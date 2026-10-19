@@ -12,7 +12,7 @@ import { isSaved, toggleSaved } from "@/lib/personal-actions";
 import { readPersonalState, updatePersonalState } from "@/lib/personal-store";
 
 /** 관심 저장. 행 선택을 일으키지 않도록 클릭 전파를 막는다 */
-export function SaveButton({ a, variant = "icon" }: { a: Announcement; variant?: "icon" | "full" }) {
+export function SaveButton({ a, variant = "icon", className }: { a: Announcement; variant?: "icon" | "full"; className?: string }) {
   const { state, hydrated } = usePersonal();
   const requireLogin = useRequireLogin();
   const toast = useToast();
@@ -34,8 +34,8 @@ export function SaveButton({ a, variant = "icon" }: { a: Announcement; variant?:
   const label = saved ? `관심 공고에서 빼기: ${a.title}` : `관심 공고에 저장: ${a.title}`;
   if (variant === "full") {
     return (
-      <Button variant={saved ? "secondary" : "secondary"} onClick={onClick} aria-pressed={saved} aria-label={label}>
-        <Star className={cn("size-4", saved ? "fill-accent text-accent" : "text-muted")} aria-hidden />
+      <Button variant={saved ? "secondary" : "primary"} onClick={onClick} aria-pressed={saved} aria-label={label} className={className}>
+        <Star className={cn("size-4", saved ? "fill-accent text-accent" : "text-accent-fg")} aria-hidden />
         {saved ? "저장됨" : "관심 저장"}
       </Button>
     );

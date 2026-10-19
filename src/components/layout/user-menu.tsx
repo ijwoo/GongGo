@@ -31,7 +31,7 @@ export function UserMenu() {
         <span className="hidden lg:inline">{state.session.displayName}</span>
       </Menu.Trigger>
       <Menu.Portal>
-        <Menu.Content align="end" sideOffset={6} className="z-50 min-w-52 rounded-md border border-line bg-panel p-1 shadow-[var(--shadow)]">
+        <Menu.Content align="end" sideOffset={6} className="z-50 min-w-52 rounded-md border border-line bg-elevated p-1 shadow-[var(--shadow)]">
           <div className="px-2 py-1.5">
             <p className="text-sm font-semibold">{state.session.displayName}</p>
             <p className="text-xs text-muted">데모 체험 중 · 이 브라우저에만 저장</p>

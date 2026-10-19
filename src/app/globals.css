@@ -7,14 +7,18 @@
  * 상태 색은 항상 텍스트 라벨과 함께 쓴다(색만으로 구분하지 않음).
  */
 :root {
-  --page: #f6f7f9;
+  /* 표면 3단계: 페이지 < 패널 < 띄운 요소(팝오버·시트) */
+  --page: #f2f4f6;
   --panel: #ffffff;
+  --elevated: #ffffff;
   --fg: #191f28;
+  --fg-2: #333d4b;
   --muted: #6b7684;
   --faint: #8b95a1;
   --line: #e5e8eb;
   --line-strong: #d1d6db;
   --subtle: #f2f4f6;
+  --hover: #f6f7f9;
   --accent: #3182f6;
   --accent-hover: #1b64da;
   --accent-soft: #edf4ff;
@@ -27,40 +31,46 @@
   --danger: #d22030;
   --danger-soft: #fdecee;
   --focus: #3182f6;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.06);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 20px rgb(0 0 0 / 0.08);
   --map-bg: #eef1f4;
   --map-grid: #dde2e7;
 }
 
 [data-theme="dark"] {
-  --page: #101114;
-  --panel: #17181d;
+  --page: #0b0c0f;
+  --panel: #15161b;
+  --elevated: #1e2027;
   --fg: #f2f4f6;
-  --muted: #9aa1ac;
-  --faint: #7d8590;
-  --line: #2a2c34;
-  --line-strong: #3a3d47;
-  --subtle: #1f2128;
-  --accent: #4087f8;
-  --accent-hover: #6aa2fa;
-  --accent-soft: #1a2a45;
+  --fg-2: #d5d9df;
+  --muted: #a3aab5;
+  --faint: #7e8591;
+  --line: #262832;
+  --line-strong: #383b47;
+  --subtle: #1e2027;
+  --hover: #1b1d23;
+  --accent: #4b8ffa;
+  --accent-hover: #6ea4fb;
+  --accent-soft: #172a48;
   --accent-fg: #ffffff;
-  --accent-text: #7fb0ff;
-  --success: #4cc38a;
-  --success-soft: #12291f;
-  --warning: #f0a54a;
-  --warning-soft: #2e2213;
-  --danger: #ff6b76;
-  --danger-soft: #33161a;
-  --focus: #6aa2fa;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
-  --map-bg: #1b1d23;
-  --map-grid: #262932;
+  --accent-text: #86b5ff;
+  --success: #4fcb8d;
+  --success-soft: #11291e;
+  --warning: #f3ab52;
+  --warning-soft: #2c2113;
+  --danger: #ff6f7a;
+  --danger-soft: #34171b;
+  --focus: #6ea4fb;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
+  --map-bg: #13151a;
+  --map-grid: #20232b;
 }
 
 @theme inline {
   --color-page: var(--page);
   --color-panel: var(--panel);
+  --color-elevated: var(--elevated);
+  --color-fg-2: var(--fg-2);
+  --color-hover: var(--hover);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
@@ -95,8 +105,8 @@ html {
 body {
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
+  line-height: 1.55;
+  letter-spacing: -0.012em;
   font-feature-settings: "tnum" 0;
 }
 

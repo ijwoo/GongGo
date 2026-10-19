@@ -10,19 +10,23 @@ import { Button, buttonClass } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import {
   CATEGORY_LABEL,
+  daysUntilDeadline,
   formatCost,
+  formatKrw,
   formatDeadline,
   formatEventSchedule,
   formatSupport,
   formatTeamSize,
   MODE_LABEL,
+  venueShort,
 } from "@/domain/announcement";
 import { ELIGIBILITY_LABEL, evaluateCondition, type EligibilityResult } from "@/domain/eligibility";
-import { formatSeoulDateTime } from "@/domain/time";
+import { formatLocalDateShort, formatSeoulDateTime, formatSeoulTime, seoulDateOf } from "@/domain/time";
 import type { Announcement, ApplicationStart } from "@/domain/types";
 import { sourcePolicy } from "@/data/sources";
 import { usePersonal, newId } from "@/hooks/use-personal";
 import { useNow } from "@/lib/app-data";
+import { cn } from "@/lib/cn";
 import { markSeen, upsertApplication } from "@/lib/personal-actions";
 import { readPersonalState, updatePersonalState } from "@/lib/personal-store";
 import { CompareButton } from "./compare-toggle";
@@ -39,17 +43,17 @@ function formatStart(s: ApplicationStart): string {
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[88px_1fr] gap-3 py-2 text-[13px]">
+    <div className="grid grid-cols-[92px_1fr] gap-3 py-2.5 text-sm">
       <dt className="text-muted">{label}</dt>
-      <dd className="min-w-0 break-keep">{children}</dd>
+      <dd className="min-w-0 break-keep text-fg-2">{children}</dd>
     </div>
   );
 }
 
 function Section({ title, icon, children, id }: { title: string; icon?: ReactNode; children: ReactNode; id?: string }) {
   return (
-    <section aria-labelledby={id} className="border-t border-line px-4 py-4">
-      <h3 id={id} className="mb-2 flex items-center gap-1.5 text-sm font-bold">
+    <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="scroll-mt-12 border-b border-line px-5 py-5 last:border-b-0">
+      <h3 id={id ? `${id}-title` : undefined} className="mb-3 flex items-center gap-1.5 text-[15px] font-bold">
         {icon}
         {title}
       </h3>
@@ -60,6 +64,77 @@ function Section({ title, icon, children, id }: { title: string; icon?: ReactNod
 
 function Missing() {
   return <span className="text-faint">정보 없음</span>;
+}
+
+/** 결정에 바로 필요한 네 가지를 위에 크게 */
+function KeyFacts({ a, now }: { a: Announcement; now: string }) {
+  const d = a.applicationDeadline;
+  const days = daysUntilDeadline(a, now);
+  const deadlineMain =
+    d.type === "datetime"
+      ? formatLocalDateShort(seoulDateOf(d.at))
+      : d.type === "date"
+        ? formatLocalDateShort(d.date)
+        : d.type === "rolling"
+          ? "상시 모집"
+          : d.type === "untilBudget"
+            ? "예산 소진 시"
+            : "미정";
+  const deadlineSub =
+    d.type === "datetime"
+      ? `${formatSeoulTime(d.at)}${days !== null && days >= 0 ? ` · ${days === 0 ? "오늘 마감" : `D-${days}`}` : ""}`
+      : d.type === "date"
+        ? `시각 미공지${days !== null && days >= 0 ? ` · ${days === 0 ? "오늘 마감" : `D-${days}`}` : ""}`
+        : "고정 마감일 없음";
+  const e = a.event;
+  const eventMain =
+    e.type === "dates"
+      ? e.start === e.end
+        ? formatLocalDateShort(e.start)
+        : `${formatLocalDateShort(e.start)}~`
+      : e.type === "datetime"
+        ? formatLocalDateShort(seoulDateOf(e.start))
+        : e.type === "ongoing"
+          ? "상시 진행"
+          : "미정";
+  const eventSub =
+    e.type === "dates"
+      ? e.start === e.end
+        ? "종일"
+        : `${formatLocalDateShort(e.end)}까지`
+      : e.type === "datetime"
+        ? `${formatSeoulTime(e.start)}~${formatSeoulTime(e.end)}`
+        : "일정 공지 전";
+  const facts = [
+    { label: "신청 마감", main: deadlineMain, sub: deadlineSub, tone: days !== null && days >= 0 && days <= 3 && a.status !== "cancelled" },
+    { label: "행사 일정", main: eventMain, sub: eventSub },
+    { label: "장소", main: venueShort(a), sub: a.venue.status === "confirmed" ? a.venue.name : MODE_LABEL[a.participationMode] },
+    {
+      label: a.supportAmount && a.supportAmount.type !== "none" ? "지원 규모" : "참가비",
+      main:
+        a.supportAmount && a.supportAmount.type === "amount"
+          ? `최대 ${formatKrw(a.supportAmount.maxKrw)}`
+          : a.supportAmount && a.supportAmount.type === "text"
+            ? "별도 지원"
+            : a.cost
+              ? formatCost(a.cost)
+              : "정보 없음",
+      sub: a.supportAmount && a.supportAmount.type === "text" ? a.supportAmount.text : a.cost ? `참가비 ${formatCost(a.cost)}` : "원문 확인",
+    },
+  ];
+  return (
+    <dl className="mx-5 mb-4 grid grid-cols-2 overflow-hidden rounded-lg border border-line">
+      {facts.map((f, i) => (
+        <div key={f.label} className={cn("min-w-0 px-3.5 py-3", i % 2 === 1 && "border-l border-line", i > 1 && "border-t border-line")}>
+          <dt className="text-xs text-muted">{f.label}</dt>
+          <dd className={cn("num mt-1 truncate text-base font-bold", f.tone ? "text-danger" : "text-fg")}>{f.main}</dd>
+          <dd className="num truncate text-xs text-muted" title={f.sub}>
+            {f.sub}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; headingLevel?: 2 | 3 }) {
@@ -93,32 +168,37 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
       },
     });
 
+  const sections = [
+    { id: `s-schedule-${a.id}`, label: "일정·장소" },
+    { id: `s-cond-${a.id}`, label: "자격 조건" },
+    { id: `s-docs-${a.id}`, label: "서류" },
+    { id: `s-rev-${a.id}`, label: "변경 이력" },
+  ];
+
   return (
-    <article aria-labelledby={`detail-title-${a.id}`} className="pb-6">
-      <header className="px-4 pt-4 pr-12 pb-3">
-        <div className="mb-2 flex items-center gap-2">
+    <article aria-labelledby={`detail-title-${a.id}`} className="bg-[inherit] pb-8">
+      <header className="px-5 pt-5 pr-12 pb-4">
+        <div className="mb-3 flex items-center gap-2.5">
           <OrgMark org={a.organizer} />
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold">{a.organizer.name}</p>
+            <p className="truncate text-sm font-semibold text-fg-2">{a.organizer.name}</p>
             <p className="text-xs text-muted">
               {CATEGORY_LABEL[a.category]} · {MODE_LABEL[a.participationMode]}
             </p>
           </div>
         </div>
-        <Heading id={`detail-title-${a.id}`} className="text-lg leading-snug font-bold break-keep">
+        <Heading id={`detail-title-${a.id}`} className="text-xl leading-snug font-bold tracking-tight break-keep">
           {a.title}
         </Heading>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           <StateBadge a={a} now={now} />
           {a.revisions.length > 0 ? <Badge tone="warning">공고 수정 {a.revisions.length}회</Badge> : <Badge>수정 없음</Badge>}
+          <span className="num ml-auto text-xs text-faint">확인 {formatSeoulDateTime(a.lastCheckedAt)}</span>
         </div>
-        <p className="num mt-2 text-xs text-muted">
-          마지막 확인 {formatSeoulDateTime(a.lastCheckedAt)} · 출처 {a.sourceName}
-        </p>
       </header>
 
       {a.status === "cancelled" ? (
-        <div role="alert" className="mx-4 mb-3 flex gap-2 rounded-md bg-danger-soft px-3 py-2.5 text-[13px] text-danger">
+        <div role="alert" className="mx-5 mb-4 flex gap-2 rounded-md bg-danger-soft px-3 py-2.5 text-[13px] text-danger">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
             <b>취소된 공고예요.</b> {a.revisions.findLast((r) => r.kind === "cancel")?.summary}
@@ -126,38 +206,57 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
         </div>
       ) : null}
       {hydrated && showChanged ? (
-        <div className="mx-4 mb-3 flex gap-2 rounded-md bg-warning-soft px-3 py-2.5 text-[13px] text-warning">
+        <div className="mx-5 mb-4 flex gap-2 rounded-md bg-warning-soft px-3 py-2.5 text-[13px] text-warning">
           <History className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>관심 저장한 뒤 바뀐 내용이 있어요. 아래 변경 이력을 확인하세요.</p>
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-2 px-4 pb-4">
-        <SaveButton a={a} variant="full" />
-        <CompareButton a={a} />
-        <AddToCalendarButton a={a} />
-        {application ? (
-          <Link href="/applications" className={buttonClass("secondary", "md")}>
-            <ClipboardList className="size-4 text-accent" aria-hidden />
-            지원 현황 보기
-          </Link>
-        ) : (
-          <Button onClick={addApplication}>
-            <ClipboardList className="size-4 text-muted" aria-hidden />
-            지원 준비에 추가
-          </Button>
-        )}
-        <a
-          href={a.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClass("ghost", "md", "text-accent-text")}
-          aria-label={`원문 보기: ${a.title} (새 창에서 열림)`}
-        >
-          원문 보기
-          <ExternalLink className="size-3.5" aria-hidden />
-        </a>
+      <KeyFacts a={a} now={now} />
+
+      <div className="space-y-2 px-5 pb-5">
+        <div className="grid grid-cols-2 gap-2">
+          <SaveButton a={a} variant="full" className="w-full" />
+          <AddToCalendarButton a={a} className="w-full" />
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          <CompareButton a={a} />
+          {application ? (
+            <Link href="/applications" className={buttonClass("ghost", "sm")}>
+              <ClipboardList className="size-4 text-accent" aria-hidden />
+              지원 현황 보기
+            </Link>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={addApplication}>
+              <ClipboardList className="size-4 text-muted" aria-hidden />
+              지원 준비에 추가
+            </Button>
+          )}
+          <a
+            href={a.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonClass("ghost", "sm", "ml-auto text-accent-text")}
+            aria-label={`원문 보기: ${a.title} (새 창에서 열림)`}
+          >
+            원문 보기
+            <ExternalLink className="size-3.5" aria-hidden />
+          </a>
+        </div>
       </div>
+
+      <nav aria-label="상세 항목" className="sticky top-0 z-[2] flex gap-1 overflow-x-auto border-y border-line bg-[inherit] px-4 py-1.5 [scrollbar-width:none]">
+        {sections.map((sec) => (
+          <button
+            key={sec.id}
+            type="button"
+            onClick={() => document.getElementById(sec.id)?.scrollIntoView({ block: "start", behavior: "smooth" })}
+            className="h-8 rounded-md px-2.5 text-[13px] font-semibold text-muted hover:bg-hover hover:text-fg"
+          >
+            {sec.label}
+          </button>
+        ))}
+      </nav>
 
       <Section title="일정·장소" id={`s-schedule-${a.id}`}>
         <dl className="divide-y divide-line">

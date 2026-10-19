@@ -24,7 +24,7 @@ export function ThemeMenu() {
         <Moon className="hidden size-[18px] dark:block" aria-hidden />
       </Menu.Trigger>
       <Menu.Portal>
-        <Menu.Content align="end" sideOffset={6} className="z-50 min-w-40 rounded-md border border-line bg-panel p-1 shadow-[var(--shadow)]">
+        <Menu.Content align="end" sideOffset={6} className="z-50 min-w-40 rounded-md border border-line bg-elevated p-1 shadow-[var(--shadow)]">
           <Menu.Label className="px-2 py-1.5 text-xs text-muted">화면 테마</Menu.Label>
           <Menu.RadioGroup value={pref} onValueChange={(v) => setThemePreference(v as ThemePreference)}>
             {OPTIONS.map(({ value, label, icon: Icon }) => (

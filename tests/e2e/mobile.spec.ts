@@ -9,7 +9,7 @@ test("모바일: 목록 → 상세 바텀시트 → 닫기, 필터 시트", asyn
   await sheet.getByRole("button", { name: "닫기" }).click();
   await expect(page).not.toHaveURL(/id=/);
 
-  await page.getByRole("button", { name: /^필터/ }).click();
+  await page.getByRole("button", { name: /^필터(,.*)?$/ }).click();
   const filter = page.getByRole("dialog", { name: "필터" });
   await filter.getByRole("button", { name: "교육", exact: true }).click();
   await filter.getByRole("button", { name: /공고 \d+건 보기/ }).click();

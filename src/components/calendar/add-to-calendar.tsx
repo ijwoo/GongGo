@@ -26,12 +26,13 @@ import { defaultReminders, ReminderFields } from "./reminder-fields";
 const STEPS = ["일정 종류", "날짜·시간 확인", "알림 설정"] as const;
 
 /** 공고 상세의 '내 캘린더에 추가' → 종류 선택 → 날짜 확인 → 알림 → 저장 */
-export function AddToCalendarButton({ a }: { a: Announcement }) {
+export function AddToCalendarButton({ a, className }: { a: Announcement; className?: string }) {
   const requireLogin = useRequireLogin();
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button
+        className={className}
         onClick={() =>
           requireLogin({
             reason: "내 캘린더는 계정에 저장돼요. 로그인하면 일정과 알림을 관리할 수 있어요.",

@@ -34,6 +34,9 @@ test("캘린더 등록 → 수정 → 삭제", async ({ page }) => {
   await editor.getByLabel("일정 이름").fill("판교 해커톤 지원서 마감");
   await editor.getByRole("button", { name: "저장" }).click();
   await expect(page.getByText("판교 해커톤 지원서 마감").first()).toBeVisible();
+  // 저장 후 수정 창이 닫히고 주소에서 event가 빠질 때까지 기다린 뒤 새로고침한다
+  await expect(page.getByRole("dialog", { name: "일정 수정" })).toBeHidden();
+  await expect(page).not.toHaveURL(/event=/);
 
   await page.reload();
   await page.getByRole("button", { name: "일정 수정: 판교 해커톤 지원서 마감" }).first().click();

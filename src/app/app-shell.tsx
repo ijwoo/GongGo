@@ -39,8 +39,8 @@ export function AppShellFallback() {
   return (
     <div aria-busy="true" aria-label="불러오는 중">
       <div className="h-14 border-b border-line bg-panel" />
-      <div className="h-10 border-b border-line bg-panel" />
-      <div className="mx-auto max-w-[1680px] space-y-2 p-4">
+      <div className="h-11 border-b border-line bg-panel" />
+      <div className="space-y-2 p-4 lg:px-6">
         {Array.from({ length: 8 }, (_, i) => (
           <div key={i} className="h-11 animate-pulse rounded-sm bg-subtle" />
         ))}

@@ -55,7 +55,7 @@ export function CompareCheckbox({ a }: { a: Announcement }) {
 export function CompareButton({ a }: { a: Announcement }) {
   const { selected, toggle } = useCompareToggle(a);
   return (
-    <Button onClick={toggle} aria-pressed={selected}>
+    <Button variant="ghost" size="sm" onClick={toggle} aria-pressed={selected}>
       <GitCompareArrows className={cn("size-4", selected ? "text-accent" : "text-muted")} aria-hidden />
       {selected ? "비교에 담김" : "비교에 추가"}
     </Button>

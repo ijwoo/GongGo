@@ -43,7 +43,7 @@ export function Sheet({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40" />
         <Dialog.Content
-          className={cn("fixed z-50 flex flex-col bg-panel shadow-[var(--shadow)] outline-none", CONTENT[side], className)}
+          className={cn("fixed z-50 flex flex-col bg-elevated shadow-[var(--shadow)] outline-none", CONTENT[side], className)}
         >
           <div
             className={cn(
@@ -66,7 +66,7 @@ export function Sheet({
             </Dialog.Close>
           </div>
           {!description ? <Dialog.Description className="sr-only">{title}</Dialog.Description> : null}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[inherit]">{children}</div>
           {footer ? <div className="shrink-0 border-t border-line px-4 py-3">{footer}</div> : null}
         </Dialog.Content>
       </Dialog.Portal>

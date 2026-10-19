@@ -31,15 +31,15 @@ export function DeadlineCell({ a, now }: { a: Announcement; now: string }) {
   const days = daysUntilDeadline(a, now);
   if (d.type === "rolling" || d.type === "untilBudget" || d.type === "tbd") {
     return (
-      <span className="text-[13px] text-muted">
+      <span className="text-sm text-muted">
         {d.type === "rolling" ? "상시 모집" : d.type === "untilBudget" ? "예산 소진 시" : "마감일 미정"}
       </span>
     );
   }
   const date = d.type === "datetime" ? seoulDateOf(d.at) : d.date;
   return (
-    <span className="num flex flex-col leading-tight">
-      <span className="text-[13px] font-semibold">{formatLocalDateShort(date)}</span>
+    <span className="num flex flex-col gap-0.5 leading-tight">
+      <span className="text-sm font-semibold text-fg">{formatLocalDateShort(date)}</span>
       <span className="text-xs text-muted">
         {d.type === "datetime" ? formatSeoulTime(d.at) : "시각 미공지"}
         {days !== null && days >= 0 && a.status !== "cancelled" ? ` · ${days === 0 ? "오늘" : `D-${days}`}` : ""}

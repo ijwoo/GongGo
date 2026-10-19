@@ -11,15 +11,17 @@ test("검색·필터·정렬이 URL에 반영되고, 새로고침·뒤로 가기
   const hackathons = Number(await resultCount(page).innerText());
   expect(hackathons).toBeLessThan(total);
 
-  await page.getByRole("button", { name: "경기", exact: true }).click();
+  await page.getByRole("button", { name: /^필터(,.*)?$/ }).click();
+  await page.getByRole("dialog", { name: "필터" }).getByRole("button", { name: "경기", exact: true }).click();
   await expect(page).toHaveURL(/region=%EA%B2%BD%EA%B8%B0|region=경기/);
+  await page.keyboard.press("Escape");
   await page.getByLabel("정렬").selectOption("recent");
   await expect(page).toHaveURL(/sort=recent/);
   const narrowed = Number(await resultCount(page).innerText());
 
   await page.reload();
   await expect(page.getByRole("button", { name: "해커톤", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("button", { name: "경기", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "경기 필터 해제" })).toBeVisible();
   await expect(page.getByLabel("정렬")).toHaveValue("recent");
   await expect(resultCount(page)).toHaveText(String(narrowed));
 

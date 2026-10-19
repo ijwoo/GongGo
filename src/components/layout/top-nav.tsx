@@ -61,7 +61,7 @@ function SearchBox({ className, onDone }: { className?: string; onDone?: () => v
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="공고명, 기관, 지역 검색"
-        className="h-9 w-full rounded-md border border-line bg-subtle pr-3 pl-8 text-sm placeholder:text-faint focus:border-accent focus:bg-panel focus:outline-none"
+        className="h-9 w-full rounded-md border border-transparent bg-subtle pr-3 pl-8 text-sm placeholder:text-faint focus:border-accent focus:bg-panel focus:outline-none"
       />
     </form>
   );
@@ -76,7 +76,7 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-panel">
-      <div className="mx-auto flex h-14 max-w-[1680px] items-center gap-3 px-4 lg:gap-5">
+      <div className="flex h-14 w-full items-center gap-3 px-4 lg:gap-6 lg:px-6">
         <Logo />
         <nav aria-label="주요 메뉴" className="hidden h-full items-stretch md:flex">
           {items.map((item) => {
@@ -87,7 +87,7 @@ export function TopNav() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-1 px-2.5 text-[15px] font-semibold whitespace-nowrap transition-colors lg:px-3",
+                  "relative flex items-center gap-1.5 px-2.5 text-[15px] font-semibold whitespace-nowrap transition-colors lg:px-3.5",
                   active ? "text-fg" : "text-muted hover:text-fg",
                 )}
               >
@@ -99,12 +99,12 @@ export function TopNav() {
                     <span className="sr-only">개</span>
                   </span>
                 ) : null}
-                {active ? <span className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full bg-fg lg:inset-x-3" aria-hidden /> : null}
+                {active ? <span className="absolute inset-x-2.5 bottom-0 h-[2px] rounded-full bg-accent lg:inset-x-3.5" aria-hidden /> : null}
               </Link>
             );
           })}
         </nav>
-        <SearchBox className="ml-auto hidden w-full max-w-72 sm:block" />
+        <SearchBox className="ml-auto hidden w-full max-w-[360px] sm:block" />
         <div className="ml-auto flex items-center gap-0.5 sm:ml-0">
           <Link
             href="/notifications"

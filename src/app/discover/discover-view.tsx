@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AnnouncementCompactList, AnnouncementTable } from "@/components/discover/announcement-list";
 import { DetailHost } from "@/components/discover/detail-host";
 import { FilterBar } from "@/components/discover/filter-bar";
-import { DEFAULT_QUERY, filterAnnouncements, serializeDiscoverQuery } from "@/domain/discover";
+import { activeFilterCount, DEFAULT_QUERY, filterAnnouncements, serializeDiscoverQuery } from "@/domain/discover";
 import { useDiscoverQuery } from "@/hooks/use-discover-query";
 import { useAnnouncements, useNow } from "@/lib/app-data";
 import { rememberDiscoverQuery } from "@/lib/last-discover";
@@ -61,7 +61,7 @@ export function DiscoverView() {
   );
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-96px)] max-w-[1680px] min-w-0">
+    <div className="flex h-[calc(100dvh-102px)] w-full min-w-0 bg-page">
       <section aria-label="공고 탐색" className="flex min-w-0 flex-1 flex-col bg-panel">
         <h1 className="sr-only">공고 발견</h1>
         <FilterBar query={query} setQuery={setQuery} total={results.length} />
@@ -77,6 +77,19 @@ export function DiscoverView() {
                 <div className="md:hidden">
                   <AnnouncementCompactList items={results} now={now} selectedId={query.id} hrefFor={linkFor} onSelect={select} />
                 </div>
+                {results.length < 8 && activeFilterCount(query) > 0 ? (
+                  <div className="flex flex-wrap items-center justify-center gap-2 px-6 py-10 text-center text-[13px] text-muted">
+                    <span>조건에 맞는 공고가 {results.length}건이에요. 조건을 줄이면 더 볼 수 있어요.</span>
+                    {!query.includeClosed ? (
+                      <Button size="sm" variant="ghost" onClick={() => setQuery({ includeClosed: true })}>
+                        마감 공고 포함
+                      </Button>
+                    ) : null}
+                    <Button size="sm" onClick={() => setQuery({ ...DEFAULT_QUERY, view: query.view })}>
+                      전체 공고 보기
+                    </Button>
+                  </div>
+                ) : null}
               </>
             )}
           </div>
@@ -89,7 +102,11 @@ export function DiscoverView() {
         missing={missing}
         onClose={() => select(null)}
         panelBreakpoint={query.view === "map" ? "(min-width: 1280px)" : "(min-width: 1180px)"}
-        panelClassName={query.view === "map" ? "hidden xl:block w-[28%] min-w-[340px] max-w-[440px]" : "hidden min-[1180px]:block w-[400px] shrink-0"}
+        panelClassName={
+          query.view === "map"
+            ? "hidden xl:block w-[28%] min-w-[360px] max-w-[480px] shrink-0"
+            : "hidden min-[1180px]:block w-[clamp(400px,28vw,520px)] shrink-0"
+        }
       />
     </div>
   );

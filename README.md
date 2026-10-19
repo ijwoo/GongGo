@@ -5,6 +5,8 @@
 
 > **모든 공고·기관·장소는 데모용 합성 데이터입니다.** 실제 기관의 공고가 아니며, 원문 링크는 `example.com`을 가리킵니다.
 
+![발견 화면(다크, 2560px)](docs/screenshots/discover-dark-wide.png)
+
 | 발견(라이트) | 지도(다크) |
 |---|---|
 | ![발견](docs/screenshots/discover-light.png) | ![지도](docs/screenshots/map-dark.png) |

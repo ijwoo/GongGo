@@ -102,6 +102,15 @@ public class IngestionService {
                     log.warn("[ingestion] {} {} 처리 실패: {}", adapter.sourceId(), record.externalId(), e.toString());
                 }
             }
+            // 빈 응답은 출처 장애일 수 있어 전부 마감시키지 않는다
+            if (adapter.fullSnapshot() && !records.isEmpty()) {
+                Set<String> seen = records.stream().map(SourceRecord::externalId).collect(Collectors.toSet());
+                int closed = upserter.closeMissing(adapter.sourceId(), seen, clock.instant());
+                counts.merge(Outcome.CHANGED, closed, Integer::sum);
+                if (closed > 0) {
+                    log.info("[ingestion] {} 목록에서 내려간 공고 {}건 마감 처리", adapter.sourceId(), closed);
+                }
+            }
         } catch (RuntimeException e) {
             status = "failed";
             details.addFirst(e.getMessage());

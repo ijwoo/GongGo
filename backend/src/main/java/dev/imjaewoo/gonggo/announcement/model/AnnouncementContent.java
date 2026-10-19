@@ -32,4 +32,10 @@ public record AnnouncementContent(
         List<String> requiredDocuments,
         List<String> checkPoints,
         String status) {
+
+    public AnnouncementContent withStatus(String status) {
+        return new AnnouncementContent(id, title, organizer, category, sourceId, sourceUrl, sourceName, publishedAt,
+                sourceUpdatedAt, applicationStart, applicationDeadline, event, participationMode, venue,
+                eligibilityRegions, teamSize, cost, supportAmount, conditions, requiredDocuments, checkPoints, status);
+    }
 }

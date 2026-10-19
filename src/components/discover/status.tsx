@@ -2,6 +2,7 @@ import { Badge, type Tone } from "@/components/ui/badge";
 import {
   applicationState,
   daysUntilDeadline,
+  cancelledLabel,
   STATE_LABEL,
   type ApplicationState,
 } from "@/domain/announcement";
@@ -21,7 +22,13 @@ export function StateBadge({ a, now }: { a: Announcement; now: string }) {
   const state = applicationState(a, now);
   const days = daysUntilDeadline(a, now);
   const label =
-    state === "closingSoon" && days !== null ? (days === 0 ? "오늘 마감" : `마감 D-${days}`) : STATE_LABEL[state];
+    state === "closingSoon" && days !== null
+      ? days === 0
+        ? "오늘 마감"
+        : `마감 D-${days}`
+      : state === "cancelled"
+        ? cancelledLabel(a)
+        : STATE_LABEL[state];
   return <Badge tone={STATE_TONE[state]}>{label}</Badge>;
 }
 

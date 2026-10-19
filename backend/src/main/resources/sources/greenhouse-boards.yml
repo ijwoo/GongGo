@@ -1,0 +1,15 @@
+# Greenhouse 채용 게시판 (키 없음). 회사를 더하려면 boards에 token(boards.greenhouse.io/{token})과 이름을 넣는다.
+# 국내 근무지 + 개발 직군만 남긴다. 쿠팡처럼 공고가 많은 회사도 이 조건으로 수십 건 수준이 된다.
+gonggo:
+  greenhouse:
+    enabled: ${GONGGO_GREENHOUSE_ENABLED:true}
+    endpoint: https://boards-api.greenhouse.io/v1/boards
+    location-pattern: "seoul|korea|서울|한국|pangyo|판교|seongnam|성남"
+    title-pattern: "engineer|developer|개발|scientist|machine learning|\\bml\\b|\\bai\\b|\\bsre\\b|devops|data|backend|frontend|android|ios"
+    boards:
+      - { token: coupang, name: 쿠팡 }
+      - { token: krafton, name: 크래프톤 }
+      - { token: daangn, name: 당근 }
+      - { token: furiosaai, name: 퓨리오사AI }
+      - { token: moloco, name: 몰로코 }
+      - { token: sendbird, name: 센드버드 }

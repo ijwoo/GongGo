@@ -1,0 +1,6 @@
+{"jobs":[
+ {"absolute_url":"https://job-boards.greenhouse.io/moloco/jobs/111","application_deadline":null,"company_name":"Moloco","first_published":"2026-09-03T15:26:16-04:00","id":111,"location":{"name":"Seoul, South Korea"},"title":"Senior Backend Engineer","updated_at":"2026-10-08T19:10:08-04:00"},
+ {"absolute_url":"https://job-boards.greenhouse.io/moloco/jobs/222","application_deadline":"2026-11-30T23:59:00+09:00","company_name":"Moloco","first_published":"2026-10-01T09:00:00+09:00","id":222,"location":{"name":"Seoul"},"title":"Machine Learning Engineer, Ads","updated_at":"2026-10-02T09:00:00+09:00"},
+ {"absolute_url":"https://job-boards.greenhouse.io/moloco/jobs/333","application_deadline":null,"company_name":"Moloco","first_published":"2026-09-03T15:26:16-04:00","id":333,"location":{"name":"Menlo Park, California, United States"},"title":"Data Scientist II","updated_at":"2026-10-08T19:10:08-04:00"},
+ {"absolute_url":"https://job-boards.greenhouse.io/moloco/jobs/444","application_deadline":null,"company_name":"Moloco","first_published":"2026-09-03T15:26:16-04:00","id":444,"location":{"name":"Seoul, South Korea"},"title":"Account Manager","updated_at":"2026-10-08T19:10:08-04:00"}
+]}

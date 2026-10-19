@@ -201,7 +201,7 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
         <div role="alert" className="mx-5 mb-4 flex gap-2 rounded-md bg-danger-soft px-3 py-2.5 text-[13px] text-danger">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
-            <b>취소된 공고예요.</b> {a.revisions.findLast((r) => r.kind === "cancel")?.summary}
+            <b>{a.category === "job" ? "마감된 채용 공고예요." : "취소된 공고예요."}</b> {a.revisions.findLast((r) => r.kind === "cancel")?.summary}
           </p>
         </div>
       ) : null}

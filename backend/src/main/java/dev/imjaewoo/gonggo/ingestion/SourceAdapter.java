@@ -15,6 +15,14 @@ public interface SourceAdapter {
     /** 정기 수집에 포함할지 */
     boolean scheduled();
 
+    /**
+     * fetch가 지금 열려 있는 공고 전부를 돌려주는지(채용 게시판처럼 마감되면 목록에서 내려가는 출처).
+     * true면 실행이 성공했을 때 이번 응답에 없는 기존 공고를 마감(cancelled) 처리한다.
+     */
+    default boolean fullSnapshot() {
+        return false;
+    }
+
     List<SourceRecord> fetch();
 
     /** 응답 전체를 보고 매핑이 맞는지 검사한다. 틀리면 예외 → 그 실행은 failed */

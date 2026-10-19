@@ -3,6 +3,7 @@ package dev.imjaewoo.gonggo.announcement;
 import dev.imjaewoo.gonggo.announcement.model.AnnouncementContent;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,5 +60,21 @@ public class AnnouncementUpserter {
                         c.kind(), c.summary(), c.before(), c.after(), now))
                 .toList());
         return Outcome.CHANGED;
+    }
+
+    /**
+     * 출처 목록에서 내려간 공고를 마감 처리한다. seenExternalIds에 없는 열린 공고만 바꾸며, 바꾼 건수를 돌려준다.
+     * 내용은 마지막으로 받은 그대로 두고 상태만 바꾸므로 변경 이력에는 'cancel' 한 건이 남는다.
+     */
+    @Transactional
+    public int closeMissing(String sourceId, Set<String> seenExternalIds, Instant now) {
+        int closed = 0;
+        for (Announcement a : announcements.findBySourceIdAndStatus(sourceId, "active")) {
+            if (!seenExternalIds.contains(a.getExternalId())) {
+                upsert(Incoming.fresh(a.getExternalId(), mapper.toContent(a).withStatus("cancelled"), now), now);
+                closed++;
+            }
+        }
+        return closed;
     }
 }

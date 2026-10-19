@@ -13,7 +13,7 @@ import { z } from "zod";
 export const isoInstant = z.iso.datetime({ offset: true });
 export const localDate = z.iso.date(); // YYYY-MM-DD (Asia/Seoul 기준)
 
-export const CATEGORIES = ["hackathon", "startup", "education", "event"] as const;
+export const CATEGORIES = ["hackathon", "startup", "education", "event", "job"] as const;
 export const categorySchema = z.enum(CATEGORIES);
 export type Category = z.infer<typeof categorySchema>;
 

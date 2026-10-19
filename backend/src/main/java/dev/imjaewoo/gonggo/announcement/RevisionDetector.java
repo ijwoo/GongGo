@@ -36,7 +36,9 @@ public final class RevisionDetector {
                     conditionText(before), conditionText(after)));
         }
         if (!"cancelled".equals(before.status()) && "cancelled".equals(after.status())) {
-            changes.add(new Change("cancel", "공고가 취소되었습니다.", "모집 중", "취소"));
+            changes.add("job".equals(after.category())
+                    ? new Change("cancel", "채용이 마감되었습니다.", "모집 중", "마감")
+                    : new Change("cancel", "공고가 취소되었습니다.", "모집 중", "취소"));
         }
         return changes;
     }

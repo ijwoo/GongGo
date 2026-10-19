@@ -2,7 +2,9 @@ spring:
   application:
     name: gonggo-api
   config:
-    import: optional:classpath:sources/kstartup-mapping.yml
+    import:
+      - optional:classpath:sources/kstartup-mapping.yml
+      - optional:classpath:sources/greenhouse-boards.yml
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/gonggo}
     username: ${DB_USER:gonggo}
@@ -38,3 +40,7 @@ gonggo:
     scheduler-enabled: ${GONGGO_INGESTION_SCHEDULER:true}
   kstartup:
     service-key: ${KSTARTUP_SERVICE_KEY:}
+  devevent:
+    # 키 없음. 커뮤니티가 관리하는 개발자 행사 목록 README
+    enabled: ${GONGGO_DEVEVENT_ENABLED:true}
+    url: https://raw.githubusercontent.com/brave-people/Dev-Event/master/README.md

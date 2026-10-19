@@ -40,6 +40,7 @@ class IngestionServiceTest extends IntegrationTest {
     void tearDown() {
         fake.items.clear();
         fake.fetchFailure = null;
+        fake.snapshot = false;
         jdbc.sql("delete from announcements where source_id = 'fake'").update();
         jdbc.sql("delete from raw_records where source_id = 'fake'").update();
     }
@@ -125,6 +126,38 @@ class IngestionServiceTest extends IntegrationTest {
         assertThat(run.status()).isEqualTo("failed");
         assertThat(run.errorMessage()).contains("pbanc_sn");
         assertThat(run.finishedAt()).isNotNull();
+    }
+
+    @Test
+    void 목록_전체를_주는_출처에서_내려간_공고는_마감된다() {
+        fake.snapshot = true;
+        fake.items.put("a1", now -> incoming("a1", "공고 A", new Deadline.Rolling(), now));
+        fake.items.put("a2", now -> incoming("a2", "공고 B", new Deadline.Rolling(), now));
+        ingestion.run(fake, "manual");
+
+        fake.items.remove("a2");
+        IngestionRunView run = ingestion.run(fake, "manual").orElseThrow();
+
+        assertThat(run.changedCount()).isEqualTo(1);
+        assertThat(query.find("fake-a1").orElseThrow().status()).isEqualTo("active");
+        AnnouncementView closed = query.find("fake-a2").orElseThrow();
+        assertThat(closed.status()).isEqualTo("cancelled");
+        assertThat(closed.revisions()).singleElement().satisfies(r -> assertThat(r.kind()).isEqualTo("cancel"));
+
+        // 다시 돌려도 이미 마감된 공고는 그대로다
+        assertThat(ingestion.run(fake, "manual").orElseThrow().changedCount()).isZero();
+    }
+
+    @Test
+    void 빈_응답이면_아무것도_마감하지_않는다() {
+        fake.snapshot = true;
+        fake.items.put("a1", now -> incoming("a1", "공고 A", new Deadline.Rolling(), now));
+        ingestion.run(fake, "manual");
+
+        fake.items.clear();
+        ingestion.run(fake, "manual");
+
+        assertThat(query.find("fake-a1").orElseThrow().status()).isEqualTo("active");
     }
 
     private static Incoming incoming(String externalId, String title, Deadline deadline, Instant now) {

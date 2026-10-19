@@ -14,6 +14,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   startup: "창업 지원",
   education: "교육",
   event: "개발자 행사",
+  job: "채용",
 };
 
 export const MODE_LABEL: Record<ParticipationMode, string> = {
@@ -32,6 +33,11 @@ export const STATE_LABEL: Record<ApplicationState, string> = {
   rolling: "상시 모집",
   cancelled: "취소됨",
 };
+
+/** 취소 상태 표기. 채용 공고는 게시판에서 내려가면 취소가 아니라 마감이다 */
+export function cancelledLabel(a: Pick<Announcement, "category">): string {
+  return a.category === "job" ? "채용 마감" : "취소됨";
+}
 
 /** 마감일(서울 기준 날짜). 고정 날짜가 없으면 null */
 export function deadlineDate(deadline: Deadline): LocalDate | null {

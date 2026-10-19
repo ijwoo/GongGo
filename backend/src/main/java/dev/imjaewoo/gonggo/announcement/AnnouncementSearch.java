@@ -15,7 +15,7 @@ public record AnnouncementSearch(
         boolean includeClosed,
         String sort) {
 
-    static final Set<String> CATEGORIES = Set.of("hackathon", "startup", "education", "event");
+    static final Set<String> CATEGORIES = Set.of("hackathon", "startup", "education", "event", "job");
     static final Set<String> REGIONS = Set.of("서울", "경기");
     static final Set<String> MODES = Set.of("online", "offline", "hybrid");
 

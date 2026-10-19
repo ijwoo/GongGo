@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonClass, IconButton } from "@/components/ui/button";
 import {
   CATEGORY_LABEL,
+  cancelledLabel,
   formatCost,
   formatDeadline,
   formatEventSchedule,
@@ -121,7 +122,7 @@ export function CompareView() {
                           {a.title}
                         </Link>
                         <p className="text-xs text-muted">{a.organizer.name}</p>
-                        {a.status === "cancelled" ? <Badge tone="danger">취소됨</Badge> : null}
+                        {a.status === "cancelled" ? <Badge tone="danger">{cancelledLabel(a)}</Badge> : null}
                       </div>
                       <IconButton label={`비교에서 빼기: ${a.title}`} className="size-7" onClick={() => toggleCompare(a.id)}>
                         <X className="size-4" aria-hidden />

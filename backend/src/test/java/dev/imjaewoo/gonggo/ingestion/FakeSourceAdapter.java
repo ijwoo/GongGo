@@ -16,6 +16,8 @@ public class FakeSourceAdapter implements SourceAdapter {
     /** externalId → 그 건을 만드는 함수. 함수가 예외를 던지면 정규화 실패로 센다 */
     public final Map<String, Function<Instant, Incoming>> items = new ConcurrentHashMap<>();
     public volatile RuntimeException fetchFailure;
+    /** true면 응답에 없는 기존 공고를 마감 처리하는 출처처럼 동작한다 */
+    public volatile boolean snapshot;
 
     @Override
     public String sourceId() {
@@ -30,6 +32,11 @@ public class FakeSourceAdapter implements SourceAdapter {
     @Override
     public boolean scheduled() {
         return false;
+    }
+
+    @Override
+    public boolean fullSnapshot() {
+        return snapshot;
     }
 
     @Override

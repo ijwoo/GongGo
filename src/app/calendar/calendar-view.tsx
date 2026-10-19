@@ -357,7 +357,7 @@ function EventList({
                 <p className="num mt-0.5 text-xs text-muted">{showDate || e.timing.type === "timed" ? formatTiming(e.timing) : e.timing.timeUnknown ? "시각 미공지" : "종일"}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   {changed ? <Badge tone="warning">변경 확인 필요</Badge> : null}
-                  {a?.status === "cancelled" ? <Badge tone="danger">공고 취소됨</Badge> : null}
+                  {a?.status === "cancelled" ? <Badge tone="danger">{a.category === "job" ? "채용 마감" : "공고 취소됨"}</Badge> : null}
                   {e.reminders.length ? (
                     <span className="text-xs text-muted">알림 {e.reminders.map((r) => offsetLabel(r.offset)).join(", ")}</span>
                   ) : (

@@ -44,16 +44,23 @@ export function Sheet({
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40" />
         <Dialog.Content
           className={cn("fixed z-50 flex flex-col bg-panel shadow-[var(--shadow)] outline-none", CONTENT[side], className)}
-          aria-describedby={description ? undefined : undefined}
         >
-          <div className={cn("flex shrink-0 items-start gap-3 border-b border-line px-4 py-3", hideTitle && "sr-only")}>
-            <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              "flex shrink-0 items-start gap-3",
+              hideTitle ? "absolute top-2 right-2 z-10" : "border-b border-line px-4 py-3",
+            )}
+          >
+            <div className={cn("min-w-0 flex-1", hideTitle && "sr-only")}>
               <Dialog.Title className="text-base font-bold">{title}</Dialog.Title>
               {description ? <Dialog.Description className="mt-0.5 text-[13px] text-muted">{description}</Dialog.Description> : null}
             </div>
             <Dialog.Close
               aria-label="닫기"
-              className="-mr-1 inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-fg"
+              className={cn(
+                "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-fg",
+                hideTitle ? "bg-panel/90" : "-mr-1",
+              )}
             >
               <X className="size-4" aria-hidden />
             </Dialog.Close>

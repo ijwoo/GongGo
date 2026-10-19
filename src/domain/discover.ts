@@ -4,6 +4,7 @@ import {
   deadlineDate,
   hasCoordinates,
   type ApplicationState,
+  type LocatedAnnouncement,
 } from "./announcement";
 import { addLocalDays, seoulDateOf, weekdayOf } from "./time";
 import { CATEGORIES, PARTICIPATION_MODES, type Announcement, type Category, type ParticipationMode } from "./types";
@@ -198,7 +199,7 @@ export function filterAnnouncements(list: Announcement[], q: DiscoverQuery, nowI
 }
 
 /** 지도 범위 필터. 좌표가 있는 공고만 남는다 */
-export function withinBbox(list: Announcement[], bbox: Bbox | null): Announcement[] {
+export function withinBbox(list: Announcement[], bbox: Bbox | null): LocatedAnnouncement[] {
   const located = list.filter(hasCoordinates);
   if (!bbox) return located;
   const [minLng, minLat, maxLng, maxLat] = bbox;

@@ -1,4 +1,4 @@
-import { addLocalDays, seoulDateOf, type LocalDate } from "./time";
+import { addLocalDays, formatLocalDate, formatSeoulDateTime, formatSeoulTime, seoulDateOf, type LocalDate } from "./time";
 import type { Announcement, AnnouncementRevision, CalendarEvent, EventKind, RevisionKind, Timing } from "./types";
 
 export const EVENT_KIND_LABEL: Record<EventKind, string> = {
@@ -123,4 +123,16 @@ export function monthGrid(year: number, month1: number): LocalDate[] {
   const firstWeekday = new Date(Date.UTC(y, m - 1, 1, 12)).getUTCDay();
   const start = addLocalDays(first, -firstWeekday);
   return Array.from({ length: 42 }, (_, i) => addLocalDays(start, i));
+}
+
+/** 일정 시각을 사람이 읽는 문장으로 */
+export function formatTiming(t: Timing): string {
+  if (t.type === "allDay") {
+    const range = t.start === t.end ? formatLocalDate(t.start) : `${formatLocalDate(t.start)} ~ ${formatLocalDate(t.end)}`;
+    return t.timeUnknown ? `${range} · 시각 미공지` : `${range} · 종일`;
+  }
+  if (!t.end) return formatSeoulDateTime(t.start);
+  return seoulDateOf(t.start) === seoulDateOf(t.end)
+    ? `${formatSeoulDateTime(t.start)} ~ ${formatSeoulTime(t.end)}`
+    : `${formatSeoulDateTime(t.start)} ~ ${formatSeoulDateTime(t.end)}`;
 }

@@ -142,6 +142,8 @@ export function formatSupport(s: Announcement["supportAmount"]): string {
   return `최대 ${formatKrw(s.maxKrw)}${s.note ? ` · ${s.note}` : ""}`;
 }
 
-export function hasCoordinates(a: Announcement): a is Announcement & { venue: Extract<Venue, { status: "confirmed" }> } {
+export type LocatedAnnouncement = Announcement & { venue: Extract<Venue, { status: "confirmed" }> };
+
+export function hasCoordinates(a: Announcement): a is LocatedAnnouncement {
   return a.venue.status === "confirmed";
 }

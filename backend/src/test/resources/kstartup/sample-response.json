@@ -1,0 +1,37 @@
+{
+  "_comment": "가상 픽스처. 실제 응답 1건으로 바꿔야 한다(docs/backend-design.md 5.1).",
+  "currentCount": 3,
+  "page": 1,
+  "perPage": 100,
+  "totalCount": 3,
+  "data": [
+    {
+      "pbanc_sn": 900001,
+      "biz_pbanc_nm": "2026년 예비창업패키지 추가 모집 (예시)",
+      "pbanc_ntrp_nm": "창업진흥원",
+      "detl_pg_url": "https://www.k-startup.go.kr/example/900001",
+      "pbanc_rcpt_bgng_dt": "20261015",
+      "pbanc_rcpt_end_dt": "20261030",
+      "supt_regin": "전국",
+      "aply_trgt_ctnt": "공고일 기준 창업 경험이 없는 예비창업자"
+    },
+    {
+      "pbanc_sn": 900002,
+      "biz_pbanc_nm": "서울·경기 청년 창업 지원 (예시)",
+      "pbanc_ntrp_nm": "예시 창업센터",
+      "detl_pg_url": "https://www.k-startup.go.kr/example/900002",
+      "pbanc_rcpt_bgng_dt": "2026-10-20",
+      "pbanc_rcpt_end_dt": "",
+      "supt_regin": "서울, 경기도",
+      "aply_trgt_ctnt": null
+    },
+    {
+      "pbanc_sn": 900003,
+      "biz_pbanc_nm": "",
+      "pbanc_ntrp_nm": "예시 기관",
+      "detl_pg_url": "https://www.k-startup.go.kr/example/900003",
+      "pbanc_rcpt_bgng_dt": "20261001",
+      "pbanc_rcpt_end_dt": "20261101"
+    }
+  ]
+}

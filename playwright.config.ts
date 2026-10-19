@@ -24,7 +24,8 @@ export default defineConfig({
     command: `pnpm start --port ${PORT}`,
     url: `http://localhost:${PORT}/discover`,
     reuseExistingServer: !process.env.CI,
-    env: { DEMO_FIXED_NOW: FIXED_NOW },
+    // API_BASE_URL이 있으면 백엔드 모드로 돌린다. 백엔드도 같은 시각으로 고정해 띄워야 한다(README 참고)
+    env: { DEMO_FIXED_NOW: FIXED_NOW, ...(process.env.API_BASE_URL ? { API_BASE_URL: process.env.API_BASE_URL } : {}) },
     timeout: 120_000,
   },
 });

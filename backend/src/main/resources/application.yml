@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: gonggo-api
+  config:
+    import: optional:classpath:sources/kstartup-mapping.yml
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/gonggo}
+    username: ${DB_USER:gonggo}
+    password: ${DB_PASSWORD:gonggo}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+
+gonggo:
+  admin-token: ${ADMIN_TOKEN:}
+  demo:
+    # 데모 공고를 처음 한 번 넣는다. 날짜는 이 날짜(비우면 서울 기준 오늘)로 옮긴다
+    enabled: ${GONGGO_DEMO_ENABLED:true}
+    anchor-date: ${GONGGO_DEMO_ANCHOR_DATE:}
+  ingestion:
+    # 매일 06:10 (서울)
+    cron: ${GONGGO_INGESTION_CRON:0 10 6 * * *}
+    scheduler-enabled: ${GONGGO_INGESTION_SCHEDULER:true}
+  kstartup:
+    service-key: ${KSTARTUP_SERVICE_KEY:}

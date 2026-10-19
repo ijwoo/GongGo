@@ -1,0 +1,61 @@
+# 서버 1대(Lightsail 등)에 db·api·web을 함께 띄운다. web만 외부에 연다.
+#   cp .env.example .env   # DB_PASSWORD, ADMIN_TOKEN 등을 채운다
+#   docker compose up -d --build
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gonggo
+      POSTGRES_USER: gonggo
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD를 .env에 설정하세요}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gonggo -d gonggo"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/gonggo
+      DB_USER: gonggo
+      DB_PASSWORD: ${DB_PASSWORD}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      KSTARTUP_SERVICE_KEY: ${KSTARTUP_SERVICE_KEY:-}
+      GONGGO_INGESTION_CRON: ${GONGGO_INGESTION_CRON:-0 10 6 * * *}
+      GONGGO_DEMO_ENABLED: ${GONGGO_DEMO_ENABLED:-true}
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /actuator/health HTTP/1.0\\r\\n\\r\\n\" >&3 && grep -q UP <&3'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    # 외부 포트를 열지 않는다. 운영자 API는 web 컨테이너 안에서 부른다:
+    #   docker compose exec web wget -qO- --post-data '' --header "X-Admin-Token: $ADMIN_TOKEN" \
+    #     http://api:8080/api/admin/ingestions/kstartup
+
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_MAP_STYLE_URL: ${NEXT_PUBLIC_MAP_STYLE_URL:-}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_BASE_URL: http://api:8080
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
+      EMAIL_API_KEY: ${EMAIL_API_KEY:-}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+
+volumes:
+  db-data:

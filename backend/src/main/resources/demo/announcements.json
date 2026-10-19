@@ -1,0 +1,2388 @@
+{
+  "anchor": "2026-01-01",
+  "items": [
+    {
+      "id": "hk-pangyo-ai",
+      "title": "판교 생성형 AI 서비스 해커톤 2기",
+      "organizer": {
+        "name": "한빛개발자재단",
+        "address": "서울 중구 (예시 주소)",
+        "color": "#3182F6"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-pangyo-ai",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2026-01-01T01:00:00.000Z",
+      "sourceUpdatedAt": "2026-01-01T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "datetime",
+        "at": "2026-01-01T01:00:00.000Z"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-06T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-20",
+        "end": "2026-01-21"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "판교 데모홀",
+        "address": "경기 성남시 분당구 (예시 주소)",
+        "district": "성남 판교",
+        "coordinates": {
+          "lat": 37.4022,
+          "lng": 127.1087
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": {
+        "min": 2,
+        "max": 4
+      },
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 5000000,
+        "note": "대상 1팀 기준 상금"
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "2~4인 팀",
+          "evidence": "참가 단위: 2인 이상 4인 이하의 팀",
+          "rule": {
+            "type": "teamSize",
+            "min": 2,
+            "max": 4
+          },
+          "origin": "source",
+          "id": "hk-pangyo-ai-c1"
+        },
+        {
+          "kind": "required",
+          "text": "만 19세 이상",
+          "evidence": "만 19세 이상 누구나 참가 가능",
+          "origin": "source",
+          "id": "hk-pangyo-ai-c2"
+        },
+        {
+          "kind": "preferred",
+          "text": "AI 서비스 기획 경험",
+          "evidence": "생성형 AI를 활용한 서비스 기획·개발 경험이 있는 팀 우대",
+          "origin": "ai-demo",
+          "id": "hk-pangyo-ai-c3"
+        }
+      ],
+      "requiredDocuments": [
+        "팀 구성표",
+        "서비스 아이디어 1장 요약"
+      ],
+      "checkPoints": [
+        "무박 2일 진행",
+        "노트북 지참"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "hk-seongsu-climate",
+      "title": "기후테크 아이디어 해커톤",
+      "organizer": {
+        "name": "푸른도시연구소",
+        "address": "서울 성동구 (예시 주소)",
+        "color": "#0F9D58"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-seongsu-climate",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-26T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-30T06:20:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-26"
+      },
+      "applicationDeadline": {
+        "type": "date",
+        "date": "2026-01-03"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-13",
+        "end": "2026-01-14"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "성수 실험공간 3층",
+        "address": "서울 성동구 (예시 주소)",
+        "district": "서울 성동",
+        "coordinates": {
+          "lat": 37.5446,
+          "lng": 127.0557
+        }
+      },
+      "eligibilityRegions": [
+        "서울",
+        "경기"
+      ],
+      "teamSize": {
+        "min": 3,
+        "max": 5
+      },
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "text",
+        "text": "우수팀 실증 공간 3개월 제공"
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "서울·경기 거주 또는 재학",
+          "evidence": "서울특별시 또는 경기도에 거주하거나 재학 중인 자",
+          "rule": {
+            "type": "region",
+            "regions": [
+              "서울",
+              "경기"
+            ]
+          },
+          "origin": "ai-demo",
+          "id": "hk-seongsu-climate-c1"
+        },
+        {
+          "kind": "required",
+          "text": "3~5인 팀",
+          "evidence": "팀은 3명 이상 5명 이하로 구성",
+          "rule": {
+            "type": "teamSize",
+            "min": 3,
+            "max": 5
+          },
+          "origin": "source",
+          "id": "hk-seongsu-climate-c2"
+        },
+        {
+          "kind": "preferred",
+          "text": "데이터 분석 역량",
+          "evidence": "환경 데이터 분석 경험자 포함 팀 가산점",
+          "origin": "ai-demo",
+          "id": "hk-seongsu-climate-c3"
+        }
+      ],
+      "requiredDocuments": [
+        "참가 신청서",
+        "개인정보 수집 동의서"
+      ],
+      "checkPoints": [
+        "마감 시각 미공지 — 원문 확인",
+        "1박 2일 숙박 제공 여부 확인"
+      ],
+      "status": "active",
+      "contentVersion": 2,
+      "revisions": [
+        {
+          "version": 2,
+          "changedAt": "2025-12-30T06:20:00.000Z",
+          "kind": "venue",
+          "summary": "행사 장소가 변경되었습니다.",
+          "before": "을지로 메이커스 공간",
+          "after": "성수 실험공간 3층",
+          "id": "hk-seongsu-climate-r1"
+        }
+      ]
+    },
+    {
+      "id": "hk-online-oss",
+      "title": "오픈소스 기여 챌린지 가을 시즌",
+      "organizer": {
+        "name": "열린코드협회",
+        "address": null,
+        "color": "#6B7684"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-online-oss",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-29T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-29T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-29"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-10T14:59:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-15",
+        "end": "2026-02-14"
+      },
+      "participationMode": "online",
+      "venue": {
+        "status": "online",
+        "platform": "깃허브·디스코드"
+      },
+      "eligibilityRegions": [],
+      "teamSize": {
+        "min": 1,
+        "max": 1,
+        "note": "개인 참가"
+      },
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "text",
+        "text": "완주자 기념품"
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "개인 참가",
+          "evidence": "참가는 개인 단위로만 가능합니다",
+          "rule": {
+            "type": "teamSize",
+            "max": 1
+          },
+          "origin": "source",
+          "id": "hk-online-oss-c1"
+        }
+      ],
+      "requiredDocuments": [
+        "깃허브 계정"
+      ],
+      "checkPoints": [
+        "한 달간 주 2회 이상 기여"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "hk-gwanggyo-mobility",
+      "title": "모빌리티 데이터 해커톤",
+      "organizer": {
+        "name": "경기모빌리티센터(예시)",
+        "address": "경기 수원시 (예시 주소)",
+        "color": "#F59E0B"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-gwanggyo-mobility",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-22T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-22T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-22"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2025-12-31T08:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-07",
+        "end": "2026-01-08"
+      },
+      "participationMode": "hybrid",
+      "venue": {
+        "status": "confirmed",
+        "name": "광교 테크 라운지",
+        "address": "경기 수원시 영통구 (예시 주소)",
+        "district": "수원 광교",
+        "coordinates": {
+          "lat": 37.2885,
+          "lng": 127.0512
+        }
+      },
+      "eligibilityRegions": [
+        "경기"
+      ],
+      "teamSize": {
+        "min": 2,
+        "max": 4
+      },
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 3000000
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "경기도 소재 대학 재학생 또는 경기도민",
+          "evidence": "경기도 소재 대학 재학생 또는 경기도 거주자",
+          "rule": {
+            "type": "region",
+            "regions": [
+              "경기"
+            ]
+          },
+          "origin": "ai-demo",
+          "id": "hk-gwanggyo-mobility-c1"
+        },
+        {
+          "kind": "required",
+          "text": "2~4인 팀",
+          "evidence": "팀 구성 2~4인",
+          "rule": {
+            "type": "teamSize",
+            "min": 2,
+            "max": 4
+          },
+          "origin": "source",
+          "id": "hk-gwanggyo-mobility-c2"
+        }
+      ],
+      "requiredDocuments": [
+        "재학증명서 또는 주민등록초본"
+      ],
+      "checkPoints": [
+        "본선은 오프라인, 예선은 온라인"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "hk-sangam-media",
+      "title": "미디어 접근성 해커톤",
+      "organizer": {
+        "name": "모두의화면연구회",
+        "address": "서울 마포구 (예시 주소)",
+        "color": "#8B5CF6"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-sangam-media",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-31T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-31T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2026-01-04"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-18T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-31",
+        "end": "2026-02-01"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "상암 미디어 데모센터",
+        "address": "서울 마포구 (예시 주소)",
+        "district": "서울 마포",
+        "coordinates": {
+          "lat": 37.5793,
+          "lng": 126.8894
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": {
+        "min": 2,
+        "max": 5,
+        "note": "디자이너 1인 이상 포함"
+      },
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "2~5인 팀",
+          "evidence": "2인 이상 5인 이하 팀",
+          "rule": {
+            "type": "teamSize",
+            "min": 2,
+            "max": 5
+          },
+          "origin": "source",
+          "id": "hk-sangam-media-c1"
+        },
+        {
+          "kind": "required",
+          "text": "디자이너 1인 이상 포함",
+          "evidence": "팀에는 디자이너가 1명 이상 포함되어야 합니다",
+          "origin": "ai-demo",
+          "id": "hk-sangam-media-c2"
+        }
+      ],
+      "requiredDocuments": [
+        "팀 소개서"
+      ],
+      "checkPoints": [
+        "시상 내역 미공지"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "hk-pangyo-security",
+      "title": "클라우드 보안 CTF",
+      "organizer": {
+        "name": "한빛개발자재단",
+        "address": "서울 중구 (예시 주소)",
+        "color": "#3182F6"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-pangyo-security",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-28T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-28T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-28"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-05T03:00:00.000Z"
+      },
+      "event": {
+        "type": "datetime",
+        "start": "2026-01-12T00:00:00.000Z",
+        "end": "2026-01-12T12:00:00.000Z"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "판교 데모홀",
+        "address": "경기 성남시 분당구 (예시 주소)",
+        "district": "성남 판교",
+        "coordinates": {
+          "lat": 37.4022,
+          "lng": 127.1087
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": {
+        "min": 1,
+        "max": 3
+      },
+      "cost": {
+        "type": "paid",
+        "amountKrw": 10000
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 2000000
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "1~3인",
+          "evidence": "개인 또는 3인 이하 팀",
+          "rule": {
+            "type": "teamSize",
+            "min": 1,
+            "max": 3
+          },
+          "origin": "source",
+          "id": "hk-pangyo-security-c1"
+        }
+      ],
+      "requiredDocuments": [
+        "참가비 입금 확인"
+      ],
+      "checkPoints": [
+        "참가비 1만원 · 노쇼 시 환불 불가"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "hk-tbd-fintech",
+      "title": "핀테크 API 해커톤 (장소 추후 공지)",
+      "organizer": {
+        "name": "바른금융기술포럼",
+        "address": "서울 영등포구 (예시 주소)",
+        "color": "#EF4444"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-tbd-fintech",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-30T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-30T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-30"
+      },
+      "applicationDeadline": {
+        "type": "date",
+        "date": "2026-01-16"
+      },
+      "event": {
+        "type": "tbd"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "tbd",
+        "note": "서울 시내 예정"
+      },
+      "eligibilityRegions": [],
+      "teamSize": {
+        "min": 2,
+        "max": 4
+      },
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 10000000,
+        "note": "총상금"
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "2~4인 팀",
+          "evidence": "팀 구성 2~4인",
+          "rule": {
+            "type": "teamSize",
+            "min": 2,
+            "max": 4
+          },
+          "origin": "source",
+          "id": "hk-tbd-fintech-c1"
+        },
+        {
+          "kind": "required",
+          "text": "재직자 1인 이상 포함 시 별도 심사",
+          "evidence": "현직 금융권 재직자가 포함된 팀은 별도 기준으로 심사",
+          "origin": "ai-demo",
+          "id": "hk-tbd-fintech-c2"
+        }
+      ],
+      "requiredDocuments": [
+        "참가 신청서"
+      ],
+      "checkPoints": [
+        "행사 일정·장소 미정"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "hk-yeouido-cancel",
+      "title": "블록체인 빌더 해커톤",
+      "organizer": {
+        "name": "체인랩스(예시)",
+        "address": "서울 영등포구 (예시 주소)",
+        "color": "#111827"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-yeouido-cancel",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-20T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-31T02:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-20"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-04T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-10",
+        "end": "2026-01-11"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "여의도 컨퍼런스룸 7",
+        "address": "서울 영등포구 (예시 주소)",
+        "district": "서울 영등포",
+        "coordinates": {
+          "lat": 37.5218,
+          "lng": 126.9243
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": {
+        "min": 2,
+        "max": 4
+      },
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "2~4인 팀",
+          "evidence": "팀 구성 2~4인",
+          "rule": {
+            "type": "teamSize",
+            "min": 2,
+            "max": 4
+          },
+          "origin": "source",
+          "id": "hk-yeouido-cancel-c1"
+        }
+      ],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "주최 측 사정으로 취소"
+      ],
+      "status": "cancelled",
+      "contentVersion": 2,
+      "revisions": [
+        {
+          "version": 2,
+          "changedAt": "2025-12-31T02:00:00.000Z",
+          "kind": "cancel",
+          "summary": "주최 측 사정으로 행사가 취소되었습니다.",
+          "before": "모집 중",
+          "after": "취소",
+          "id": "hk-yeouido-cancel-r1"
+        }
+      ]
+    },
+    {
+      "id": "hk-hongdae-game",
+      "title": "48시간 인디게임 잼",
+      "organizer": {
+        "name": "픽셀공방",
+        "address": "서울 마포구 (예시 주소)",
+        "color": "#EC4899"
+      },
+      "category": "hackathon",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/hk-hongdae-game",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2026-01-01T01:00:00.000Z",
+      "sourceUpdatedAt": "2026-01-01T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2026-01-01"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-02T14:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-09",
+        "end": "2026-01-11"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "홍대 코워킹 예시점",
+        "address": "서울 마포구 (예시 주소)",
+        "district": "서울 마포",
+        "coordinates": {
+          "lat": 37.5565,
+          "lng": 126.9226
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": {
+        "min": 1,
+        "max": 4
+      },
+      "cost": {
+        "type": "paid",
+        "amountKrw": 30000
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "1~4인",
+          "evidence": "개인 또는 4인 이하 팀",
+          "rule": {
+            "type": "teamSize",
+            "min": 1,
+            "max": 4
+          },
+          "origin": "source",
+          "id": "hk-hongdae-game-c1"
+        }
+      ],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "참가비에 식사 포함",
+        "주제는 현장 공개"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "su-seoul-prestartup",
+      "title": "예비창업자 사업화 지원 (2차)",
+      "organizer": {
+        "name": "서울청년창업센터(예시)",
+        "address": "서울 중구 (예시 주소)",
+        "color": "#3182F6"
+      },
+      "category": "startup",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/su-seoul-prestartup",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-25T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-29T01:30:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "datetime",
+        "at": "2025-12-25T00:00:00.000Z"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-07T07:00:00.000Z"
+      },
+      "event": {
+        "type": "tbd"
+      },
+      "participationMode": "online",
+      "venue": {
+        "status": "online",
+        "platform": "온라인 접수·서면 평가"
+      },
+      "eligibilityRegions": [
+        "서울"
+      ],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 50000000,
+        "note": "평가에 따라 차등"
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "공고일 기준 사업자 등록 이력 없음",
+          "evidence": "공고일 현재 사업자 등록(개인·법인)을 하지 않은 자",
+          "rule": {
+            "type": "startupYearsMax",
+            "years": 0
+          },
+          "origin": "ai-demo",
+          "id": "su-seoul-prestartup-c1"
+        },
+        {
+          "kind": "required",
+          "text": "서울 소재 창업 예정",
+          "evidence": "서울특별시에 사업장을 둘 예정인 자",
+          "rule": {
+            "type": "region",
+            "regions": [
+              "서울"
+            ]
+          },
+          "origin": "ai-demo",
+          "id": "su-seoul-prestartup-c2"
+        },
+        {
+          "kind": "preferred",
+          "text": "만 39세 이하",
+          "evidence": "만 39세 이하 청년 우대",
+          "origin": "ai-demo",
+          "id": "su-seoul-prestartup-c3"
+        }
+      ],
+      "requiredDocuments": [
+        "사업계획서",
+        "신분증 사본",
+        "중복 지원 확인서"
+      ],
+      "checkPoints": [
+        "타 정부지원사업과 중복 수혜 불가",
+        "서면 평가 후 발표 평가"
+      ],
+      "status": "active",
+      "contentVersion": 2,
+      "revisions": [
+        {
+          "version": 2,
+          "changedAt": "2025-12-29T01:30:00.000Z",
+          "kind": "conditions",
+          "summary": "필수 서류가 추가되었습니다.",
+          "before": "사업계획서, 신분증 사본",
+          "after": "사업계획서, 신분증 사본, 중복 지원 확인서",
+          "id": "su-seoul-prestartup-r1"
+        }
+      ]
+    },
+    {
+      "id": "su-gyeonggi-early",
+      "title": "초기창업기업 스케일업 프로그램",
+      "organizer": {
+        "name": "경기창업진흥원(예시)",
+        "address": "경기 수원시 (예시 주소)",
+        "color": "#F59E0B"
+      },
+      "category": "startup",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/su-gyeonggi-early",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-18T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-18T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-18"
+      },
+      "applicationDeadline": {
+        "type": "untilBudget",
+        "note": "선착순 접수, 예산 소진 시 조기 마감"
+      },
+      "event": {
+        "type": "ongoing"
+      },
+      "participationMode": "hybrid",
+      "venue": {
+        "status": "confirmed",
+        "name": "동탄 창업 허브",
+        "address": "경기 화성시 (예시 주소)",
+        "district": "화성 동탄",
+        "coordinates": {
+          "lat": 37.2006,
+          "lng": 127.0731
+        }
+      },
+      "eligibilityRegions": [
+        "경기"
+      ],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 30000000
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "창업 3년 이내",
+          "evidence": "창업일로부터 3년이 지나지 않은 기업",
+          "rule": {
+            "type": "startupYearsMax",
+            "years": 3
+          },
+          "origin": "source",
+          "id": "su-gyeonggi-early-c1"
+        },
+        {
+          "kind": "required",
+          "text": "경기도 소재 기업",
+          "evidence": "본점 소재지가 경기도인 기업",
+          "rule": {
+            "type": "region",
+            "regions": [
+              "경기"
+            ]
+          },
+          "origin": "source",
+          "id": "su-gyeonggi-early-c2"
+        }
+      ],
+      "requiredDocuments": [
+        "사업자등록증",
+        "재무제표",
+        "사업계획서"
+      ],
+      "checkPoints": [
+        "예산 소진 시 조기 마감",
+        "고정 마감일 없음"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "su-pangyo-accel",
+      "title": "딥테크 액셀러레이팅 배치 7기",
+      "organizer": {
+        "name": "판교벤처파트너스(예시)",
+        "address": "경기 성남시 (예시 주소)",
+        "color": "#0EA5E9"
+      },
+      "category": "startup",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/su-pangyo-accel",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-27T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-27T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-27"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-13T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-02-10",
+        "end": "2026-05-11"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "판교 데모홀",
+        "address": "경기 성남시 분당구 (예시 주소)",
+        "district": "성남 판교",
+        "coordinates": {
+          "lat": 37.4022,
+          "lng": 127.1087
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "text",
+        "text": "투자 검토 및 입주 공간"
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "법인 설립 7년 이내",
+          "evidence": "법인 설립 7년 이내 기술 기반 기업",
+          "rule": {
+            "type": "startupYearsMax",
+            "years": 7
+          },
+          "origin": "ai-demo",
+          "id": "su-pangyo-accel-c1"
+        },
+        {
+          "kind": "required",
+          "text": "기술 기반 제품 보유",
+          "evidence": "자체 기술을 보유한 제품 또는 시제품이 있는 기업",
+          "origin": "ai-demo",
+          "id": "su-pangyo-accel-c2"
+        }
+      ],
+      "requiredDocuments": [
+        "IR 자료",
+        "법인등기부등본"
+      ],
+      "checkPoints": [
+        "지분 투자 조건 원문 확인 필요"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "su-rolling-mentoring",
+      "title": "1:1 창업 멘토링 상시 신청",
+      "organizer": {
+        "name": "서울청년창업센터(예시)",
+        "address": "서울 중구 (예시 주소)",
+        "color": "#3182F6"
+      },
+      "category": "startup",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/su-rolling-mentoring",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-11-22T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-11-22T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-11-22"
+      },
+      "applicationDeadline": {
+        "type": "rolling"
+      },
+      "event": {
+        "type": "ongoing"
+      },
+      "participationMode": "hybrid",
+      "venue": {
+        "status": "confirmed",
+        "name": "을지로 메이커스 공간",
+        "address": "서울 중구 (예시 주소)",
+        "district": "서울 중구",
+        "coordinates": {
+          "lat": 37.5661,
+          "lng": 126.9912
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "none"
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "예비·초기 창업자",
+          "evidence": "예비창업자 또는 창업 5년 이내 기업 대표",
+          "rule": {
+            "type": "startupYearsMax",
+            "years": 5
+          },
+          "origin": "ai-demo",
+          "id": "su-rolling-mentoring-c1"
+        }
+      ],
+      "requiredDocuments": [
+        "멘토링 신청서"
+      ],
+      "checkPoints": [
+        "상시 모집 · 월 1회 배정"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "su-munjeong-social",
+      "title": "소셜벤처 성장 지원사업",
+      "organizer": {
+        "name": "함께성장재단",
+        "address": "서울 송파구 (예시 주소)",
+        "color": "#10B981"
+      },
+      "category": "startup",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/su-munjeong-social",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-12T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-12T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-12"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2025-12-29T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-21",
+        "end": "2026-03-22"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "문정 벤처 홀",
+        "address": "서울 송파구 (예시 주소)",
+        "district": "서울 송파",
+        "coordinates": {
+          "lat": 37.4857,
+          "lng": 127.1224
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 20000000
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "사회적 가치 지표 보유",
+          "evidence": "사회적 가치를 측정할 수 있는 지표를 갖춘 기업",
+          "origin": "ai-demo",
+          "id": "su-munjeong-social-c1"
+        }
+      ],
+      "requiredDocuments": [
+        "사업계획서",
+        "사회적 가치 측정표"
+      ],
+      "checkPoints": [],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "su-gwanak-student",
+      "title": "대학생 창업동아리 활동비 지원",
+      "organizer": {
+        "name": "관악창업네트워크(예시)",
+        "address": "서울 관악구 (예시 주소)",
+        "color": "#6366F1"
+      },
+      "category": "startup",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/su-gwanak-student",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-31T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-31T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-31"
+      },
+      "applicationDeadline": {
+        "type": "date",
+        "date": "2026-01-07"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-21",
+        "end": "2026-04-21"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "관악 청년 창업방",
+        "address": "서울 관악구 (예시 주소)",
+        "district": "서울 관악",
+        "coordinates": {
+          "lat": 37.4813,
+          "lng": 126.9526
+        }
+      },
+      "eligibilityRegions": [
+        "서울"
+      ],
+      "teamSize": {
+        "min": 3,
+        "note": "동아리 단위"
+      },
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 3000000
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "대학(원)생",
+          "evidence": "신청일 현재 대학 또는 대학원 재학생",
+          "rule": {
+            "type": "student"
+          },
+          "origin": "source",
+          "id": "su-gwanak-student-c1"
+        },
+        {
+          "kind": "required",
+          "text": "서울 소재 대학",
+          "evidence": "서울 소재 대학의 창업동아리",
+          "rule": {
+            "type": "region",
+            "regions": [
+              "서울"
+            ]
+          },
+          "origin": "ai-demo",
+          "id": "su-gwanak-student-c2"
+        }
+      ],
+      "requiredDocuments": [
+        "재학증명서",
+        "동아리 활동계획서"
+      ],
+      "checkPoints": [
+        "마감 시각 미공지"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "su-hanam-local",
+      "title": "로컬 크리에이터 창업 지원",
+      "organizer": {
+        "name": "하남지역혁신센터(예시)",
+        "address": "경기 하남시 (예시 주소)",
+        "color": "#84CC16"
+      },
+      "category": "startup",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/su-hanam-local",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2026-01-01T01:00:00.000Z",
+      "sourceUpdatedAt": "2026-01-01T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2026-01-08"
+      },
+      "applicationDeadline": {
+        "type": "date",
+        "date": "2026-01-29"
+      },
+      "event": {
+        "type": "tbd"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "미사 커뮤니티 랩",
+        "address": "경기 하남시 (예시 주소)",
+        "district": "경기 하남",
+        "coordinates": {
+          "lat": 37.5627,
+          "lng": 127.1926
+        }
+      },
+      "eligibilityRegions": [
+        "경기"
+      ],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "amount",
+        "maxKrw": 15000000
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "하남 지역 기반 사업",
+          "evidence": "하남시에 사업장을 두었거나 둘 예정인 자",
+          "rule": {
+            "type": "region",
+            "regions": [
+              "경기"
+            ]
+          },
+          "origin": "ai-demo",
+          "id": "su-hanam-local-c1"
+        }
+      ],
+      "requiredDocuments": [
+        "사업계획서"
+      ],
+      "checkPoints": [
+        "접수 시작 전"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "su-online-global",
+      "title": "글로벌 진출 온라인 부트캠프 (창업기업)",
+      "organizer": {
+        "name": "넥스트스테이지(예시)",
+        "address": null,
+        "color": "#14B8A6"
+      },
+      "category": "startup",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/su-online-global",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-23T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-23T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-23"
+      },
+      "applicationDeadline": {
+        "type": "tbd"
+      },
+      "event": {
+        "type": "tbd"
+      },
+      "participationMode": "online",
+      "venue": {
+        "status": "online",
+        "platform": "화상 강의"
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": null,
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "창업 7년 이내",
+          "evidence": "창업 7년 이내 기업",
+          "rule": {
+            "type": "startupYearsMax",
+            "years": 7
+          },
+          "origin": "ai-demo",
+          "id": "su-online-global-c1"
+        }
+      ],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "마감일·참가비 미공지"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ed-guro-backend",
+      "title": "백엔드 실무 심화 과정 (야간)",
+      "organizer": {
+        "name": "코드온아카데미(예시)",
+        "address": "서울 구로구 (예시 주소)",
+        "color": "#3182F6"
+      },
+      "category": "education",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ed-guro-backend",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-24T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-24T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-24"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-04T14:59:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-15",
+        "end": "2026-03-12"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "구로 디지털 교육장",
+        "address": "서울 구로구 (예시 주소)",
+        "district": "서울 구로",
+        "coordinates": {
+          "lat": 37.4851,
+          "lng": 126.9013
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": {
+        "min": 1,
+        "max": 1,
+        "note": "개인"
+      },
+      "cost": {
+        "type": "paid",
+        "amountKrw": 200000
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "실무 경력 1년 이상",
+          "evidence": "백엔드 실무 경력 1년 이상인 재직자",
+          "rule": {
+            "type": "careerMinYears",
+            "years": 1
+          },
+          "origin": "ai-demo",
+          "id": "ed-guro-backend-c1"
+        },
+        {
+          "kind": "preferred",
+          "text": "Java 또는 Kotlin 사용 경험",
+          "evidence": "JVM 언어 사용 경험자 우대",
+          "origin": "ai-demo",
+          "id": "ed-guro-backend-c2"
+        }
+      ],
+      "requiredDocuments": [
+        "간단한 이력 요약(1쪽)"
+      ],
+      "checkPoints": [
+        "주 2회 저녁 7시"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ed-yangjae-ai",
+      "title": "AI 엔지니어 전환 과정",
+      "organizer": {
+        "name": "서초디지털배움터(예시)",
+        "address": "서울 서초구 (예시 주소)",
+        "color": "#0EA5E9"
+      },
+      "category": "education",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ed-yangjae-ai",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-30T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-30T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-30"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-09T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-22",
+        "end": "2026-04-22"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "양재 AI 실습실",
+        "address": "서울 서초구 (예시 주소)",
+        "district": "서울 서초",
+        "coordinates": {
+          "lat": 37.4842,
+          "lng": 127.0348
+        }
+      },
+      "eligibilityRegions": [
+        "서울"
+      ],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "text",
+        "text": "훈련장려금 지급(조건부)"
+      },
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "경력 3년 이하 개발자 또는 취업 준비생",
+          "evidence": "개발 경력 3년 이하 또는 미취업자",
+          "rule": {
+            "type": "careerMaxYears",
+            "years": 3
+          },
+          "origin": "ai-demo",
+          "id": "ed-yangjae-ai-c1"
+        },
+        {
+          "kind": "required",
+          "text": "서울 거주",
+          "evidence": "서울시 거주자",
+          "rule": {
+            "type": "region",
+            "regions": [
+              "서울"
+            ]
+          },
+          "origin": "ai-demo",
+          "id": "ed-yangjae-ai-c2"
+        }
+      ],
+      "requiredDocuments": [
+        "수강 신청서",
+        "주민등록초본"
+      ],
+      "checkPoints": [
+        "장려금 지급 조건 원문 확인"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ed-online-frontend",
+      "title": "프론트엔드 접근성 온라인 클래스",
+      "organizer": {
+        "name": "모두의화면연구회",
+        "address": "서울 마포구 (예시 주소)",
+        "color": "#8B5CF6"
+      },
+      "category": "education",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ed-online-frontend",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-02T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-02T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-02"
+      },
+      "applicationDeadline": {
+        "type": "rolling"
+      },
+      "event": {
+        "type": "ongoing"
+      },
+      "participationMode": "online",
+      "venue": {
+        "status": "online",
+        "platform": "녹화 강의"
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": {
+        "type": "none"
+      },
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "상시 수강"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ed-pyeongchon-cloud",
+      "title": "클라우드 자격 대비 집중반",
+      "organizer": {
+        "name": "안양IT교육원(예시)",
+        "address": "경기 안양시 (예시 주소)",
+        "color": "#F97316"
+      },
+      "category": "education",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ed-pyeongchon-cloud",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-28T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-28T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-28"
+      },
+      "applicationDeadline": {
+        "type": "date",
+        "date": "2026-01-05"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-12",
+        "end": "2026-02-09"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "평촌 스마트 교육관",
+        "address": "경기 안양시 동안구 (예시 주소)",
+        "district": "안양 평촌",
+        "coordinates": {
+          "lat": 37.3898,
+          "lng": 126.9508
+        }
+      },
+      "eligibilityRegions": [
+        "경기"
+      ],
+      "teamSize": null,
+      "cost": {
+        "type": "paid",
+        "amountKrw": 50000
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "경기도 거주자",
+          "evidence": "경기도 거주 구직자 또는 재직자",
+          "rule": {
+            "type": "region",
+            "regions": [
+              "경기"
+            ]
+          },
+          "origin": "ai-demo",
+          "id": "ed-pyeongchon-cloud-c1"
+        }
+      ],
+      "requiredDocuments": [
+        "수강 신청서"
+      ],
+      "checkPoints": [
+        "마감 시각 미공지",
+        "출석률 80% 미만 시 수료 불가"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ed-magok-data",
+      "title": "데이터 엔지니어링 부트캠프",
+      "organizer": {
+        "name": "마곡테크스쿨(예시)",
+        "address": "서울 강서구 (예시 주소)",
+        "color": "#22C55E"
+      },
+      "category": "education",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ed-magok-data",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-21T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-21T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-21"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2025-12-30T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-06",
+        "end": "2026-05-06"
+      },
+      "participationMode": "hybrid",
+      "venue": {
+        "status": "confirmed",
+        "name": "마곡 연구동 세미나실",
+        "address": "서울 강서구 (예시 주소)",
+        "district": "서울 강서",
+        "coordinates": {
+          "lat": 37.5601,
+          "lng": 126.8256
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "미취업자",
+          "evidence": "신청일 기준 미취업 상태인 자",
+          "origin": "ai-demo",
+          "id": "ed-magok-data-c1"
+        }
+      ],
+      "requiredDocuments": [
+        "구직 등록 확인서"
+      ],
+      "checkPoints": [],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ed-gwacheon-robot",
+      "title": "로봇 소프트웨어 입문 워크숍",
+      "organizer": {
+        "name": "과천과학교육재단(예시)",
+        "address": "경기 과천시 (예시 주소)",
+        "color": "#64748B"
+      },
+      "category": "education",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ed-gwacheon-robot",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-29T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-29T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-29"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-11T08:00:00.000Z"
+      },
+      "event": {
+        "type": "datetime",
+        "start": "2026-01-19T01:00:00.000Z",
+        "end": "2026-01-19T08:00:00.000Z"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "과천 과학 세미나홀",
+        "address": "경기 과천시 (예시 주소)",
+        "district": "경기 과천",
+        "coordinates": {
+          "lat": 37.4293,
+          "lng": 126.9877
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "paid",
+        "amountKrw": 15000
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "재료비 별도"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ed-bucheon-content",
+      "title": "인터랙티브 콘텐츠 개발 과정",
+      "organizer": {
+        "name": "부천콘텐츠랩(예시)",
+        "address": "경기 부천시 (예시 주소)",
+        "color": "#E11D48"
+      },
+      "category": "education",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ed-bucheon-content",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2026-01-01T01:00:00.000Z",
+      "sourceUpdatedAt": "2026-01-01T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2026-01-01"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-14T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-26",
+        "end": "2026-02-25"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "부천 콘텐츠 실습실",
+        "address": "경기 부천시 (예시 주소)",
+        "district": "경기 부천",
+        "coordinates": {
+          "lat": 37.5036,
+          "lng": 126.7661
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "만 34세 이하",
+          "evidence": "만 34세 이하 청년",
+          "origin": "source",
+          "id": "ed-bucheon-content-c1"
+        }
+      ],
+      "requiredDocuments": [
+        "포트폴리오(선택)"
+      ],
+      "checkPoints": [],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ed-tbd-security",
+      "title": "웹 보안 실습 과정 (장소 협의 중)",
+      "organizer": {
+        "name": "시큐어코딩포럼(예시)",
+        "address": "서울 송파구 (예시 주소)",
+        "color": "#DC2626"
+      },
+      "category": "education",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ed-tbd-security",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-27T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-27T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-27"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-17T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-02-05",
+        "end": "2026-02-06"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "tbd",
+        "note": "경기 남부 예정"
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "required",
+          "text": "웹 개발 경력 2년 이상",
+          "evidence": "웹 서비스 개발 경력 2년 이상",
+          "rule": {
+            "type": "careerMinYears",
+            "years": 2
+          },
+          "origin": "ai-demo",
+          "id": "ed-tbd-security-c1"
+        }
+      ],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "장소 미정"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ev-seongsu-meetup",
+      "title": "프론트엔드 성능 밋업 #12",
+      "organizer": {
+        "name": "프론트모임",
+        "address": null,
+        "color": "#3182F6"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-seongsu-meetup",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-30T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-30T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-30"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-05T03:00:00.000Z"
+      },
+      "event": {
+        "type": "datetime",
+        "start": "2026-01-07T10:00:00.000Z",
+        "end": "2026-01-07T12:30:00.000Z"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "성수 실험공간 3층",
+        "address": "서울 성동구 (예시 주소)",
+        "district": "서울 성동",
+        "coordinates": {
+          "lat": 37.5446,
+          "lng": 127.0557
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "선착순 80명"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ev-ilsan-conf",
+      "title": "개발자 컨퍼런스 2026 가을",
+      "organizer": {
+        "name": "데브서밋조직위(예시)",
+        "address": "서울 강남구 (예시 주소)",
+        "color": "#0F172A"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-ilsan-conf",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-17T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-26T00:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-17"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-10T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-17",
+        "end": "2026-01-18"
+      },
+      "participationMode": "hybrid",
+      "venue": {
+        "status": "confirmed",
+        "name": "일산 전시장 2홀",
+        "address": "경기 고양시 일산서구 (예시 주소)",
+        "district": "고양 일산",
+        "coordinates": {
+          "lat": 37.6689,
+          "lng": 126.7452
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "paid",
+        "amountKrw": 120000
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "온라인 생중계 별도 신청"
+      ],
+      "status": "active",
+      "contentVersion": 2,
+      "revisions": [
+        {
+          "version": 2,
+          "changedAt": "2025-12-26T00:00:00.000Z",
+          "kind": "deadline",
+          "summary": "얼리버드 마감이 연장되었습니다.",
+          "before": "D-3 마감",
+          "after": "D+9 마감",
+          "id": "ev-ilsan-conf-r1"
+        }
+      ]
+    },
+    {
+      "id": "ev-gangnam-ai-night",
+      "title": "LLM 애플리케이션 실무 사례 나이트",
+      "organizer": {
+        "name": "에이아이빌더스",
+        "address": "서울 강남구 (예시 주소)",
+        "color": "#7C3AED"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-gangnam-ai-night",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-31T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-31T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-31"
+      },
+      "applicationDeadline": {
+        "type": "date",
+        "date": "2026-01-06"
+      },
+      "event": {
+        "type": "datetime",
+        "start": "2026-01-08T10:30:00.000Z",
+        "end": "2026-01-08T13:00:00.000Z"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "역삼 라운지 B",
+        "address": "서울 강남구 (예시 주소)",
+        "district": "서울 강남",
+        "coordinates": {
+          "lat": 37.5006,
+          "lng": 127.0366
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "paid",
+        "amountKrw": 20000
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "마감 시각 미공지"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ev-online-devrel",
+      "title": "데브렐 커리어 온라인 토크",
+      "organizer": {
+        "name": "커리어피치(예시)",
+        "address": null,
+        "color": "#F59E0B"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-online-devrel",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2026-01-01T01:00:00.000Z",
+      "sourceUpdatedAt": "2026-01-01T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2026-01-01"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-03T09:00:00.000Z"
+      },
+      "event": {
+        "type": "datetime",
+        "start": "2026-01-04T11:00:00.000Z",
+        "end": "2026-01-04T12:30:00.000Z"
+      },
+      "participationMode": "online",
+      "venue": {
+        "status": "online",
+        "platform": "유튜브 라이브"
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ev-jongno-oss-day",
+      "title": "오픈소스 스프린트 데이",
+      "organizer": {
+        "name": "열린코드협회",
+        "address": null,
+        "color": "#6B7684"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-jongno-oss-day",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-23T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-23T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-23"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2025-12-28T09:00:00.000Z"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2025-12-31",
+        "end": "2025-12-31"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "종로 오픈 스튜디오",
+        "address": "서울 종로구 (예시 주소)",
+        "district": "서울 종로",
+        "coordinates": {
+          "lat": 37.5716,
+          "lng": 126.9769
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ev-pangyo-mobile",
+      "title": "모바일 개발자 데이 in 판교",
+      "organizer": {
+        "name": "앱메이커스(예시)",
+        "address": "경기 성남시 (예시 주소)",
+        "color": "#06B6D4"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-pangyo-mobile",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-29T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-29T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-29"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-12T09:00:00.000Z"
+      },
+      "event": {
+        "type": "datetime",
+        "start": "2026-01-16T04:00:00.000Z",
+        "end": "2026-01-16T09:00:00.000Z"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "판교 데모홀",
+        "address": "경기 성남시 분당구 (예시 주소)",
+        "district": "성남 판교",
+        "coordinates": {
+          "lat": 37.4022,
+          "lng": 127.1087
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "사전 질문 접수"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ev-euljiro-hardware",
+      "title": "하드웨어 스타트업 데모데이",
+      "organizer": {
+        "name": "메이커스얼라이언스(예시)",
+        "address": "서울 중구 (예시 주소)",
+        "color": "#A16207"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-euljiro-hardware",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-26T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-26T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-26"
+      },
+      "applicationDeadline": {
+        "type": "tbd"
+      },
+      "event": {
+        "type": "dates",
+        "start": "2026-01-25",
+        "end": "2026-01-25"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "을지로 메이커스 공간",
+        "address": "서울 중구 (예시 주소)",
+        "district": "서울 중구",
+        "coordinates": {
+          "lat": 37.5661,
+          "lng": 126.9912
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "관람 신청 마감일 미공지"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ev-seongsu-design",
+      "title": "디자인 시스템 실무 워크숍",
+      "organizer": {
+        "name": "프론트모임",
+        "address": null,
+        "color": "#3182F6"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-seongsu-design",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-31T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-31T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2026-01-03"
+      },
+      "applicationDeadline": {
+        "type": "datetime",
+        "at": "2026-01-10T03:00:00.000Z"
+      },
+      "event": {
+        "type": "datetime",
+        "start": "2026-01-14T05:00:00.000Z",
+        "end": "2026-01-14T09:00:00.000Z"
+      },
+      "participationMode": "offline",
+      "venue": {
+        "status": "confirmed",
+        "name": "성수 실험공간 3층",
+        "address": "서울 성동구 (예시 주소)",
+        "district": "서울 성동",
+        "coordinates": {
+          "lat": 37.5446,
+          "lng": 127.0557
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "paid",
+        "amountKrw": 40000
+      },
+      "supportAmount": null,
+      "conditions": [
+        {
+          "kind": "preferred",
+          "text": "실무 디자이너·프론트엔드 개발자",
+          "evidence": "디자인 시스템을 운영 중인 실무자 우대",
+          "origin": "ai-demo",
+          "id": "ev-seongsu-design-c1"
+        }
+      ],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "접수 시작 전"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    },
+    {
+      "id": "ev-yeouido-fintech",
+      "title": "금융 데이터 개방 세미나",
+      "organizer": {
+        "name": "바른금융기술포럼",
+        "address": "서울 영등포구 (예시 주소)",
+        "color": "#EF4444"
+      },
+      "category": "event",
+      "sourceId": "demo",
+      "sourceUrl": "https://example.com/notices/ev-yeouido-fintech",
+      "sourceName": "데모 공고 게시판",
+      "publishedAt": "2025-12-28T01:00:00.000Z",
+      "sourceUpdatedAt": "2025-12-28T01:00:00.000Z",
+      "lastCheckedAt": "2025-12-31T12:00:00.000Z",
+      "applicationStart": {
+        "type": "date",
+        "date": "2025-12-28"
+      },
+      "applicationDeadline": {
+        "type": "date",
+        "date": "2026-01-02"
+      },
+      "event": {
+        "type": "datetime",
+        "start": "2026-01-03T05:00:00.000Z",
+        "end": "2026-01-03T08:00:00.000Z"
+      },
+      "participationMode": "hybrid",
+      "venue": {
+        "status": "confirmed",
+        "name": "여의도 컨퍼런스룸 7",
+        "address": "서울 영등포구 (예시 주소)",
+        "district": "서울 영등포",
+        "coordinates": {
+          "lat": 37.5218,
+          "lng": 126.9243
+        }
+      },
+      "eligibilityRegions": [],
+      "teamSize": null,
+      "cost": {
+        "type": "free"
+      },
+      "supportAmount": null,
+      "conditions": [],
+      "requiredDocuments": [],
+      "checkPoints": [
+        "마감 시각 미공지"
+      ],
+      "status": "active",
+      "contentVersion": 1,
+      "revisions": []
+    }
+  ]
+}

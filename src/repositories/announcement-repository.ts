@@ -1,26 +1,57 @@
 import "server-only";
+import { connection } from "next/server";
 import { buildDemoAnnouncements } from "@/data/demo-announcements";
 import { seoulDateOf } from "@/domain/time";
 import { announcementSchema, type Announcement } from "@/domain/types";
+import { getRequestNow } from "@/lib/server-clock";
+import { fetchAnnouncements } from "./http-announcements";
+
+export interface AnnouncementSnapshot {
+  announcements: Announcement[];
+  /** 요청 기준 시각. 서버 렌더링과 브라우저가 같은 값을 쓴다 */
+  now: string;
+  source: "demo" | "api";
+}
 
 /**
  * 공고 저장소 경계. 화면은 이 인터페이스만 안다.
- * 실제 DB(PostgreSQL 등)를 붙일 때는 같은 인터페이스로 구현체를 바꾸고,
- * 발견 화면의 필터(`filterAnnouncements`)는 같은 query 스키마로 서버 쿼리로 옮긴다.
+ * - API_BASE_URL이 있으면 백엔드(Spring Boot, backend/)에서 읽고, 기준 시각도 백엔드의 serverTime을 쓴다.
+ * - 없으면 브라우저 데모와 같은 데모 데이터를 쓴다.
  */
 export interface AnnouncementRepository {
-  list(): Promise<Announcement[]>;
+  load(): Promise<AnnouncementSnapshot>;
 }
 
 class DemoAnnouncementRepository implements AnnouncementRepository {
-  constructor(private readonly nowIso: string) {}
-
-  async list(): Promise<Announcement[]> {
+  async load(): Promise<AnnouncementSnapshot> {
+    const now = await getRequestNow();
     // 데모 데이터도 경계에서 스키마 검증을 거친다. 잘못된 데이터가 화면까지 가지 않게 한다.
-    return announcementSchema.array().parse(buildDemoAnnouncements(seoulDateOf(this.nowIso)));
+    const announcements = announcementSchema
+      .array()
+      .parse(buildDemoAnnouncements(seoulDateOf(now)));
+    return { announcements, now, source: "demo" };
   }
 }
 
-export function getAnnouncementRepository(nowIso: string): AnnouncementRepository {
-  return new DemoAnnouncementRepository(nowIso);
+class HttpAnnouncementRepository implements AnnouncementRepository {
+  constructor(private readonly baseUrl: string) {}
+
+  async load(): Promise<AnnouncementSnapshot> {
+    await connection(); // 요청마다 새로 읽는다
+    const { announcements, serverTime, truncated } = await fetchAnnouncements(
+      this.baseUrl,
+    );
+    if (truncated)
+      console.warn(
+        "[announcements] 공고가 상한보다 많아 일부만 받았습니다. 서버 페이지네이션이 필요합니다.",
+      );
+    return { announcements, now: serverTime, source: "api" };
+  }
+}
+
+export function getAnnouncementRepository(): AnnouncementRepository {
+  const baseUrl = process.env.API_BASE_URL?.trim();
+  return baseUrl
+    ? new HttpAnnouncementRepository(baseUrl)
+    : new DemoAnnouncementRepository();
 }

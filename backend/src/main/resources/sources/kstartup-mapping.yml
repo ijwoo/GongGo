@@ -1,0 +1,29 @@
+# K-Startup 사업공고 조회 API 매핑 — 확인 전 초안
+#
+# 이 저장소를 만든 환경에서는 공공데이터포털에 접속할 수 없어 응답을 직접 보지 못했다.
+# 켜기 전에 데이터셋 15125364의 활용가이드 또는 실제 응답 1건으로 아래 값을 확인하고,
+# KStartupNormalizerTest의 픽스처를 실제 응답으로 바꿔 통과시킬 것.
+# 필수 필드(external-id, title, url)가 응답에 없으면 그 수집 실행은 failed로 끝난다.
+gonggo:
+  kstartup:
+    endpoint: https://apis.data.go.kr/B552735/kisedKstartupService01/getAnnouncementInformation01
+    params:
+      returnType: json
+      # 모집 중인 공고만
+      "cond[rcrt_prgs_yn::EQ]": "Y"
+    page-param: page
+    size-param: perPage
+    page-size: 100
+    max-pages: 5
+    items-pointer: /data
+    date-formats: [yyyyMMdd, yyyy-MM-dd, yyyy.MM.dd, "yyyy-MM-dd HH:mm:ss"]
+    fields:
+      external-id: pbanc_sn
+      title: biz_pbanc_nm
+      organizer: pbanc_ntrp_nm
+      url: detl_pg_url
+      start-date: pbanc_rcpt_bgng_dt
+      end-date: pbanc_rcpt_end_dt
+      region: supt_regin
+      target: aply_trgt_ctnt
+      published-at: pbanc_rcpt_bgng_dt

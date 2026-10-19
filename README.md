@@ -3,7 +3,7 @@
 해커톤·창업 지원사업·교육·개발자 행사 공고를 **탐색 → 조건 검토 → 관심 저장 → 내 캘린더 → 알림**까지 한 흐름으로 관리하는 웹앱입니다.
 2인 개발 포트폴리오를 가정해, 기능 수보다 핵심 흐름의 완성도와 상태 관리·접근성·반응형·데이터 설계·오류 처리를 드러내는 데 집중했습니다.
 
-> **모든 공고·기관·장소는 데모용 합성 데이터입니다.** 실제 기관의 공고가 아니며, 원문 링크는 `example.com`을 가리킵니다.
+> 기본 공고 34건은 **데모용 합성 데이터**입니다(원문 링크는 `example.com`). 백엔드에 K-Startup API 키를 넣으면 공공 오픈 API의 실제 공고가 함께 수집됩니다.
 
 ![발견 화면(다크, 2560px)](docs/screenshots/discover-dark-wide.png)
 
@@ -11,12 +11,37 @@
 |---|---|
 | ![발견](docs/screenshots/discover-light.png) | ![지도](docs/screenshots/map-dark.png) |
 
+## 구성
+
+```
+[브라우저] ─► web (Next.js, 저장소 루트) ──서버에서 fetch──► api (Spring Boot, backend/) ─► PostgreSQL
+                │ API_BASE_URL이 없으면 내장 데모 데이터                │
+                └ 개인 데이터: 브라우저 localStorage(1단계)              └ 매일 수집: 공공데이터포털 K-Startup
+```
+
+- **web**은 `API_BASE_URL`이 있으면 백엔드에서 공고를 읽고, 없으면 내장 데모 데이터로 혼자 동작합니다. 두 모드 모두 같은 화면 코드와 같은 E2E를 통과합니다.
+- **api**(`backend/`): Spring Boot 4 · Java 21 · JPA · Flyway · PostgreSQL 17. 공고 조회 API, 수집 파이프라인(원본 보관 → 정규화 → 멱등 저장 → 변경 이력), 스케줄러, 운영자 API.
+- 설계·데이터 모델·API·2~4단계 계획: [`docs/backend-design.md`](docs/backend-design.md)
+
 ## 실행
 
 ```bash
 pnpm install          # postinstall이 MapLibre worker를 public/vendor로 복사
-pnpm dev              # http://localhost:3000
+pnpm dev              # http://localhost:3000 (데모 데이터)
 ```
+
+백엔드까지 함께:
+
+```bash
+# 1) DB
+docker run -d --name gonggo-db -e POSTGRES_DB=gonggo -e POSTGRES_USER=gonggo -e POSTGRES_PASSWORD=gonggo -p 5432:5432 postgres:17-alpine
+# 2) API (처음 뜰 때 데모 공고 34건을 넣는다)
+cd backend && ./gradlew bootRun          # http://localhost:8080/api/announcements
+# 3) web
+API_BASE_URL=http://localhost:8080 pnpm dev
+```
+
+서버 1대 배포(Lightsail 등): `.env`에 `DB_PASSWORD`·`ADMIN_TOKEN`을 채운 뒤 `docker compose up -d --build` (db·api·web, web만 외부 포트).
 
 | 명령 | 설명 |
 |---|---|
@@ -25,8 +50,11 @@ pnpm dev              # http://localhost:3000
 | `pnpm test` | Vitest 단위 테스트 (일부러 `TZ=America/Los_Angeles`에서 실행) |
 | `pnpm build` | 프로덕션 빌드 |
 | `pnpm test:e2e` | Playwright E2E. 먼저 `pnpm build` 필요. 서버를 `DEMO_FIXED_NOW`로 띄워 날짜를 고정 |
+| `API_BASE_URL=… pnpm test:e2e` | 같은 E2E를 백엔드 모드로. API를 `GONGGO_DEMO_ANCHOR_DATE=2026-10-21`, `-Dgonggo.clock.fixed-now=2026-10-21T01:00:00Z`로 띄운다 |
+| `API_BASE_URL=http://localhost:8080 npx -y tsx@4.19.2 --tsconfig tsconfig.json scripts/check-api-parity.ts` | 백엔드 응답이 웹 계약(Zod)·데모 데이터·필터/정렬 결과와 같은지 비교 |
+| `cd backend && ./gradlew test` | 백엔드 테스트. Testcontainers라 Docker 필요 |
 
-Node 22, pnpm 10 기준입니다.
+Node 22, pnpm 10, Java 21 기준입니다.
 
 ## 환경변수
 
@@ -37,7 +65,10 @@ Node 22, pnpm 10 기준입니다.
 | `NEXT_PUBLIC_MAP_STYLE_URL` | 외부 타일 없는 ‘예시 지도’(배경·격자·대략적 지역명). 화면에 “예시 지도 · 실제 지도 타일이 아니에요” 표시 |
 | `EMAIL_PROVIDER`, `EMAIL_API_KEY` | 이메일 채널 선택 불가, ‘설정되지 않음’ 표시 |
 | `AI_API_KEY` | 데모 분석기(준비된 구조화 결과) 사용 |
-| `DEMO_FIXED_NOW` | 요청 시각 기준으로 데모 날짜 생성 |
+| `DEMO_FIXED_NOW` | 요청 시각 기준으로 데모 날짜 생성 (데모 모드 전용. 백엔드 모드는 API의 `serverTime`을 기준 시각으로 씀) |
+| `API_BASE_URL` | 내장 데모 데이터 사용. 있으면 백엔드에서 읽고, 연결 실패 시 ‘공고를 불러오지 못했어요’ 화면 |
+
+백엔드 환경변수(`DB_URL`, `DB_USER`, `DB_PASSWORD`, `ADMIN_TOKEN`, `KSTARTUP_SERVICE_KEY`, `GONGGO_INGESTION_CRON` 등)는 `.env.example`과 설계 문서 9장 참고.
 
 ## 화면·기능
 
@@ -57,7 +88,8 @@ Node 22, pnpm 10 기준입니다.
 
 | 영역 | 상태 |
 |---|---|
-| 공고 데이터 | **데모.** 타입이 있는 저장소 경계(`src/repositories`) 뒤의 합성 데이터 34건. 경계에서 Zod 검증 |
+| 공고 데이터 | **실제 백엔드**(PostgreSQL + Spring Boot API, `API_BASE_URL` 설정 시) 또는 내장 데모. 어느 쪽이든 경계(`src/repositories`)에서 Zod 검증 |
+| 공고 수집 | **구현.** 공공데이터포털 K-Startup 어댑터(키가 있을 때만 켜짐), 원본 보관·멱등 저장·실행 기록. 단, 응답 필드명은 **실제 응답으로 확인하지 못함** → 아래 ‘알려진 한계’ |
 | 인증 | **데모.** ‘데모로 체험하기’는 합성 프로필로 로그인 상태만 표시. 비밀번호·토큰을 받거나 저장하지 않음 |
 | 개인 상태(관심·일정·알림·지원 현황) | **데모.** 브라우저 localStorage에만 저장, Zod로 읽을 때 검증 |
 | 조건 비교 | **실제 규칙.** 프로필 구간과 구조화 조건을 규칙으로 비교. 단정 불가 시 ‘확인 필요’. 점수 없음 |
@@ -65,7 +97,7 @@ Node 22, pnpm 10 기준입니다.
 | 일정·알림 시각 계산, `.ics` | **실제 구현** (단위 테스트) |
 | 알림 발송 | **데모.** 서버 스케줄러 없음. 앱이 열려 있을 때(또는 다시 열 때) 도래한 알림을 앱 내 알림으로 생성. 브라우저를 닫은 동안에는 발송되지 않음 |
 | 이메일 | **미구현.** 발송 인터페이스만 있음. 설정돼 있어도 실제 발송했다고 표시하지 않음 |
-| 공고 변경 감지 | **데모.** 알림 화면에서 준비된 변경을 직접 발생시킴 |
+| 공고 변경 감지 | **백엔드 구현.** 수집 때 내용 해시로 변경을 찾아 마감·장소·조건·취소 이력과 버전을 남김. 화면의 ‘데모 공고 변경 발생’은 그대로 데모 |
 | 지도 | 예시 지도(기본) 또는 환경변수의 실제 스타일 |
 | 외부 캘린더 | `.ics` 일회성 내보내기만. 자동 동기화 없음 |
 
@@ -100,8 +132,10 @@ Node 22, pnpm 10 기준입니다.
 
 ## 검증
 
-- 단위 테스트(Vitest + Testing Library) 47개: URL 직렬화·필터·정렬, 지도 범위 일치, 조건 비교, 공고→일정 변환(시각 미공지·상시 모집·복수일), 중복 등록, 알림 시각·중복 방지·이메일 실패, 공고 변경 후 일정 갱신·알림 재계산, `.ics` 이스케이프·줄 접기·종일 DTEND, AI 결과 스키마·근거 확인, 데모 데이터 요건.
-- E2E(Playwright, 데스크톱 20 + 모바일 2): 검색·필터 URL 복원과 뒤로 가기, 상세 직접 진입, 저장·비교 클릭이 행 선택을 일으키지 않음, 요약 수치 일치, 지도↔목록 선택 연동·수 일치, WebGL 실패 시 목록 사용, 데모 로그인 후 원래 동작 이어가기, 새로고침 후 유지, 비교 3개 제한, 열린 리다이렉트 차단, 프로필 조건 비교, 캘린더 등록·중복 방지·수정·삭제, 시각 미공지·상시 모집, 변경→알림→갱신, 데모 알림, `.ics` 다운로드, 모바일 시트·가로 넘침.
+- 백엔드 테스트(JUnit + Testcontainers PostgreSQL) 22개: 데모 시드 34건과 웹 계약 모양, 시각 미공지 마감, 필터·정렬, ProblemDetail 오류, 관리자 토큰, 수집 멱등성(같은 응답 재수집 시 변경 없음·원본 1건), 마감 변경 시 버전·이력(서울 기준 표기), 알릴 필요 없는 변경은 버전 유지, 한 건 실패 시 나머지 저장, 가져오기 실패 시 failed 기록, K-Startup 정규화(가상 픽스처).
+- 웹↔백엔드 대조(`scripts/check-api-parity.ts`): 34건 전부 웹 데모와 내용 일치, 기본·마감 포함·분야·지역·방식·검색·최신순 등 9개 조건에서 목록 순서까지 일치.
+- 단위 테스트(Vitest + Testing Library) 51개: HTTP 저장소(계약 위반 응답 차단, 연결 실패·오류 응답 구분), URL 직렬화·필터·정렬, 지도 범위 일치, 조건 비교, 공고→일정 변환(시각 미공지·상시 모집·복수일), 중복 등록, 알림 시각·중복 방지·이메일 실패, 공고 변경 후 일정 갱신·알림 재계산, `.ics` 이스케이프·줄 접기·종일 DTEND, AI 결과 스키마·근거 확인, 데모 데이터 요건.
+- E2E(Playwright, 데스크톱 20 + 모바일 2, **데모 모드·백엔드 모드 각각 통과**): 검색·필터 URL 복원과 뒤로 가기, 상세 직접 진입, 저장·비교 클릭이 행 선택을 일으키지 않음, 요약 수치 일치, 지도↔목록 선택 연동·수 일치, WebGL 실패 시 목록 사용, 데모 로그인 후 원래 동작 이어가기, 새로고침 후 유지, 비교 3개 제한, 열린 리다이렉트 차단, 프로필 조건 비교, 캘린더 등록·중복 방지·수정·삭제, 시각 미공지·상시 모집, 변경→알림→갱신, 데모 알림, `.ics` 다운로드, 모바일 시트·가로 넘침.
 
 ## 알려진 한계
 
@@ -109,7 +143,9 @@ Node 22, pnpm 10 기준입니다.
 - 알림은 앱이 열려 있을 때만 만들어집니다. 브라우저 푸시·이메일 발송은 없습니다.
 - 예시 지도는 실제 도로·지형이 없고, 지역명 위치는 대략적입니다.
 - 월간 캘린더는 직접 구현한 단순 그리드이며 드래그·주간 시간표는 없습니다.
-- 공고 수집기·변경 감지는 없습니다(데모 변경만).
+- **K-Startup 매핑 미확인**: 개발 환경에서 공공데이터포털에 접속할 수 없어 응답 필드명·날짜 형식을 실제로 확인하지 못했습니다. 필드명은 `backend/src/main/resources/sources/kstartup-mapping.yml`에 초안으로 두었고, 필수 필드가 응답에 없으면 수집 실행이 `failed`로 끝나 바로 드러납니다. 켜기 전 확인 절차는 설계 문서 5.1.
+- 공고가 500건을 넘으면 web이 일부만 받습니다(경고 로그). 서버 페이지네이션·지도 마커 API는 2단계 계획입니다.
+- `docker compose` 이미지 빌드는 이 저장소를 만든 환경의 네트워크 제약(TLS 프록시)으로 끝까지 확인하지 못했습니다. API 이미지의 실행 단계(기동·헬스체크·시드)만 확인했습니다.
 
 ## 운영 전 검토가 필요한 지점
 

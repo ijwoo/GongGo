@@ -95,6 +95,8 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
   const [moved, setMoved] = useState(false);
   const [geoMessage, setGeoMessage] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const appliedBboxRef = useRef(appliedBbox);
+  const userMoveRef = useRef(false);
 
   // 최신 props를 지도 이벤트 핸들러에서 읽기 위한 참조
   const latest = useRef({ items, selectedId, onSelect });
@@ -107,138 +109,6 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
   useEffect(() => {
     groupsRef.current = groups;
   });
-
-  /* 지도 생성 */
-  useEffect(() => {
-    let cancelled = false;
-    const markers = markersRef.current;
-    (async () => {
-      try {
-        const lib = await import("maplibre-gl");
-        if (cancelled || !containerRef.current) return;
-        libRef.current = lib;
-        lib.setWorkerUrl("/vendor/maplibre-gl-worker.mjs");
-        const map = new lib.Map({
-          container: containerRef.current,
-          style: STYLE_URL ?? demoStyle(),
-          center: DEFAULT_CENTER,
-          zoom: 9.3,
-          minZoom: 8,
-          maxZoom: 16,
-          maxBounds: MAX_BOUNDS,
-          attributionControl: STYLE_URL ? { compact: true } : false,
-          dragRotate: false,
-          pitchWithRotate: false,
-          touchPitch: false,
-        });
-        mapRef.current = map;
-        map.touchZoomRotate.disableRotation();
-
-        map.on("error", (e) => {
-          // 스타일·타일을 못 불러온 경우. 목록은 계속 쓸 수 있도록 지도 영역에만 안내한다
-          if (!map.isStyleLoaded()) {
-            setStatus("error");
-            setError(e.error?.message ?? "지도 데이터를 불러오지 못했어요.");
-          }
-        });
-
-        map.on("load", () => {
-          if (cancelled) return;
-          map.addSource("ann", {
-            type: "geojson",
-            data: toGeoJson(groupsRef.current),
-            cluster: true,
-            clusterRadius: 44,
-            clusterMaxZoom: 13,
-            clusterProperties: { total: ["+", ["get", "count"]] },
-          });
-          // 마커는 HTML로 그리지만, 소스 데이터를 계산하려면 소스를 쓰는 레이어가 하나 필요하다
-          map.addLayer({ id: "ann-anchor", type: "circle", source: "ann", paint: { "circle-radius": 0, "circle-opacity": 0 } });
-          if (!STYLE_URL) addAreaLabels(lib, map);
-          setStatus("ready");
-          if (appliedBboxRef.current) {
-            const [a, b, c, d] = appliedBboxRef.current;
-            map.fitBounds([[a, b], [c, d]], { duration: 0 });
-          } else fitToItems(map, groupsRef.current, 0);
-          setMoved(false);
-        });
-
-        map.on("moveend", (e) => {
-          // 사용자가 직접 움직인 경우에만 '이 지역 다시 검색'을 보여 준다
-          if ((e as { originalEvent?: unknown }).originalEvent || userMoveRef.current) setMoved(true);
-          userMoveRef.current = false;
-        });
-        map.on("render", () => syncMarkers());
-      } catch (e) {
-        if (cancelled) return;
-        setStatus("error");
-        setError(e instanceof Error ? e.message : String(e));
-      }
-    })();
-    return () => {
-      cancelled = true;
-      markers.forEach((m) => m.remove());
-      markers.clear();
-      popupRef.current?.remove();
-      mapRef.current?.remove();
-      mapRef.current = null;
-    };
-    // attempt가 바뀌면 다시 시도한다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attempt]);
-
-  const appliedBboxRef = useRef(appliedBbox);
-  const userMoveRef = useRef(false);
-
-  /* 데이터가 바뀌면 소스를 갱신 */
-  const dataKey = groups.map((g) => `${g.key}:${g.ids.join("|")}`).join(";");
-  useEffect(() => {
-    const map = mapRef.current;
-    const source = map?.getSource("ann") as GeoJSONSource | undefined;
-    if (!map || !source) return;
-    source.setData(toGeoJson(groupsRef.current));
-    syncMarkers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataKey, status]);
-
-  /* 적용 범위가 바뀌면(뒤로 가기 등) 지도도 맞춘다 */
-  const bboxKey = appliedBbox?.join(",") ?? "";
-  useEffect(() => {
-    appliedBboxRef.current = appliedBbox;
-    const map = mapRef.current;
-    if (!map || status !== "ready") return;
-    if (appliedBbox) {
-      const [a, b, c, d] = appliedBbox;
-      map.fitBounds([[a, b], [c, d]], { duration: 0 });
-    }
-    setMoved(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bboxKey, status]);
-
-  /* 선택이 바뀌면 마커를 강조하고, 보이지 않으면 지도를 옮긴다 */
-  useEffect(() => {
-    const map = mapRef.current;
-    syncMarkers();
-    if (!map || status !== "ready" || !selectedId) return;
-    const a = items.find((x) => x.id === selectedId);
-    if (!a) return;
-    const { lng, lat } = a.venue.coordinates;
-    if (!map.getBounds().contains([lng, lat])) map.easeTo({ center: [lng, lat], duration: 300 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, status]);
-
-  /* 테마가 바뀌면 예시 지도 색을 맞춘다 */
-  useEffect(() => {
-    if (STYLE_URL) return;
-    const observer = new MutationObserver(() => {
-      const map = mapRef.current;
-      if (!map || !map.isStyleLoaded()) return;
-      map.setPaintProperty("bg", "background-color", cssVar("--map-bg"));
-      map.setPaintProperty("grid", "line-color", cssVar("--map-grid"));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => observer.disconnect();
-  }, []);
 
   function syncMarkers() {
     const map = mapRef.current;
@@ -336,6 +206,135 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
       .addTo(map);
     box.querySelector("button")?.focus();
   }
+
+  /* 지도 생성 */
+  useEffect(() => {
+    let cancelled = false;
+    const markers = markersRef.current;
+    (async () => {
+      try {
+        const lib = await import("maplibre-gl");
+        if (cancelled || !containerRef.current) return;
+        libRef.current = lib;
+        lib.setWorkerUrl("/vendor/maplibre-gl-worker.mjs");
+        const map = new lib.Map({
+          container: containerRef.current,
+          style: STYLE_URL ?? demoStyle(),
+          center: DEFAULT_CENTER,
+          zoom: 9.3,
+          minZoom: 8,
+          maxZoom: 16,
+          maxBounds: MAX_BOUNDS,
+          attributionControl: STYLE_URL ? { compact: true } : false,
+          dragRotate: false,
+          pitchWithRotate: false,
+          touchPitch: false,
+        });
+        mapRef.current = map;
+        map.touchZoomRotate.disableRotation();
+
+        map.on("error", (e) => {
+          // 스타일·타일을 못 불러온 경우. 목록은 계속 쓸 수 있도록 지도 영역에만 안내한다
+          if (!map.isStyleLoaded()) {
+            setStatus("error");
+            setError(e.error?.message ?? "지도 데이터를 불러오지 못했어요.");
+          }
+        });
+
+        map.on("load", () => {
+          if (cancelled) return;
+          map.addSource("ann", {
+            type: "geojson",
+            data: toGeoJson(groupsRef.current),
+            cluster: true,
+            clusterRadius: 44,
+            clusterMaxZoom: 13,
+            clusterProperties: { total: ["+", ["get", "count"]] },
+          });
+          // 마커는 HTML로 그리지만, 소스 데이터를 계산하려면 소스를 쓰는 레이어가 하나 필요하다
+          map.addLayer({ id: "ann-anchor", type: "circle", source: "ann", paint: { "circle-radius": 0, "circle-opacity": 0 } });
+          if (!STYLE_URL) addAreaLabels(lib, map);
+          setStatus("ready");
+          if (appliedBboxRef.current) {
+            const [a, b, c, d] = appliedBboxRef.current;
+            map.fitBounds([[a, b], [c, d]], { duration: 0 });
+          } else fitToItems(map, groupsRef.current, 0);
+          setMoved(false);
+        });
+
+        map.on("moveend", (e) => {
+          // 사용자가 직접 움직인 경우에만 '이 지역 다시 검색'을 보여 준다
+          if ((e as { originalEvent?: unknown }).originalEvent || userMoveRef.current) setMoved(true);
+          userMoveRef.current = false;
+        });
+        map.on("render", () => syncMarkers());
+      } catch (e) {
+        if (cancelled) return;
+        setStatus("error");
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    })();
+    return () => {
+      cancelled = true;
+      markers.forEach((m) => m.remove());
+      markers.clear();
+      popupRef.current?.remove();
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+    // attempt가 바뀌면 다시 시도한다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt]);
+
+  /* 데이터가 바뀌면 소스를 갱신 */
+  const dataKey = groups.map((g) => `${g.key}:${g.ids.join("|")}`).join(";");
+  useEffect(() => {
+    const map = mapRef.current;
+    const source = map?.getSource("ann") as GeoJSONSource | undefined;
+    if (!map || !source) return;
+    source.setData(toGeoJson(groupsRef.current));
+    syncMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataKey, status]);
+
+  /* 적용 범위가 바뀌면(뒤로 가기 등) 지도도 맞춘다 */
+  const bboxKey = appliedBbox?.join(",") ?? "";
+  useEffect(() => {
+    appliedBboxRef.current = appliedBbox;
+    const map = mapRef.current;
+    if (!map || status !== "ready") return;
+    if (appliedBbox) {
+      const [a, b, c, d] = appliedBbox;
+      map.fitBounds([[a, b], [c, d]], { duration: 0 });
+    }
+    setMoved(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bboxKey, status]);
+
+  /* 선택이 바뀌면 마커를 강조하고, 보이지 않으면 지도를 옮긴다 */
+  useEffect(() => {
+    const map = mapRef.current;
+    syncMarkers();
+    if (!map || status !== "ready" || !selectedId) return;
+    const a = items.find((x) => x.id === selectedId);
+    if (!a) return;
+    const { lng, lat } = a.venue.coordinates;
+    if (!map.getBounds().contains([lng, lat])) map.easeTo({ center: [lng, lat], duration: 300 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, status]);
+
+  /* 테마가 바뀌면 예시 지도 색을 맞춘다 */
+  useEffect(() => {
+    if (STYLE_URL) return;
+    const observer = new MutationObserver(() => {
+      const map = mapRef.current;
+      if (!map || !map.isStyleLoaded()) return;
+      map.setPaintProperty("bg", "background-color", cssVar("--map-bg"));
+      map.setPaintProperty("grid", "line-color", cssVar("--map-grid"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   const zoomBy = (delta: number) => {
     userMoveRef.current = true;

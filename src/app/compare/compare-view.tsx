@@ -26,8 +26,8 @@ import { clearCompare, COMPARE_LIMIT, toggleCompare, useCompare, useHydrated } f
 
 const NO_INFO = <span className="text-faint">정보 없음</span>;
 
-function list(items: string[]): ReactNode {
-  if (items.length === 0) return NO_INFO;
+function list(items: string[], empty: ReactNode = NO_INFO): ReactNode {
+  if (items.length === 0) return empty;
   return (
     <ul className="list-disc space-y-0.5 pl-4">
       {items.map((t) => (
@@ -68,7 +68,7 @@ export function CompareView() {
     { label: "팀 규모", render: (a) => (a.teamSize ? formatTeamSize(a.teamSize) : NO_INFO) },
     { label: "필수 조건", render: (a) => list(a.conditions.filter((c) => c.kind === "required").map((c) => c.text)) },
     { label: "준비 서류", render: (a) => list(a.requiredDocuments) },
-    { label: "확인 필요", render: (a) => list(toCheck(a)) },
+    { label: "확인 필요", render: (a) => list(toCheck(a), <span className="text-faint">따로 확인할 항목 없음</span>) },
   ];
 
   return (

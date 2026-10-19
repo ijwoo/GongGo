@@ -76,7 +76,7 @@ function AddEventDialog({ a, onClose }: { a: Announcement; onClose: () => void }
       : selected.timing?.available
         ? selected.timing.timing
         : null;
-  const defaultTitle = kind === "prep" ? `${a.title} 준비` : `${a.title} ${EVENT_KIND_LABEL[kind]}`;
+  const defaultTitle = kind === "prep" ? `${a.title} 준비` : kind === "deadline" ? `${a.title} 신청 마감` : a.title;
   const canNext = step === 0 ? !selected.dup && (kind === "prep" || selected.timing?.available) : step === 1 ? timing !== null : true;
 
   const save = () => {

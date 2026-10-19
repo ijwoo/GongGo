@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { EVENT_KIND_LABEL, timingStartDate, upcomingEvents } from "@/domain/calendar";
+import { timingStartDate, upcomingEvents } from "@/domain/calendar";
 import { isDueThisWeek, isPublishedToday } from "@/domain/discover";
 import { addLocalDays, formatLocalDateShort } from "@/domain/time";
 import { usePersonal } from "@/hooks/use-personal";
@@ -55,7 +55,7 @@ export function SummaryStrip() {
               hint={
                 next ? (
                   <>
-                    · {formatLocalDateShort(timingStartDate(next.timing))} {EVENT_KIND_LABEL[next.kind]} {next.title}
+                    · {formatLocalDateShort(timingStartDate(next.timing))} {next.title}
                   </>
                 ) : null
               }

@@ -128,12 +128,12 @@ function CalendarBody() {
         title="내 캘린더"
         description="관심 저장과 별개로, 직접 추가한 신청 마감·행사·준비 일정을 모아 봐요. 시간은 한국 시간 기준이에요."
         actions={
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col items-start gap-1 sm:items-end">
             <Button size="sm" onClick={exportIcs}>
               <Download className="size-4" aria-hidden />
               .ics 내보내기
             </Button>
-            <p className="max-w-64 text-right text-[11px] text-faint">한 번 내려받는 파일이에요. 이후 변경은 외부 캘린더에 자동 반영되지 않아요.</p>
+            <p className="max-w-64 text-[11px] text-faint sm:text-right">한 번 내려받는 파일이에요. 이후 변경은 외부 캘린더에 자동 반영되지 않아요.</p>
           </div>
         }
       />

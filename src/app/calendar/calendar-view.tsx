@@ -34,7 +34,7 @@ const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
 export function CalendarView() {
   return (
-    <PageFrame wide>
+    <PageFrame>
       <LoginRequired reason="내 캘린더는 계정에 저장돼요.">
         <CalendarBody />
       </LoginRequired>
@@ -196,7 +196,7 @@ function CalendarBody() {
         </section>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
         <section aria-labelledby="month-title" className="rounded-lg border border-line bg-panel">
           <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
             <IconButton label="이전 달" onClick={() => moveMonth(-1)}>

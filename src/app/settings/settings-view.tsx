@@ -42,15 +42,19 @@ export function SettingsView() {
   return (
     <PageFrame>
       <PageHeader title="프로필·알림 설정" />
-      <div className="space-y-4">
-        <ThemeCard />
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <LoginRequired reason="프로필과 알림 설정은 계정에 저장돼요.">
-          <div className="space-y-4">
-            <ProfileCard />
-            <AlertCard />
-            <DemoCard />
-          </div>
+          <ProfileCard />
         </LoginRequired>
+        <div className="space-y-4">
+          <ThemeCard />
+          <LoginRequired reason="알림 설정과 데모 데이터는 계정에 저장돼요." fallback={null}>
+            <div className="space-y-4">
+              <AlertCard />
+              <DemoCard />
+            </div>
+          </LoginRequired>
+        </div>
       </div>
     </PageFrame>
   );

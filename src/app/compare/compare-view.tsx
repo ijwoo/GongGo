@@ -72,7 +72,7 @@ export function CompareView() {
   ];
 
   return (
-    <PageFrame wide>
+    <PageFrame>
       <PageHeader
         title="공고 비교"
         description={`최대 ${COMPARE_LIMIT}개까지 나란히 비교해요. 비교 목록은 로그인하지 않아도 이 브라우저에 유지돼요.`}

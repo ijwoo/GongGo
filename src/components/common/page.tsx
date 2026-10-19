@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-export function PageFrame({ children, wide }: { children: ReactNode; wide?: boolean }) {
-  return <div className={cn("mx-auto w-full px-4 py-6 lg:px-6 md:py-8", wide ? "max-w-[1440px]" : "max-w-[1120px]")}>{children}</div>;
+/** 발견 화면과 같은 좌우 여백으로 화면 폭을 모두 쓴다. 넓은 공간은 각 화면이 열을 나눠 활용한다 */
+export function PageFrame({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn("w-full px-4 py-6 md:py-7 lg:px-6", className)}>{children}</div>;
 }
 
 export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {

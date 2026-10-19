@@ -11,7 +11,7 @@ import { DeadlineCell, StateBadge } from "@/components/discover/status";
 import { Badge } from "@/components/ui/badge";
 import { buttonClass, IconButton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { CATEGORY_LABEL, venueShort } from "@/domain/announcement";
+import { CATEGORY_LABEL, MODE_LABEL, venueShort } from "@/domain/announcement";
 import { sortAnnouncements } from "@/domain/discover";
 import { usePersonal } from "@/hooks/use-personal";
 import { useAnnouncements, useNow } from "@/lib/app-data";
@@ -84,46 +84,78 @@ function SavedList() {
       {ordered.length === 0 ? (
         <p className="rounded-md border border-line bg-panel px-4 py-8 text-center text-[13px] text-muted">저장 이후 바뀐 공고가 없어요.</p>
       ) : (
-        <ul className="divide-y divide-line rounded-lg border border-line bg-panel">
-          {ordered.map(({ a, saved }) => {
-            const changed = a.contentVersion > saved.seenVersion;
-            const lastRev = a.revisions.at(-1);
-            return (
-              <li key={a.id} className="flex items-center gap-3 px-4 py-3">
-                <OrgMark org={a.organizer} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <Link href={`/discover?id=${a.id}`} className="line-clamp-1 font-semibold hover:underline">
-                    {a.title}
-                  </Link>
-                  <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                    <StateBadge a={a} now={now} />
-                    {changed ? <Badge tone="warning">변경 있음</Badge> : null}
-                    {a.organizer.name} · {CATEGORY_LABEL[a.category]} · {venueShort(a)}
-                  </p>
-                  {changed && lastRev ? (
-                    <p className="mt-1 text-xs">
-                      {lastRev.summary} <span className="text-muted line-through">{lastRev.before}</span> →{" "}
-                      <b>{lastRev.after}</b>
-                    </p>
-                  ) : null}
-                </div>
-                <div className="hidden w-28 shrink-0 sm:block">
-                  <DeadlineCell a={a} now={now} />
-                </div>
-                <CompareCheckbox a={a} />
-                <IconButton
-                  label={`관심 공고에서 빼기: ${a.title}`}
-                  onClick={() => {
-                    update((s) => toggleSaved(s, a, now));
-                    toast({ message: "관심 공고에서 뺐어요.", action: { label: "되돌리기", onClick: () => update((s) => ({ ...s, saved: [...s.saved, saved] })) } });
-                  }}
+        <div className="overflow-hidden rounded-lg border border-line bg-panel">
+          <div
+            aria-hidden
+            className="hidden h-10 items-center gap-4 border-b border-line px-4 text-xs font-semibold text-muted lg:grid lg:grid-cols-[minmax(0,2.2fr)_96px_128px_132px_minmax(0,1.6fr)_88px]"
+          >
+            <span>공고명 · 주최기관</span>
+            <span>분야</span>
+            <span>장소 · 방식</span>
+            <span>신청 마감</span>
+            <span>저장 이후 변경</span>
+            <span className="text-right">비교 · 빼기</span>
+          </div>
+          <ul className="divide-y divide-line">
+            {ordered.map(({ a, saved }) => {
+              const changed = a.contentVersion > saved.seenVersion;
+              const lastRev = a.revisions.at(-1);
+              return (
+                <li
+                  key={a.id}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4 py-3.5 hover:bg-hover lg:grid-cols-[minmax(0,2.2fr)_96px_128px_132px_minmax(0,1.6fr)_88px]"
                 >
-                  <Trash2 className="size-4" aria-hidden />
-                </IconButton>
-              </li>
-            );
-          })}
-        </ul>
+                  <div className="flex min-w-0 items-start gap-3">
+                    <OrgMark org={a.organizer} />
+                    <div className="min-w-0">
+                      <Link href={`/discover?id=${a.id}`} className="line-clamp-2 text-[15px] leading-snug font-semibold hover:text-accent-text">
+                        {a.title}
+                      </Link>
+                      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
+                        <span className="truncate">{a.organizer.name}</span>
+                        <StateBadge a={a} now={now} />
+                        {changed ? <Badge tone="warning">변경 있음</Badge> : null}
+                        <span className="lg:hidden">
+                          · {CATEGORY_LABEL[a.category]} · {venueShort(a)}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <span className="hidden text-sm text-fg-2 lg:block">{CATEGORY_LABEL[a.category]}</span>
+                  <span className="hidden flex-col gap-0.5 leading-tight lg:flex">
+                    <span className="text-sm text-fg-2">{venueShort(a)}</span>
+                    <span className="text-xs text-muted">{MODE_LABEL[a.participationMode]}</span>
+                  </span>
+                  <span className="hidden lg:block">
+                    <DeadlineCell a={a} now={now} />
+                  </span>
+                  <span className="col-span-2 min-w-0 text-[13px] lg:col-span-1">
+                    {changed && lastRev ? (
+                      <>
+                        <span className="text-fg-2">{lastRev.summary}</span>{" "}
+                        <span className="text-muted line-through">{lastRev.before}</span> → <b>{lastRev.after}</b>
+                      </>
+                    ) : (
+                      <span className="hidden text-faint lg:inline">변경 없음</span>
+                    )}
+                  </span>
+                  <div className="row-start-1 flex items-center justify-end gap-0.5 col-start-2 lg:col-start-auto lg:row-start-auto">
+                    <CompareCheckbox a={a} />
+                    <IconButton
+                      label={`관심 공고에서 빼기: ${a.title}`}
+                      onClick={() => {
+                        update((s) => toggleSaved(s, a, now));
+                        toast({ message: "관심 공고에서 뺐어요.", action: { label: "되돌리기", onClick: () => update((s) => ({ ...s, saved: [...s.saved, saved] })) } });
+                      }}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </IconButton>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </div>
   );

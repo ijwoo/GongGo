@@ -74,7 +74,7 @@ function NotificationsBody() {
           </Button>
         }
       />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
         <section aria-labelledby="inbox-title">
           <h2 id="inbox-title" className="sr-only">
             알림 목록

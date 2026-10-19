@@ -79,7 +79,7 @@ function ApplicationsBody() {
       {visible.length === 0 ? (
         <p className="rounded-md border border-line bg-panel px-4 py-8 text-center text-[13px] text-muted">이 상태의 공고가 없어요.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="grid items-start gap-3 2xl:grid-cols-2">
           {visible.map((r) => (
             <ApplicationCard key={r.announcementId} record={r} a={byId.get(r.announcementId)!} />
           ))}

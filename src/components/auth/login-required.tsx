@@ -10,7 +10,7 @@ import { useNow } from "@/lib/app-data";
 import { startDemoSession } from "@/lib/personal-store";
 
 /** 로그인이 필요한 화면. 비로그인이면 이유를 설명하고 데모 체험을 제안한다 */
-export function LoginRequired({ reason, children }: { reason: string; children: ReactNode }) {
+export function LoginRequired({ reason, children, fallback }: { reason: string; children: ReactNode; fallback?: ReactNode }) {
   const { hydrated, loggedIn } = usePersonal();
   const now = useNow();
   if (!hydrated) {
@@ -23,6 +23,7 @@ export function LoginRequired({ reason, children }: { reason: string; children: 
     );
   }
   if (loggedIn) return <>{children}</>;
+  if (fallback !== undefined) return <>{fallback}</>;
   return (
     <EmptyState
       icon={<Lock className="size-6 text-faint" aria-hidden />}

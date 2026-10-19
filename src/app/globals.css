@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * 디자인 토큰. 색은 모두 이 변수로만 쓴다.
+ * 상태 색은 항상 텍스트 라벨과 함께 쓴다(색만으로 구분하지 않음).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --page: #f6f7f9;
+  --panel: #ffffff;
+  --fg: #191f28;
+  --muted: #6b7684;
+  --faint: #8b95a1;
+  --line: #e5e8eb;
+  --line-strong: #d1d6db;
+  --subtle: #f2f4f6;
+  --accent: #3182f6;
+  --accent-hover: #1b64da;
+  --accent-soft: #edf4ff;
+  --accent-fg: #ffffff;
+  --accent-text: #1b64da;
+  --success: #0b7a43;
+  --success-soft: #e6f6ee;
+  --warning: #b45309;
+  --warning-soft: #fff4e5;
+  --danger: #d22030;
+  --danger-soft: #fdecee;
+  --focus: #3182f6;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.06);
+  --map-bg: #eef1f4;
+  --map-grid: #dde2e7;
+}
+
+[data-theme="dark"] {
+  --page: #101114;
+  --panel: #17181d;
+  --fg: #f2f4f6;
+  --muted: #9aa1ac;
+  --faint: #7d8590;
+  --line: #2a2c34;
+  --line-strong: #3a3d47;
+  --subtle: #1f2128;
+  --accent: #4087f8;
+  --accent-hover: #6aa2fa;
+  --accent-soft: #1a2a45;
+  --accent-fg: #ffffff;
+  --accent-text: #7fb0ff;
+  --success: #4cc38a;
+  --success-soft: #12291f;
+  --warning: #f0a54a;
+  --warning-soft: #2e2213;
+  --danger: #ff6b76;
+  --danger-soft: #33161a;
+  --focus: #6aa2fa;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+  --map-bg: #1b1d23;
+  --map-grid: #262932;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--page);
+  --color-panel: var(--panel);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-text: var(--accent-text);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR",
+    "Malgun Gothic", system-ui, sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --shadow-panel: var(--shadow);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--page);
+  color: var(--fg);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  font-feature-settings: "tnum" 0;
+}
+
+/* 숫자·날짜 비교용 고정폭 숫자 */
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 지도 컨트롤(MapLibre)을 테마에 맞춘다 */
+.maplibregl-ctrl-attrib {
+  font-size: 11px;
+}
+[data-theme="dark"] .maplibregl-ctrl-attrib {
+  background: rgb(23 24 29 / 0.8) !important;
+  color: var(--muted);
+}
+[data-theme="dark"] .maplibregl-ctrl-attrib a {
+  color: var(--muted);
 }

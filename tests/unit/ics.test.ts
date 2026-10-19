@@ -4,7 +4,7 @@ import { seoulInstant } from "@/domain/time";
 import type { CalendarEvent } from "@/domain/types";
 import { ANNOUNCEMENTS, NOW } from "./fixtures";
 
-const base = { reminders: [], memo: "", createdAt: NOW, updatedAt: NOW, sourceVersion: null, announcementId: null } as const;
+const base = { reminders: [] as CalendarEvent["reminders"], memo: "", createdAt: NOW, updatedAt: NOW, sourceVersion: null, announcementId: null };
 const allDay: CalendarEvent = { ...base, id: "a1", kind: "event", title: "해커톤, 본선; 1일차", timing: { type: "allDay", start: "2026-11-09", end: "2026-11-10", timeUnknown: false } };
 const deadline: CalendarEvent = {
   ...base,

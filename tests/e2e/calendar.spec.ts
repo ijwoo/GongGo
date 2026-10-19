@@ -1,0 +1,129 @@
+import { expect, test, type Page } from "@playwright/test";
+import { expectToast, loginDemo } from "./helpers";
+
+async function addDeadline(page: Page, id: string) {
+  await page.goto(`/discover?id=${id}`);
+  const detail = page.getByRole("complementary", { name: "공고 상세" });
+  await detail.getByRole("button", { name: "내 캘린더에 추가" }).click();
+  const dialog = page.getByRole("dialog", { name: "내 캘린더에 추가" });
+  await dialog.getByRole("radio", { name: /신청 마감/ }).check();
+  await dialog.getByRole("button", { name: "다음" }).click();
+  return dialog;
+}
+
+test("캘린더 등록 → 수정 → 삭제", async ({ page }) => {
+  await loginDemo(page);
+  const dialog = await addDeadline(page, "hk-pangyo-ai");
+  await expect(dialog.getByText("10월 26일 (월) 18:00")).toBeVisible();
+  await dialog.getByRole("button", { name: "다음" }).click();
+  await expect(dialog.getByRole("checkbox", { name: "3일 전" })).toBeChecked();
+  await dialog.getByRole("checkbox", { name: "당일" }).check();
+  await dialog.getByRole("button", { name: "저장" }).click();
+  await expectToast(page, "신청 마감");
+
+  // 같은 종류는 다시 추가할 수 없다
+  await page.getByRole("complementary", { name: "공고 상세" }).getByRole("button", { name: "내 캘린더에 추가" }).click();
+  await expect(page.getByRole("dialog", { name: "내 캘린더에 추가" }).getByText("이미 내 캘린더에 있어요.")).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.goto("/calendar?date=2026-10-26");
+  const day = page.getByRole("region", { name: /10월 26일/ }).or(page.locator("section", { has: page.getByRole("heading", { name: /10월 26일/ }) }));
+  await expect(day.getByText("판교 생성형 AI 서비스 해커톤 2기 신청 마감").first()).toBeVisible();
+  await day.getByRole("button", { name: /일정 수정/ }).first().click();
+  const editor = page.getByRole("dialog", { name: "일정 수정" });
+  await editor.getByLabel("일정 이름").fill("판교 해커톤 지원서 마감");
+  await editor.getByRole("button", { name: "저장" }).click();
+  await expect(page.getByText("판교 해커톤 지원서 마감").first()).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("button", { name: "일정 수정: 판교 해커톤 지원서 마감" }).first().click();
+  await page.getByRole("dialog", { name: "일정 수정" }).getByRole("button", { name: "삭제", exact: true }).click();
+  await expect(page.getByText("이 일정과 예약된 알림을 삭제할까요?")).toBeVisible();
+  await page.getByRole("dialog", { name: "일정 수정" }).getByRole("button", { name: "삭제", exact: true }).click();
+  await expectToast(page, "일정을 삭제했어요");
+  await expect(page.getByText("판교 해커톤 지원서 마감")).toHaveCount(0);
+});
+
+test("마감 시각이 없는 공고는 종일 일정으로 등록하고 시각을 지어내지 않는다", async ({ page }) => {
+  await loginDemo(page);
+  const dialog = await addDeadline(page, "ed-pyeongchon-cloud");
+  await expect(dialog.getByText(/시각 미공지/)).toBeVisible();
+  await expect(dialog.getByText(/마감 시각이 공지되지 않아 날짜만 등록해요/)).toBeVisible();
+  await dialog.getByRole("button", { name: "다음" }).click();
+  await expect(dialog.getByText(/10월 22일 \(목\) 09:00/)).toBeVisible(); // 3일 전 오전 9시
+  await dialog.getByRole("button", { name: "저장" }).click();
+  await page.goto("/calendar?date=2026-10-25");
+  await expect(page.getByText("시각 미공지").first()).toBeVisible();
+  await expect(page.getByText("23:59")).toHaveCount(0);
+});
+
+test("상시 모집 공고는 마감 일정을 만들 수 없다고 안내한다", async ({ page }) => {
+  await loginDemo(page);
+  await page.goto("/discover?id=su-rolling-mentoring");
+  await page.getByRole("complementary", { name: "공고 상세" }).getByRole("button", { name: "내 캘린더에 추가" }).click();
+  const dialog = page.getByRole("dialog", { name: "내 캘린더에 추가" });
+  await expect(dialog.getByRole("radio", { name: /신청 마감/ })).toBeDisabled();
+  await expect(dialog.getByText("상시 모집이라 마감일이 없어요.")).toBeVisible();
+  await expect(dialog.getByRole("radio", { name: /준비 일정/ })).toBeChecked();
+});
+
+test("공고 마감 변경 → 알림 → 일정 변경 확인 → 갱신", async ({ page }) => {
+  await loginDemo(page);
+  const dialog = await addDeadline(page, "hk-pangyo-ai");
+  await dialog.getByRole("button", { name: "다음" }).click();
+  await dialog.getByRole("button", { name: "저장" }).click();
+
+  await page.goto("/notifications");
+  await page.getByRole("button", { name: "판교 생성형 AI 해커톤 마감 3일 연장" }).click();
+  await expect(page.getByRole("button", { name: /적용됨 · 판교 생성형 AI 해커톤/ })).toBeDisabled();
+  await expect(page.getByText("마감일이 바뀌었어요")).toBeVisible();
+  await expect(page.getByRole("link", { name: /알림, 읽지 않은 알림 1개/ })).toBeVisible();
+
+  await page.goto("/calendar");
+  const review = page.locator("section", { has: page.getByRole("heading", { name: /변경 확인 필요 1건/ }) });
+  await expect(review.getByText("10월 26일 (월) 18:00").first()).toBeVisible();
+  await expect(review.getByText(/바뀔 일정: 10월 29일 \(목\) 18:00/)).toBeVisible();
+  await review.getByRole("button", { name: "변경 내용으로 갱신" }).click();
+  await expect(page.getByRole("heading", { name: /변경 확인 필요/ })).toHaveCount(0);
+
+  await page.goto("/calendar?date=2026-10-29");
+  await expect(page.getByText("판교 생성형 AI 서비스 해커톤 2기 신청 마감").first()).toBeVisible();
+
+  // 새 시각 기준으로 알림이 다시 계산된다
+  await page.goto("/notifications");
+  await expect(page.getByText(/10월 26일 \(월\) 18:00/).first()).toBeVisible(); // 3일 전 알림
+});
+
+test("데모 알림 보내기와 알림 센터", async ({ page }) => {
+  await loginDemo(page);
+  await page.goto("/notifications");
+  await page.getByRole("button", { name: "데모 알림 보내기" }).click();
+  await expectToast(page, "예약된 알림이 없어요");
+
+  const dialog = await addDeadline(page, "hk-pangyo-ai");
+  await dialog.getByRole("button", { name: "다음" }).click();
+  await dialog.getByRole("button", { name: "저장" }).click();
+  await page.goto("/notifications");
+  await page.getByRole("button", { name: "데모 알림 보내기" }).click();
+  await expect(page.getByText("신청 마감 3일 전 알림")).toBeVisible();
+  await page.getByRole("button", { name: "모두 읽음" }).click();
+  await expect(page.getByText("안 읽음 0")).toBeVisible();
+  await page.getByRole("link", { name: "일정 보기" }).click();
+  await expect(page.getByRole("dialog", { name: "일정 수정" })).toBeVisible();
+});
+
+test(".ics 파일을 내려받는다", async ({ page }) => {
+  await loginDemo(page);
+  const dialog = await addDeadline(page, "hk-pangyo-ai");
+  await dialog.getByRole("button", { name: "다음" }).click();
+  await dialog.getByRole("button", { name: "저장" }).click();
+  await page.goto("/calendar");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: ".ics 내보내기" }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("gonggoham-2026-10-21.ics");
+  const text = await (await file.createReadStream()).toArray();
+  const ics = Buffer.concat(text).toString("utf8");
+  expect(ics).toContain("BEGIN:VCALENDAR\r\n");
+  expect(ics).toContain("DTSTART:20261026T090000Z");
+});

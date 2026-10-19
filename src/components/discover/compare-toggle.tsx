@@ -26,13 +26,13 @@ export function CompareCheckbox({ a }: { a: Announcement }) {
   const { selected, full, toggle } = useCompareToggle(a);
   return (
     <label
-      className={cn("inline-flex size-8 cursor-pointer items-center justify-center rounded-md hover:bg-subtle", full && "cursor-not-allowed")}
+      className={cn("relative inline-flex size-8 cursor-pointer items-center justify-center rounded-md hover:bg-subtle", full && "cursor-not-allowed")}
       title={full ? `비교는 최대 ${COMPARE_LIMIT}개까지` : "비교에 담기"}
       onClick={(e) => e.stopPropagation()}
     >
       <input
         type="checkbox"
-        className="peer sr-only"
+        className="peer absolute inset-0 z-[1] size-full cursor-[inherit] opacity-0"
         checked={selected}
         onChange={toggle}
         aria-label={`비교에 담기: ${a.title}`}
@@ -41,7 +41,7 @@ export function CompareCheckbox({ a }: { a: Announcement }) {
       <span
         aria-hidden
         className={cn(
-          "inline-flex size-[18px] items-center justify-center rounded-sm border transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--focus)]",
+          "pointer-events-none inline-flex size-[18px] items-center justify-center rounded-sm border transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--focus)]",
           selected ? "border-accent bg-accent text-accent-fg" : "border-line-strong bg-panel",
           full && "opacity-40",
         )}

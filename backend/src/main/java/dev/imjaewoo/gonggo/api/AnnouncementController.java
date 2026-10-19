@@ -39,6 +39,7 @@ class AnnouncementController {
             @RequestParam(required = false) String region,
             @RequestParam(required = false) String mode,
             @RequestParam(defaultValue = "false") boolean includeClosed,
+            @RequestParam(required = false) Integer closedWithinDays,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
@@ -46,11 +47,14 @@ class AnnouncementController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "page는 0 이상, size는 1~" + MAX_SIZE + " 사이여야 합니다.");
         }
+        if (closedWithinDays != null && (closedWithinDays < 1 || closedWithinDays > 3650)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "closedWithinDays는 1~3650 사이여야 합니다.");
+        }
         if (q != null && q.length() > 80) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "검색어는 80자까지입니다.");
         }
         Instant now = clock.instant();
-        var result = service.search(AnnouncementSearch.of(q, cat, region, mode, includeClosed, sort), page, size, now);
+        var result = service.search(AnnouncementSearch.of(q, cat, region, mode, includeClosed, closedWithinDays, sort), page, size, now);
         return new PageResponse(result.items(), page, size, result.total(), now);
     }
 

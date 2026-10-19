@@ -13,6 +13,8 @@ public record AnnouncementSearch(
         List<String> regions,
         List<String> modes,
         boolean includeClosed,
+        /** includeClosed일 때 마감·취소 공고는 최근 이 기간 안에 닫힌 것만. null이면 전부 */
+        Integer closedWithinDays,
         String sort) {
 
     static final Set<String> CATEGORIES = Set.of("hackathon", "startup", "education", "event", "job");
@@ -20,13 +22,14 @@ public record AnnouncementSearch(
     static final Set<String> MODES = Set.of("online", "offline", "hybrid");
 
     public static AnnouncementSearch of(String q, String cat, String region, String mode, boolean includeClosed,
-            String sort) {
+            Integer closedWithinDays, String sort) {
         return new AnnouncementSearch(
                 q == null ? "" : q.strip(),
                 csv(cat, CATEGORIES),
                 csv(region, REGIONS),
                 csv(mode, MODES),
                 includeClosed,
+                closedWithinDays,
                 "recent".equals(sort) ? "recent" : "deadline");
     }
 

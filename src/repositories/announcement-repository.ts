@@ -43,7 +43,7 @@ class HttpAnnouncementRepository implements AnnouncementRepository {
     );
     if (truncated)
       console.warn(
-        "[announcements] 공고가 상한보다 많아 일부만 받았습니다. 서버 페이지네이션이 필요합니다.",
+        "[announcements] 공고가 받을 수 있는 최대 페이지를 넘어 일부만 받았습니다.",
       );
     return { announcements, now: serverTime, source: "api" };
   }

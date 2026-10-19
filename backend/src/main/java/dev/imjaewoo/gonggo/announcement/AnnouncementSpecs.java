@@ -7,6 +7,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -40,6 +41,9 @@ final class AnnouncementSpecs {
             }
             if (!s.includeClosed()) {
                 where.add(cb.not(closed(root, cb, now)));
+            } else if (s.closedWithinDays() != null) {
+                where.add(cb.or(cb.not(closed(root, cb, now)),
+                        closedSince(root, cb, now.minus(s.closedWithinDays(), ChronoUnit.DAYS))));
             }
             // 페이지 수를 세는 쿼리에는 정렬을 붙이지 않는다
             if (query != null && query.getResultType() != Long.class && query.getResultType() != long.class) {
@@ -66,6 +70,18 @@ final class AnnouncementSpecs {
                         cb.lessThanOrEqualTo(root.<Instant>get("deadlineAt"), now)),
                 cb.and(cb.equal(root.get("deadlineType"), "date"),
                         cb.lessThan(root.<LocalDate>get("deadlineDate"), today)));
+    }
+
+    /**
+     * since 이후에 닫힌 공고. 취소는 취소가 반영된 시각(updatedAt), 마감은 마감 시각(시각 미공지는 그날 끝) 기준.
+     * closed()와 함께 써야 뜻이 맞다(열린 공고도 여기 걸릴 수 있다).
+     */
+    private static Predicate closedSince(Root<Announcement> root, CriteriaBuilder cb, Instant since) {
+        return cb.or(
+                cb.and(cb.equal(root.get("status"), "cancelled"),
+                        cb.greaterThanOrEqualTo(root.<Instant>get("updatedAt"), since)),
+                cb.and(cb.notEqual(root.get("status"), "cancelled"),
+                        cb.greaterThanOrEqualTo(root.<Instant>get("deadlineSortAt"), since)));
     }
 
     /** 0: 고정 마감일 있음, 1: 미정, 2: 상시·예산 소진, 3: 마감·취소 */

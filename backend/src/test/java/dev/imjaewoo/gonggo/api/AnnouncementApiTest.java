@@ -32,6 +32,22 @@ class AnnouncementApiTest extends IntegrationTest {
     }
 
     @Test
+    void 마감_포함이어도_오래전에_닫힌_공고는_뺄_수_있다() throws Exception {
+        // 기준 시각 하루 전보다 먼저 마감된 데모 3건(문정·마곡·종로)만 빠진다. 취소 공고는 취소 반영 시각 기준이라 남는다
+        mvc.perform(get("/api/announcements").param("includeClosed", "true").param("closedWithinDays", "1")
+                        .param("size", "500"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(31))
+                .andExpect(jsonPath("$.items[?(@.id in ['su-munjeong-social', 'ed-magok-data', 'ev-jongno-oss-day'])]")
+                        .isEmpty())
+                .andExpect(jsonPath("$.items[?(@.id == 'hk-yeouido-cancel')]").isNotEmpty())
+                .andExpect(jsonPath("$.items[?(@.id == 'hk-gwanggyo-mobility')]").isNotEmpty());
+
+        mvc.perform(get("/api/announcements").param("includeClosed", "true").param("closedWithinDays", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void 기본_목록은_마감_취소를_빼고_마감순으로_정렬한다() throws Exception {
         mvc.perform(get("/api/announcements").param("size", "500"))
                 .andExpect(status().isOk())

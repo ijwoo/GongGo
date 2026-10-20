@@ -17,9 +17,10 @@ public record GreenhouseProperties(
 
     /**
      * token: 게시판 주소의 회사 식별자(boards.greenhouse.io/{token}), name: 화면에 쓸 회사 이름,
-     * homepage: 공고 페이지에 대표 이미지가 없을 때 대신 찾아볼 회사 홈페이지(선택)
+     * homepage: 공고 페이지에 대표 이미지가 없을 때 대신 찾아볼 회사 홈페이지(선택),
+     * office: 서울 근무 공고를 지도에 놓을 사무실의 시·구(예: 서울 강남구, 선택)
      */
-    public record Board(String token, String name, String homepage) {
+    public record Board(String token, String name, String homepage, String office) {
     }
 
     public boolean configured() {

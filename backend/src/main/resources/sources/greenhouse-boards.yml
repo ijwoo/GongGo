@@ -1,5 +1,6 @@
 # Greenhouse 채용 게시판 (키 없음). 회사를 더하려면 boards에 token(boards.greenhouse.io/{token})과 이름을 넣는다.
 # homepage: 공고 페이지에 대표 이미지가 없을 때 대신 찾아볼 주소(쿠팡은 사이트가 봇 요청을 막아 비워 둠).
+# office: 서울 근무 공고를 지도에 놓을 사무실의 시·구. 없으면 '서울'(시 단위)로 놓는다.
 # 국내 근무지 + 개발 직군만 남긴다. 쿠팡처럼 공고가 많은 회사도 이 조건으로 수십 건 수준이 된다.
 gonggo:
   greenhouse:
@@ -8,9 +9,9 @@ gonggo:
     location-pattern: "seoul|korea|서울|한국|pangyo|판교|seongnam|성남"
     title-pattern: "engineer|developer|개발|scientist|machine learning|\\bml\\b|\\bai\\b|\\bsre\\b|devops|data|backend|frontend|android|ios"
     boards:
-      - { token: coupang, name: 쿠팡 }
-      - { token: krafton, name: 크래프톤, homepage: "https://www.krafton.com" }
-      - { token: daangn, name: 당근, homepage: "https://about.daangn.com" }
-      - { token: furiosaai, name: 퓨리오사AI, homepage: "https://furiosa.ai" }
+      - { token: coupang, name: 쿠팡, office: 서울 송파구 }
+      - { token: krafton, name: 크래프톤, homepage: "https://www.krafton.com", office: 서울 강남구 }
+      - { token: daangn, name: 당근, homepage: "https://about.daangn.com", office: 서울 서초구 }
+      - { token: furiosaai, name: 퓨리오사AI, homepage: "https://furiosa.ai", office: 서울 강남구 }
       - { token: moloco, name: 몰로코, homepage: "https://www.moloco.com" }
       - { token: sendbird, name: 센드버드, homepage: "https://sendbird.com" }

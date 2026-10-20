@@ -52,13 +52,14 @@ class GreenhouseNormalizerTest {
     }
 
     @Test
-    void 마감일이_없으면_상시_모집이고_근무지는_좌표_없이_메모로_둔다() {
+    void 마감일이_없으면_상시_모집이고_근무지는_메모와_시_단위_지역으로_둔다() {
         var c = normalizer.normalize(record(jobs.get(0)), NOW).content();
         assertThat(c.id()).isEqualTo("greenhouse-moloco-111");
         assertThat(c.category()).isEqualTo("job");
         assertThat(c.organizer().name()).isEqualTo("몰로코");
         assertThat(c.applicationDeadline()).isEqualTo(new Deadline.Rolling());
-        assertThat(c.venue()).isEqualTo(new Venue.Tbd("근무지 Seoul, South Korea"));
+        // 몰로코는 사무실 구를 모르므로 서울(시 단위)
+        assertThat(c.venue()).isEqualTo(new Venue.Tbd("근무지 Seoul, South Korea", new Venue.Area("서울", null)));
         assertThat(c.publishedAt()).isEqualTo(Instant.parse("2026-09-03T19:26:16Z"));
         assertThat(c.conditions().isArray()).isTrue();
     }
@@ -67,5 +68,16 @@ class GreenhouseNormalizerTest {
     void 마감일이_있으면_그_시각을_마감으로_쓴다() {
         var c = normalizer.normalize(record(jobs.get(1)), NOW).content();
         assertThat(c.applicationDeadline()).isEqualTo(new Deadline.AtTime(Instant.parse("2026-11-30T14:59:00Z")));
+    }
+
+    @Test
+    void 근무지_지역은_먼저_나온_도시이고_서울이면_회사_사무실_구를_쓴다() {
+        assertThat(GreenhouseNormalizer.areaOf("Seoul, South Korea", "서울 강남구")).contains("서울 강남구");
+        assertThat(GreenhouseNormalizer.areaOf("SEOUL", null)).contains("서울");
+        assertThat(GreenhouseNormalizer.areaOf("South Korea", "서울 송파구")).contains("서울 송파구");
+        assertThat(GreenhouseNormalizer.areaOf("South Korea", null)).isEmpty();
+        assertThat(GreenhouseNormalizer.areaOf("Hwaseong(Dongtan), South Korea / Seoul, South Korea", "서울 강남구"))
+                .contains("경기 화성");
+        assertThat(GreenhouseNormalizer.areaOf("Pangyo, Korea", "서울 강남구")).contains("경기 성남");
     }
 }

@@ -77,6 +77,9 @@ export interface MapCanvasProps {
   appliedBbox: Bbox | null;
   onSearchArea: (bbox: Bbox) => void;
   onShowList: () => void;
+  /** 지도 위에 뜬 패널이 가린 왼쪽·오른쪽 너비(px). 조작 버튼과 공고 맞추기를 그만큼 비켜 둔다 */
+  insetLeft?: number;
+  insetRight?: number;
 }
 
 type Status = "loading" | "ready" | "error" | "nokey";
@@ -87,7 +90,7 @@ interface Marker {
   group: Group;
 }
 
-export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchArea, onShowList }: MapCanvasProps) {
+export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchArea, onShowList, insetLeft = 0, insetRight = 0 }: MapCanvasProps) {
   const appKey = useKakaoMapKey();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KMap | null>(null);
@@ -107,9 +110,9 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
   const [attempt, setAttempt] = useState(0);
 
   // 최신 props를 지도 이벤트 핸들러에서 읽기 위한 참조
-  const latest = useRef({ items, selectedId, onSelect, appliedBbox });
+  const latest = useRef({ items, selectedId, onSelect, appliedBbox, insetLeft, insetRight });
   useEffect(() => {
-    latest.current = { items, selectedId, onSelect, appliedBbox };
+    latest.current = { items, selectedId, onSelect, appliedBbox, insetLeft, insetRight };
     bboxKeyRef.current = bboxKey;
   });
 
@@ -131,6 +134,7 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
     if (!map || !lib) return;
     const { items: current, selectedId: sel } = latest.current;
     const groups = groupForLevel(current, map.getLevel());
+    const jobIds = new Set(current.filter((a) => a.category === "job").map((a) => a.id));
     const seen = new Set<string>();
     for (const g of groups) {
       seen.add(g.key);
@@ -158,7 +162,10 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
       m.button.title = label;
       m.button.dataset.markerId = g.key;
       m.button.dataset.precision = g.precision;
+      const jobs = g.ids.filter((id) => jobIds.has(id)).length;
+      m.button.dataset.kind = jobs === 0 ? "event" : jobs === g.ids.length ? "job" : "mixed";
       m.button.className = markerClass(g, selected);
+      m.button.style.background = selected ? "" : markerColor(m.button.dataset.kind, g);
       m.button.textContent = g.cluster || g.ids.length > 1 ? String(g.ids.length) : "";
       m.button.setAttribute("aria-pressed", String(selected));
     }
@@ -187,7 +194,7 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
     }
     // 같은 장소의 여러 공고: 작은 목록을 띄워 고르게 한다
     const box = document.createElement("div");
-    box.className = "mb-3 min-w-52 max-w-72 rounded-md border border-[var(--line)] bg-[var(--elevated)] p-2 text-[13px] text-[var(--fg)] shadow-[var(--shadow)]";
+    box.className = "mb-5 max-h-80 min-w-56 max-w-80 overflow-y-auto rounded-lg border border-[var(--line)] bg-[var(--elevated)] p-2 text-[13px] text-[var(--fg)] shadow-[var(--shadow)]";
     const head = document.createElement("div");
     head.className = "mb-1 flex items-center justify-between gap-2";
     const heading = document.createElement("p");
@@ -232,7 +239,8 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
       for (const p of points) bounds.extend(new lib.LatLng(p.lat, p.lng));
     }
     programmaticRef.current = true;
-    map.setBounds(bounds, 40, 40, 40, 40);
+    const { insetLeft: left, insetRight: right } = latest.current;
+    map.setBounds(bounds, 48, 48 + right, 48, 48 + left);
   }
 
   /* 지도 생성 */
@@ -369,28 +377,33 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
     <div className="relative h-full min-h-[320px] w-full overflow-hidden bg-[var(--map-bg)]" data-map-status={status}>
       <div ref={containerRef} className="h-full w-full" aria-label="공고 위치 지도. 모든 공고는 목록에서도 볼 수 있습니다." role="region" />
 
-      <div className="pointer-events-none absolute top-2 left-2 z-[2] flex max-w-[calc(100%-64px)] flex-col items-start gap-1">
-        <p className="flex items-center gap-2 rounded-sm bg-panel/95 px-2 py-1 text-[11px] text-muted shadow-sm">
-          <span className="inline-flex items-center gap-1">
-            <span className="size-2.5 rounded-full bg-[#5b6573]" aria-hidden />
-            정확한 장소
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="size-2.5 rounded-full border-2 border-dashed border-[#5b6573]" aria-hidden />
-            대략 위치(시·구 단위)
-          </span>
-        </p>
+      <div
+        style={{ left: insetLeft + 12 }}
+        className="pointer-events-none absolute bottom-3 z-[2] hidden flex-wrap items-center gap-x-3 gap-y-1 rounded-full bg-panel/95 px-3 py-1.5 text-[11px] text-muted shadow-sm md:flex"
+      >
+        <span className="inline-flex items-center gap-1">
+          <span className="size-2.5 rounded-full" style={{ background: EVENT_COLOR }} aria-hidden />
+          행사·교육
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="size-2.5 rounded-full" style={{ background: JOB_COLOR }} aria-hidden />
+          채용
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="size-2.5 rounded-full border border-dashed border-[#5b6573] bg-white" aria-hidden />
+          점선 = 대략 위치(시·구)
+        </span>
       </div>
 
       {moved && status === "ready" ? (
-        <div className="absolute top-12 left-1/2 z-[2] -translate-x-1/2">
+        <div className="absolute top-3 z-[3] -translate-x-1/2" style={{ left: `calc(${insetLeft}px + (100% - ${insetLeft + insetRight}px) / 2)` }}>
           <Button variant="primary" size="sm" onClick={searchHere} className="shadow-[var(--shadow)]">
             <ScanSearch className="size-4" aria-hidden />이 지역 다시 검색
           </Button>
         </div>
       ) : null}
 
-      <div className="absolute top-2 right-2 z-[2] flex flex-col overflow-hidden rounded-md border border-line bg-panel shadow-sm">
+      <div style={{ right: insetRight + 12 }} className="absolute top-3 z-[2] flex flex-col overflow-hidden rounded-lg border border-line bg-panel shadow-[var(--shadow)]">
         <button type="button" aria-label="지도 확대" onClick={() => zoomBy(1)} disabled={status !== "ready"} className="inline-flex size-9 items-center justify-center hover:bg-subtle disabled:opacity-40">
           <Plus className="size-4" aria-hidden />
         </button>
@@ -403,7 +416,7 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
       </div>
 
       {geoMessage ? (
-        <div role="status" className="absolute inset-x-2 bottom-2 z-[2] rounded-md bg-panel px-3 py-2 text-[13px] shadow-[var(--shadow)]">
+        <div role="status" style={{ left: insetLeft + 12, right: insetRight + 12 }} className="absolute bottom-12 z-[2] rounded-md bg-panel px-3 py-2 text-[13px] shadow-[var(--shadow)]">
           {geoMessage}
         </div>
       ) : null}
@@ -449,16 +462,31 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
   );
 }
 
+const EVENT_COLOR = "#205d47";
+const JOB_COLOR = "#3b5bdb";
+const MIXED_COLOR = "#2b3440";
+
+/** 채용은 파랑, 행사·교육은 초록, 섞인 묶음은 짙은 회색. 대략 위치는 옅게 칠하고 점선 테두리 */
+function markerColor(kind: string | undefined, g: Group): string {
+  const base = kind === "job" ? JOB_COLOR : kind === "event" ? EVENT_COLOR : MIXED_COLOR;
+  return g.precision === "area" && !g.cluster ? `${base}d9` : base;
+}
+
+/** 공고 수에 따라 원 크기를 키운다 */
+function sizeFor(n: number): string {
+  if (n >= 50) return "size-14 text-[15px]";
+  if (n >= 10) return "size-11 text-sm";
+  if (n > 1) return "size-9 text-[13px]";
+  return "size-7 text-[11px]";
+}
+
 function markerClass(g: Group, selected: boolean): string {
-  if (g.cluster) {
-    return "flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#191f28] text-[13px] font-bold text-white shadow-md hover:scale-105 focus-visible:outline-2";
-  }
-  const area = g.precision === "area";
+  const area = g.precision === "area" && !g.cluster;
   return cn(
-    "flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[11px] font-bold shadow-md transition-transform hover:scale-110 focus-visible:outline-2",
-    area ? "border-2 border-dashed" : "border-2 border-white",
-    selected
-      ? cn("size-8 scale-110 ring-4 ring-[#3182f6]/30", area ? "border-[#3182f6] bg-[#3182f6]/25 text-[#1b64da]" : "bg-[#3182f6] text-white")
-      : cn("size-6", area ? "border-[#5b6573] bg-white/80 text-[#333d4b]" : "bg-[#5b6573] text-white"),
+    "flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full font-bold text-white shadow-[0_2px_8px_rgb(0_0_0/0.3)] transition-transform hover:scale-110 focus-visible:outline-2",
+    sizeFor(g.ids.length),
+    area ? "border-[3px] border-dashed border-white" : "border-[3px] border-white",
+    g.cluster && "ring-4 ring-white/50",
+    selected && "scale-110 bg-[#f59e0b] ring-4 ring-[#f59e0b]/35",
   );
 }

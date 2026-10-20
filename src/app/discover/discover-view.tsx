@@ -4,7 +4,6 @@ import { AlertTriangle, ArrowRight, List, RefreshCw, SearchX } from "lucide-reac
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { DetailHost } from "@/components/discover/detail-host";
 import { ActiveFilters, FilterButton, FilterSheet, SortSelect } from "@/components/discover/filters";
 import { CardGrid, CategoryNav, DiscoverHead, SectionHeader } from "@/components/discover/gallery";
 import { ClosingSoon, MySchedule } from "@/components/discover/side-rail";
@@ -60,25 +59,18 @@ export function DiscoverView() {
           </div>
         </div>
         <FilterSheet query={query} setQuery={setQuery} total={results.length} open={filterOpen} onOpenChange={setFilterOpen} />
-        <div className="flex min-h-0 flex-1">
-          <section aria-label="지도 탐색" className="flex min-w-0 flex-1 flex-col bg-panel">
-            <MapMode
-              results={results}
-              query={query}
-              setQuery={setQuery}
-              now={now}
-              hrefFor={(id) => `/discover?${serializeDiscoverQuery({ ...query, id })}`}
-              empty={<NoResults query={query} setQuery={setQuery} />}
-            />
-          </section>
-          <DetailHost
+        <section aria-label="지도 탐색" className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <MapMode
+            results={results}
+            query={query}
+            setQuery={setQuery}
+            now={now}
+            hrefFor={(id) => `/discover?${serializeDiscoverQuery({ ...query, id })}`}
+            empty={<NoResults query={query} setQuery={setQuery} />}
             selected={selected}
             missing={query.id !== null && selected === null}
-            onClose={() => setQuery({ id: null }, "replace")}
-            panelBreakpoint="(min-width: 1280px)"
-            panelClassName="hidden xl:block w-[28%] min-w-[360px] max-w-[480px] shrink-0"
           />
-        </div>
+        </section>
       </div>
     );
   }

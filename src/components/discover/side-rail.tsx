@@ -32,14 +32,12 @@ export function ClosingSoon({ list, now }: { list: Announcement[]; now: string }
   const items = closingSoonList(list, now, 3);
   return (
     <section aria-labelledby="closing-soon-title">
-      <div className="mb-2 flex items-baseline gap-2">
-        <h2 id="closing-soon-title" className="text-lg font-bold">
-          곧 마감하는 공고
-        </h2>
-        <span className="text-[13px] text-muted">신청 마감 기준</span>
-      </div>
+      <p className="mb-1 text-[13px] font-semibold text-accent-text">신청 마감 기준</p>
+      <h2 id="closing-soon-title" className="mb-2 text-[20px] leading-tight font-bold tracking-[-0.01em]">
+        곧 마감하는 공고
+      </h2>
       {items.length === 0 ? (
-        <p className="py-6 text-sm text-muted">현재 확인된 마감 임박 공고가 없어요.</p>
+        <p className="py-4 text-sm text-muted">신청 마감일이 확인된 접수 중 공고가 없어요.</p>
       ) : (
         <ul className="divide-y divide-line">
           {items.map((a) => {
@@ -90,9 +88,10 @@ export function MySchedule() {
   const shown = onDay.length ? onDay.slice(0, 2) : upcoming;
 
   return (
-    <section aria-labelledby="my-schedule-title" className="rounded-xl bg-accent-soft p-5">
+    <section aria-labelledby="my-schedule-title" className="xl:border-t xl:border-line xl:pt-8">
+      <p className="mb-1 text-[13px] font-semibold text-accent-text">이번 주</p>
       <div className="mb-4 flex items-center justify-between">
-        <h2 id="my-schedule-title" className="text-lg font-bold">
+        <h2 id="my-schedule-title" className="text-[20px] leading-tight font-bold tracking-[-0.01em]">
           내 일정
         </h2>
         <Link href="/calendar" className="inline-flex items-center gap-0.5 text-[13px] font-semibold text-accent-text hover:underline">
@@ -102,7 +101,7 @@ export function MySchedule() {
       </div>
 
       {!hydrated ? (
-        <div aria-busy="true" className="h-40 animate-pulse rounded-lg bg-panel/60" />
+        <div aria-busy="true" className="h-40 animate-pulse rounded-lg bg-subtle" />
       ) : !loggedIn ? (
         <div className="space-y-3">
           <p className="text-sm text-fg-2">로그인하면 저장한 공고의 신청 마감·행사 일정을 여기서 볼 수 있어요.</p>
@@ -156,7 +155,7 @@ export function MySchedule() {
                     const date = timingStartDate(e.timing);
                     return (
                       <li key={e.id}>
-                        <Link href={`/calendar?event=${e.id}`} className="group flex items-center gap-3 rounded-lg bg-panel p-2.5">
+                        <Link href={`/calendar?event=${e.id}`} className="group flex items-center gap-3 rounded-lg py-1.5 hover:bg-hover">
                           <DateBlock date={date} />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-[15px] font-semibold group-hover:text-accent-text">{e.title}</span>
@@ -176,7 +175,6 @@ export function MySchedule() {
           </div>
         </>
       )}
-      <p className="mt-4 text-center text-[13px] text-muted">저장한 공고를 일정으로 관리하세요.</p>
     </section>
   );
 }

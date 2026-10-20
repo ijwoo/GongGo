@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures";
 test("모바일: 1열 카드, 카테고리 가로 스크롤, 필터 시트, 상세 이동", async ({ page }) => {
   await page.goto("/discover");
   const cards = page.getByRole("list", { name: "지금 신청할 수 있는 공고" }).getByRole("listitem");
-  await expect(cards).toHaveCount(3);
+  await expect(cards).toHaveCount(6);
   const boxes = await cards.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
   expect(new Set(boxes).size).toBe(1); // 한 열
 

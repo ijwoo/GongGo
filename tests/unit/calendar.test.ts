@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findDuplicate, formatTiming, monthGrid, pendingRevisions, proposedTiming, timingFromAnnouncement } from "@/domain/calendar";
+import { agendaGroups, findDuplicate, formatTiming, monthGrid, nextEventAfter, pendingRevisions, proposedTiming, timingFromAnnouncement } from "@/domain/calendar";
 import { addLocalDays, seoulInstant } from "@/domain/time";
 import type { CalendarEvent } from "@/domain/types";
 import { applyFixtureChanges } from "../fixtures/changes";
@@ -65,5 +65,30 @@ describe("공고 변경 확인", () => {
     const e = eventFrom("su-gwanak-student", "event");
     const changed = applyFixtureChanges(ANNOUNCEMENTS, [{ id: "demo-docs-added", appliedAt: NOW }], TODAY);
     expect(pendingRevisions(e, changed.find((x) => x.id === "su-gwanak-student"))).toHaveLength(0);
+  });
+});
+
+describe("일정 목록 보기", () => {
+  function allDay(id: string, start: string, end = start): CalendarEvent {
+    return { id, announcementId: null, kind: "prep", title: id, timing: { type: "allDay", start, end, timeUnknown: false }, sourceVersion: null, reminders: [], memo: "", createdAt: NOW, updatedAt: NOW };
+  }
+
+  it("오늘부터 날짜별로 묶고, 진행 중인 여러 날 일정은 오늘 아래에 둔다", () => {
+    const events = [
+      allDay("past", addLocalDays(TODAY, -3)),
+      allDay("ongoing", addLocalDays(TODAY, -1), addLocalDays(TODAY, 1)),
+      allDay("later", addLocalDays(TODAY, 4)),
+      allDay("today", TODAY),
+    ];
+    expect(agendaGroups(events, TODAY).map((g) => [g.date, g.events.map((e) => e.id)])).toEqual([
+      [TODAY, ["ongoing", "today"]],
+      [addLocalDays(TODAY, 4), ["later"]],
+    ]);
+  });
+
+  it("일정 없는 날에서 다음 일정으로 갈 수 있다", () => {
+    const events = [allDay("a", addLocalDays(TODAY, 2)), allDay("b", addLocalDays(TODAY, 9))];
+    expect(nextEventAfter(events, addLocalDays(TODAY, 3))?.id).toBe("b");
+    expect(nextEventAfter(events, addLocalDays(TODAY, 9))).toBeNull();
   });
 });

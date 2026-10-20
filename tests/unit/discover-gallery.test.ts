@@ -82,7 +82,7 @@ describe("곧 마감하는 공고", () => {
 });
 
 describe("큐레이션", () => {
-  it("‘이번 주 눈여겨볼 기회’는 지금 신청할 수 있는 공고만, 행사가 가까운 순", () => {
+  it("‘지금 모집 중인 공고’는 지금 신청할 수 있는 공고만, 행사가 가까운 순", () => {
     const picks = pickOpenNow(ANNOUNCEMENTS, NOW, 3);
     expect(picks).toHaveLength(3);
     for (const a of picks) expect(["open", "closingSoon", "rolling"]).toContain(applicationState(a, NOW));

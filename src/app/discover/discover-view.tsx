@@ -96,7 +96,7 @@ export function DiscoverView() {
         ) : null}
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-x-9">
+      <div className="mt-9 grid grid-cols-1 gap-y-14 xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-x-10 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
           {loadError ? (
             <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-6 py-16 text-center">
@@ -124,6 +124,7 @@ export function DiscoverView() {
             <section aria-labelledby="all-results-title">
               <SectionHeader
                 id="all-results-title"
+                eyebrow="검색·필터 결과"
                 title={query.q ? `‘${query.q}’ 검색 결과` : "전체 공고"}
                 actions={sortControls}
               />
@@ -137,7 +138,7 @@ export function DiscoverView() {
                   onClick={() => setQuery({ ...DEFAULT_QUERY, categories: query.categories, regions: query.regions, online: query.online })}
                   className="text-sm font-medium text-accent-text hover:underline"
                 >
-                  둘러보기 처음으로
+                  검색·필터 지우기
                 </button>
               </div>
               <CardGrid items={results} now={now} label="공고 목록" />
@@ -145,7 +146,7 @@ export function DiscoverView() {
           )}
         </div>
 
-        <aside aria-label="마감·일정" className="grid min-w-0 content-start gap-8 md:grid-cols-2 xl:grid-cols-1 xl:border-l xl:border-line xl:pl-9">
+        <aside aria-label="마감·일정" className="grid min-w-0 content-start gap-10 md:grid-cols-2 md:gap-8 xl:grid-cols-1 xl:gap-10 xl:border-l xl:border-line xl:pl-10">
           <ClosingSoon list={list} now={now} />
           <MySchedule />
         </aside>
@@ -165,13 +166,13 @@ function Curated({
   setQuery: (patch: Partial<DiscoverQuery>, mode?: "push" | "replace") => void;
   sortControls: React.ReactNode;
 }) {
-  const openNow = pickOpenNow(results, now, 3);
+  const openNow = pickOpenNow(results, now, 6);
   const recent = pickRecent(results, new Set(openNow.map((a) => a.id)), 3);
   return (
-    <div className="space-y-12">
+    <div className="space-y-14">
       {openNow.length ? (
         <section aria-labelledby="open-now-title">
-          <SectionHeader id="open-now-title" title="이번 주 눈여겨볼 기회" description="지금 신청할 수 있는 공고 · 행사가 가까운 순" actions={sortControls} />
+          <SectionHeader id="open-now-title" eyebrow="신청할 수 있는 공고" title="지금 모집 중인 공고" description="행사가 가까운 순" actions={sortControls} />
           <CardGrid items={openNow} now={now} label="지금 신청할 수 있는 공고" />
         </section>
       ) : null}
@@ -179,8 +180,9 @@ function Curated({
         <section aria-labelledby="recent-title">
           <SectionHeader
             id="recent-title"
+            eyebrow="최근 등록"
             title="새로 올라온 공고"
-            description="최근 등록된 순"
+            description="등록이 최근인 순"
             actions={
               <>
                 {openNow.length ? null : sortControls}

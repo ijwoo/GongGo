@@ -3,7 +3,7 @@
 import { ChevronLeft, List, MapPinOff, X } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { CATEGORY_LABEL, hasCoordinates, venueShort } from "@/domain/announcement";
+import { CATEGORY_LABEL, hasCoordinates, mapPointOf, venueShort } from "@/domain/announcement";
 import { withinBbox, type DiscoverQuery } from "@/domain/discover";
 import type { Announcement } from "@/domain/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -13,9 +13,9 @@ import { MapCanvas } from "./map-canvas";
 import { SaveButton } from "./save-button";
 import { DeadlineCell, StateBadge } from "./status";
 
-/** 떠 있는 패널 너비(px). 지도는 이만큼을 비우고 공고를 맞춰 보여 준다 */
-const LIST_WIDTH = 360;
-const DETAIL_WIDTH = 420;
+/** 떠 있는 패널 너비(px). 지도는 이만큼을 비우고 공고를 맞춰 보여 준다. 아주 넓은 화면에서만 조금 넓힌다 */
+const LIST_WIDTH = { base: 360, wide: 392 };
+const DETAIL_WIDTH = { base: 420, wide: 440 };
 const GAP = 12;
 
 /**
@@ -54,8 +54,12 @@ export function MapMode({
   // 필터를 바꿔 고른 공고가 모두 빠지면 고르기 전 목록으로 돌아간다
   const shown = pickedShown.length ? pickedShown : located;
   const pickedPlace = pickedShown.length ? placeLabel(pickedShown[0]) : null;
+  const pickedArea = pickedShown.length > 0 && mapPointOf(pickedShown[0])?.precision === "area";
   const md = useMediaQuery("(min-width: 768px)");
   const lg = useMediaQuery("(min-width: 1024px)");
+  const wide = useMediaQuery("(min-width: 1536px)");
+  const listWidth = wide ? LIST_WIDTH.wide : LIST_WIDTH.base;
+  const detailWidth = wide ? DETAIL_WIDTH.wide : DETAIL_WIDTH.base;
   const showList = md && listOpen;
   const showDetail = lg && (selected !== null || missing);
 
@@ -73,8 +77,8 @@ export function MapMode({
         appliedBbox={query.bbox}
         onSearchArea={(bbox) => setQuery({ bbox })}
         onShowList={() => setQuery({ view: "list" })}
-        insetLeft={showList ? LIST_WIDTH + GAP * 2 : 0}
-        insetRight={showDetail ? DETAIL_WIDTH + GAP * 2 : 0}
+        insetLeft={showList ? listWidth + GAP * 2 : 0}
+        insetRight={showDetail ? detailWidth + GAP * 2 : 0}
       />
 
       {md && !listOpen ? (
@@ -90,13 +94,17 @@ export function MapMode({
 
       <div
         hidden={!showList}
-        style={{ width: LIST_WIDTH }}
+        style={{ width: listWidth }}
         className="absolute top-3 bottom-3 left-3 z-[4] flex flex-col overflow-hidden rounded-xl border border-line bg-panel shadow-[var(--shadow)]"
       >
         <div className="flex items-center gap-2 border-b border-line px-4 py-3">
-          <p className="min-w-0 truncate text-sm">
-            {pickedPlace ?? (query.bbox ? "이 지역" : "지도")}의 공고 <b className="num text-accent-text">{shown.length}</b>건
-          </p>
+          <div className="min-w-0">
+            <p className="truncate text-sm">
+              {pickedPlace ?? (query.bbox ? "이 지역" : "지도")}
+              {pickedArea ? " 내" : "의"} 공고 <b className="num text-accent-text">{shown.length}</b>건
+            </p>
+            {pickedArea ? <p className="text-xs text-muted">정확한 장소 미확인 · 시·구 단위 대략 위치</p> : null}
+          </div>
           {pickedPlace ? (
             <button
               type="button"
@@ -135,10 +143,14 @@ export function MapMode({
             <ul className="space-y-1 p-2" aria-label="지도 범위의 공고 목록">
               {shown.map((a) => {
                 const isSelected = a.id === query.id;
+                const area = mapPointOf(a)?.precision === "area";
                 return (
                   <li
                     key={a.id}
-                    className={cn("flex gap-2 rounded-lg px-2.5 py-2.5", isSelected ? "bg-accent-soft ring-1 ring-accent/30" : "hover:bg-subtle")}
+                    className={cn(
+                      "relative flex gap-2 rounded-lg px-2.5 py-2.5",
+                      isSelected ? "bg-accent-soft before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-accent" : "hover:bg-subtle",
+                    )}
                   >
                     <SaveButton a={a} />
                     <div className="min-w-0 flex-1">
@@ -152,15 +164,18 @@ export function MapMode({
                           e.preventDefault();
                           select(a.id);
                         }}
-                        className="line-clamp-2 text-[13px] leading-snug font-semibold hover:underline"
+                        className="line-clamp-2 text-sm leading-snug font-semibold break-keep hover:underline"
                       >
                         {a.title}
                       </Link>
-                      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                      <p className="mt-1 truncate text-xs text-muted">
+                        <span className="font-semibold text-accent-text">{a.category === "job" ? a.organizer.name : CATEGORY_LABEL[a.category]}</span>
+                        <span aria-hidden> · </span>
+                        {venueShort(a)}
+                        {area ? " · 대략 위치" : ""}
+                      </p>
+                      <p className="mt-1">
                         <StateBadge a={a} now={now} />
-                        <span>
-                          {a.category === "job" ? a.organizer.name : CATEGORY_LABEL[a.category]} · {venueShort(a)}
-                        </span>
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
@@ -192,7 +207,7 @@ export function MapMode({
         panelBreakpoint="(min-width: 1024px)"
         floating
         panelClassName={cn("absolute top-3 right-3 bottom-3 z-[4]", !showDetail && "hidden")}
-        panelStyle={{ width: DETAIL_WIDTH }}
+        panelStyle={{ width: detailWidth }}
       />
 
       <p className="pointer-events-none absolute bottom-2 left-2 z-[2] rounded-full bg-panel/95 px-3 py-1 text-xs shadow-sm md:hidden">

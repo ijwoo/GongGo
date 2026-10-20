@@ -75,6 +75,25 @@ export function upcomingEvents(events: CalendarEvent[], today: LocalDate): Calen
   return sortEvents(events.filter((e) => timingEndDate(e.timing) >= today));
 }
 
+/**
+ * 일정 목록 보기: 오늘(포함) 이후 일정을 날짜별로 묶는다.
+ * 이미 시작해 진행 중인 여러 날 일정은 오늘 아래에 둔다(지난 날짜 머리를 만들지 않음).
+ */
+export function agendaGroups(events: CalendarEvent[], today: LocalDate): { date: LocalDate; events: CalendarEvent[] }[] {
+  const groups = new Map<LocalDate, CalendarEvent[]>();
+  for (const e of upcomingEvents(events, today)) {
+    const start = timingStartDate(e.timing);
+    const date = start < today ? today : start;
+    groups.set(date, [...(groups.get(date) ?? []), e]);
+  }
+  return [...groups].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([date, list]) => ({ date, events: list }));
+}
+
+/** 고른 날짜 다음에 시작하는 첫 일정(일정 없는 날의 ‘다음 일정으로’) */
+export function nextEventAfter(events: CalendarEvent[], date: LocalDate): CalendarEvent | null {
+  return sortEvents(events.filter((e) => timingStartDate(e.timing) > date))[0] ?? null;
+}
+
 /** 일정 종류별로 영향을 주는 변경 */
 const RELEVANT_REVISIONS: Record<EventKind, RevisionKind[]> = {
   deadline: ["deadline", "cancel"],

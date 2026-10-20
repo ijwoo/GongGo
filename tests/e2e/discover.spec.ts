@@ -6,11 +6,11 @@ function count(page: import("@playwright/test").Page) {
 
 test("첫 화면은 사실에 맞는 두 큐레이션 섹션과 마감·일정 영역을 보여 준다", async ({ page }) => {
   await page.goto("/discover");
-  await expect(page.getByRole("heading", { level: 1, name: "다음 도전을 발견하세요." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "이번 주 눈여겨볼 기회" })).toBeVisible();
-  await expect(page.getByText("지금 신청할 수 있는 공고 · 행사가 가까운 순")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "공고 둘러보기" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "지금 모집 중인 공고" })).toBeVisible();
+  await expect(page.getByText("행사가 가까운 순")).toBeVisible();
   await expect(page.getByRole("heading", { name: "새로 올라온 공고" })).toBeVisible();
-  await expect(page.getByRole("list", { name: "지금 신청할 수 있는 공고" }).getByRole("listitem")).toHaveCount(3);
+  await expect(page.getByRole("list", { name: "지금 신청할 수 있는 공고" }).getByRole("listitem")).toHaveCount(6);
   await expect(page.getByRole("list", { name: "새로 올라온 공고" }).getByRole("listitem")).toHaveCount(3);
   // 추천 점수·참가자 수 같은 근거 없는 표시가 없다
   await expect(page.getByText(/관심 분야 기반 추천|참가자 \d+|평점/)).toHaveCount(0);
@@ -62,7 +62,7 @@ test("검색·세부 필터는 하나의 결과 그리드로 보여 주고, 빈 
   await search.press("Enter");
   await expect(page).toHaveURL(/q=%ED%8C%90%EA%B5%90|q=판교/);
   await expect(page.getByRole("heading", { name: "‘판교’ 검색 결과" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "이번 주 눈여겨볼 기회" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "지금 모집 중인 공고" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "판교 생성형 AI 서비스 해커톤 2기" })).toBeVisible();
 
   await page.getByRole("button", { name: /^필터(,.*)?$/ }).click();
@@ -71,7 +71,7 @@ test("검색·세부 필터는 하나의 결과 그리드로 보여 주고, 빈 
   await expect(page.getByText("조건에 맞는 공고가 없어요")).toBeVisible();
   await page.getByRole("button", { name: "조건 초기화" }).last().click();
   await expect(page).toHaveURL(/\/discover$/);
-  await expect(page.getByRole("heading", { name: "이번 주 눈여겨볼 기회" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "지금 모집 중인 공고" })).toBeVisible();
 });
 
 test("카드를 누르면 상세 페이지로 가고, 뒤로 가면 조건과 스크롤이 그대로다", async ({ page }) => {

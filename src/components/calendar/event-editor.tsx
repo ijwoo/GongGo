@@ -52,33 +52,16 @@ export function EventEditor({
       title="일정 수정"
       description={EVENT_KIND_LABEL[event.kind]}
       footer={
-        confirmDelete ? (
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[13px] font-semibold text-danger">이 일정과 예약된 알림을 삭제할까요?</p>
-            <div className="flex gap-2">
-              <Button onClick={() => setConfirmDelete(false)}>취소</Button>
-              <Button variant="danger" onClick={onDelete}>
-                삭제
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-between gap-2">
-            <Button variant="danger" onClick={() => setConfirmDelete(true)}>
-              삭제
-            </Button>
-            <div className="flex gap-2">
-              <Button onClick={onClose}>취소</Button>
-              <Button
-                variant="primary"
-                disabled={!timing || Boolean(titleError) || Boolean(dateError)}
-                onClick={() => timing && onSave({ title: title.trim(), timing, reminders, memo })}
-              >
-                저장
-              </Button>
-            </div>
-          </div>
-        )
+        <div className="flex justify-end gap-2">
+          <Button onClick={onClose}>취소</Button>
+          <Button
+            variant="primary"
+            disabled={!timing || Boolean(titleError) || Boolean(dateError)}
+            onClick={() => timing && onSave({ title: title.trim(), timing, reminders, memo })}
+          >
+            저장
+          </Button>
+        </div>
       }
     >
       <div className="space-y-4 p-4 text-[13px]">
@@ -90,7 +73,7 @@ export function EventEditor({
             onChange={(e) => setTitle(e.target.value)}
             aria-invalid={Boolean(titleError)}
             aria-describedby={titleError ? "title-error" : undefined}
-            className="h-10 w-full rounded-md border border-line bg-panel px-2 aria-[invalid=true]:border-danger"
+            className="h-10 w-full rounded-md border border-line bg-panel px-2.5 text-sm aria-[invalid=true]:border-danger"
           />
           {titleError ? (
             <span id="title-error" className="mt-1 block text-xs text-danger">
@@ -98,11 +81,13 @@ export function EventEditor({
             </span>
           ) : null}
         </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} className="size-4 accent-[var(--accent)]" />
-          종일 일정
-        </label>
-        {timeUnknown && allDay ? <p className="text-xs text-warning">공고에 마감 시각이 없어 날짜만 등록된 일정이에요.</p> : null}
+        <div>
+          <label className="flex w-fit items-center gap-2">
+            <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} className="size-4 accent-[var(--accent)]" />
+            종일
+          </label>
+          {timeUnknown && allDay ? <p className="mt-1 text-xs text-muted">공고에 마감 시각이 없어 날짜만 등록했어요.</p> : null}
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <label className="block">
             <span className="mb-1 block font-semibold">시작일</span>
@@ -136,10 +121,31 @@ export function EventEditor({
         {dateError ? <p className="text-xs text-danger">{dateError}</p> : null}
         <label className="block">
           <span className="mb-1 block font-semibold">메모</span>
-          <textarea value={memo} maxLength={500} rows={2} onChange={(e) => setMemo(e.target.value)} className="w-full rounded-md border border-line bg-panel px-2 py-1.5" />
+          <textarea value={memo} maxLength={500} rows={2} onChange={(e) => setMemo(e.target.value)} className="w-full rounded-md border border-line bg-panel px-2.5 py-1.5 text-sm" />
         </label>
         <div className="border-t border-line pt-4">
           <ReminderFields timing={timing} value={reminders} onChange={setReminders} />
+        </div>
+
+        {/* 삭제는 저장 버튼과 떨어진 본문 끝에 두고, 한 번 더 확인한다 */}
+        <div className="border-t border-line pt-4">
+          {confirmDelete ? (
+            <div role="alert" className="rounded-md bg-danger-soft p-3">
+              <p className="font-semibold text-danger">이 일정과 예약된 알림을 삭제할까요?</p>
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" onClick={() => setConfirmDelete(false)}>
+                  취소
+                </Button>
+                <Button size="sm" variant="danger" onClick={onDelete}>
+                  삭제
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setConfirmDelete(true)} className="text-[13px] font-semibold text-danger hover:underline">
+              일정 삭제
+            </button>
+          )}
         </div>
       </div>
     </Sheet>

@@ -33,7 +33,7 @@ test("목록에서 고르면 해당 마커가 강조되고, 보기 전환 후에
   // 목록으로 돌아가도 분야·지역 조건은 유지된다
   await page.getByRole("button", { name: "목록으로 보기" }).click();
   await expect(page).not.toHaveURL(/view=map/);
-  await expect(page.getByRole("heading", { level: 1, name: "다음 도전을 발견하세요." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "공고 둘러보기" })).toBeVisible();
 });
 
 test("목록 ↔ 지도 전환 시 탐색 조건이 유지된다", async ({ page }) => {
@@ -55,7 +55,7 @@ test("지도를 불러오지 못해도 목록은 정상 동작한다", async ({ 
   await expect(page.getByRole("list", { name: "지도 범위의 공고 목록" }).getByRole("listitem").first()).toBeVisible();
   await page.getByRole("alert").getByRole("button", { name: "목록으로 보기" }).click();
   await expect(page).not.toHaveURL(/view=map/);
-  await expect(page.getByRole("heading", { name: "이번 주 눈여겨볼 기회" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "지금 모집 중인 공고" })).toBeVisible();
 });
 
 test("정확한 장소와 대략 위치를 다른 모양으로 표시하고, 클러스터를 누르면 확대된다", async ({ page }) => {

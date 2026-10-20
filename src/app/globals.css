@@ -13,8 +13,9 @@
   --elevated: #ffffff;
   --fg: #202622;
   --fg-2: #3a423c;
-  --muted: #6f776f;
-  --faint: #8a918a;
+  /* 보조 글자도 배경(#fcfcfa) 대비 4.5:1 이상. 권장값 #788078은 4.2:1이라 조금 진하게 쓴다 */
+  --muted: #656d66;
+  --faint: #6f776f;
   --line: #e7ebe6;
   --line-strong: #d3dad2;
   --subtle: #f3f5f1;
@@ -58,7 +59,7 @@
   --fg: #eaefe9;
   --fg-2: #cdd5cc;
   --muted: #9aa49a;
-  --faint: #7c867c;
+  --faint: #8c968c;
   --line: #252d28;
   --line-strong: #344038;
   --subtle: #1c231f;

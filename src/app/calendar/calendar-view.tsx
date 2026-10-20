@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Download, Pencil } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Download, List as ListIcon, Pencil } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useRef, type KeyboardEvent } from "react";
@@ -12,19 +12,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonClass, IconButton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import {
+  agendaGroups,
   EVENT_KIND_LABEL,
   formatTiming,
   monthGrid,
+  nextEventAfter,
   occursOn,
   pendingRevisions,
   proposedTiming,
   sortEvents,
+  timingStartDate,
   upcomingEvents,
 } from "@/domain/calendar";
 import { buildIcs } from "@/domain/ics";
 import { offsetLabel } from "@/domain/reminders";
-import { addLocalDays, formatLocalDate, formatMonth } from "@/domain/time";
+import { addLocalDays, formatLocalDate, formatLocalDateShort, formatMonth, localDaysBetween } from "@/domain/time";
 import { EVENT_KINDS, type CalendarEvent, type EventKind } from "@/domain/types";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePersonal } from "@/hooks/use-personal";
 import { useAnnouncements, useNow, useToday } from "@/lib/app-data";
 import { cn } from "@/lib/cn";
@@ -32,6 +36,11 @@ import { deleteEvent, eventsNeedingReview, resolveEventChange, updateEvent } fro
 import { announcementHref } from "@/lib/announcement-href";
 
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
+
+type CalendarMode = "month" | "list";
+
+/** 일정 종류 점 색. 글자 라벨과 함께 쓴다 */
+const KIND_DOT: Record<EventKind, string> = { deadline: "bg-danger", event: "bg-accent", prep: "bg-success" };
 
 export function CalendarView() {
   return (
@@ -53,6 +62,8 @@ function useCalendarParams(today: string) {
   const kindsParam = params.get("kinds");
   const kinds = kindsParam ? (kindsParam.split(",").filter((k) => (EVENT_KINDS as readonly string[]).includes(k)) as EventKind[]) : [...EVENT_KINDS];
   const editing = params.get("event");
+  const viewParam = params.get("view");
+  const view: CalendarMode | null = viewParam === "list" || viewParam === "month" ? viewParam : null;
   const set = (patch: Record<string, string | null>, mode: "push" | "replace" = "replace") => {
     const next = new URLSearchParams(params.toString());
     for (const [k, v] of Object.entries(patch)) {
@@ -63,7 +74,7 @@ function useCalendarParams(today: string) {
     if (mode === "push") router.push(href, { scroll: false });
     else router.replace(href, { scroll: false });
   };
-  return { month, date, kinds, editing, set };
+  return { month, date, kinds, editing, view, set };
 }
 
 function CalendarBody() {
@@ -72,7 +83,10 @@ function CalendarBody() {
   const toast = useToast();
   const { state, update } = usePersonal();
   const { byId } = useAnnouncements();
-  const { month, date, kinds, editing, set } = useCalendarParams(today);
+  const { month, date, kinds, editing, view: viewParam, set } = useCalendarParams(today);
+  // 보기를 고르지 않았으면 넓은 화면은 월간, 휴대폰은 일정 목록
+  const md = useMediaQuery("(min-width: 768px)");
+  const view: CalendarMode = viewParam ?? (md ? "month" : "list");
   const [year, month1] = month.split("-").map(Number);
   const days = monthGrid(year, month1);
   const events = state.events.filter((e) => kinds.includes(e.kind));
@@ -112,7 +126,7 @@ function CalendarBody() {
     link.download = `gonggoham-${today}.ics`;
     link.click();
     URL.revokeObjectURL(url);
-    toast({ message: `일정 ${target.length}개를 .ics 파일로 내려받았어요.` });
+    toast({ message: `일정 ${target.length}개를 .ics 파일로 내려받았어요. 이후 바뀐 일정은 다시 내려받아야 해요.` });
   };
 
   const toggleKind = (k: EventKind) => {
@@ -120,22 +134,26 @@ function CalendarBody() {
     set({ kinds: next.length === EVENT_KINDS.length ? null : next.join(",") || "none" });
   };
 
+  const edit = (id: string) => set({ event: id }, "push");
   const dayEvents = sortEvents(events.filter((e) => occursOn(e, date)));
-  const upcoming = upcomingEvents(events, today).slice(0, 8);
+  // 고른 날짜에 이미 보이는 일정은 ‘다가오는 일정’에서 다시 보여 주지 않는다
+  const shownIds = new Set(dayEvents.map((e) => e.id));
+  const upcoming = upcomingEvents(events, today)
+    .filter((e) => !shownIds.has(e.id))
+    .slice(0, 6);
+  const next = dayEvents.length === 0 ? nextEventAfter(events, date) : null;
+  const noEvents = events.length === 0;
 
   return (
-    <>
+    <div className="mx-auto w-full max-w-[1240px]">
       <PageHeader
         title="내 캘린더"
-        description="관심 저장과 별개로, 직접 추가한 신청 마감·행사·준비 일정을 모아 봐요. 시간은 한국 시간 기준이에요."
+        description="직접 추가한 신청 마감·행사·준비 일정이에요. 시간은 한국 시간 기준이에요."
         actions={
-          <div className="flex flex-col items-start gap-1 sm:items-end">
-            <Button size="sm" onClick={exportIcs}>
-              <Download className="size-4" aria-hidden />
-              .ics 내보내기
-            </Button>
-            <p className="max-w-64 text-[11px] text-faint sm:text-right">한 번 내려받는 파일이에요. 이후 변경은 외부 캘린더에 자동 반영되지 않아요.</p>
-          </div>
+          <Button size="sm" onClick={exportIcs} title="한 번 내려받는 파일이라, 이후 바뀐 일정은 다시 내려받아야 해요.">
+            <Download className="size-4" aria-hidden />
+            .ics 내보내기
+          </Button>
         }
       />
 
@@ -197,105 +215,157 @@ function CalendarBody() {
         </section>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
-        <section aria-labelledby="month-title" className="rounded-lg border border-line bg-panel">
-          <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
-            <IconButton label="이전 달" onClick={() => moveMonth(-1)}>
-              <ChevronLeft className="size-4" aria-hidden />
-            </IconButton>
-            <h2 id="month-title" className="num min-w-28 text-center font-bold" aria-live="polite">
-              {formatMonth(year, month1)}
-            </h2>
-            <IconButton label="다음 달" onClick={() => moveMonth(1)}>
-              <ChevronRight className="size-4" aria-hidden />
-            </IconButton>
-            <Button size="sm" variant="ghost" onClick={() => selectDate(today)}>
-              오늘
-            </Button>
-            <fieldset className="ml-auto flex flex-wrap items-center gap-3 text-[13px]">
-              <legend className="sr-only">일정 종류 필터</legend>
-              {EVENT_KINDS.map((k) => (
-                <label key={k} className="flex cursor-pointer items-center gap-1.5">
-                  <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={kinds.includes(k)} onChange={() => toggleKind(k)} />
-                  <KindTag kind={k} />
-                  <span className="hidden sm:inline">{EVENT_KIND_LABEL[k]}</span>
-                </label>
-              ))}
-            </fieldset>
-          </div>
-          <div ref={gridRef} role="grid" aria-labelledby="month-title" onKeyDown={onGridKey} className="p-2">
-            <div role="row" className="grid grid-cols-7 text-center text-xs text-muted">
-              {WEEK.map((w, i) => (
-                <span key={w} role="columnheader" className={cn("py-1.5", i === 0 && "text-danger")}>
-                  {w}
-                </span>
-              ))}
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div role="radiogroup" aria-label="보기" className="inline-flex rounded-md border border-line-strong p-0.5">
+          {(["month", "list"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={view === v}
+              onClick={() => set({ view: v })}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-[5px] px-3 text-[13px] font-semibold",
+                view === v ? "bg-accent text-accent-fg" : "text-muted hover:text-fg",
+              )}
+            >
+              {v === "month" ? <CalendarDays className="size-4" aria-hidden /> : <ListIcon className="size-4" aria-hidden />}
+              {v === "month" ? "월간" : "일정 목록"}
+            </button>
+          ))}
+        </div>
+        <div role="group" aria-label="일정 종류" className="flex flex-wrap items-center gap-1.5">
+          {EVENT_KINDS.map((k) => {
+            const on = kinds.includes(k);
+            return (
+              <button
+                key={k}
+                type="button"
+                aria-pressed={on}
+                onClick={() => toggleKind(k)}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[13px] font-medium transition-colors",
+                  on ? "border-line-strong bg-panel text-fg" : "border-dashed border-line-strong text-muted line-through decoration-1",
+                )}
+              >
+                <span aria-hidden className={cn("size-2 rounded-full", on ? KIND_DOT[k] : "bg-line-strong")} />
+                {EVENT_KIND_LABEL[k]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {view === "list" ? (
+        <section aria-labelledby="agenda-title" className="max-w-[760px]">
+          <h2 id="agenda-title" className="sr-only">
+            다가오는 일정 목록
+          </h2>
+          <Agenda events={events} today={today} byId={byId} onEdit={edit} emptyAll={noEvents} />
+        </section>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px]">
+          <section aria-labelledby="month-title" className="min-w-0 rounded-lg border border-line bg-panel">
+            <div className="flex items-center gap-1 border-b border-line px-3 py-2">
+              <IconButton label="이전 달" onClick={() => moveMonth(-1)}>
+                <ChevronLeft className="size-4" aria-hidden />
+              </IconButton>
+              <h2 id="month-title" className="num min-w-28 text-center text-[17px] font-bold" aria-live="polite">
+                {formatMonth(year, month1)}
+              </h2>
+              <IconButton label="다음 달" onClick={() => moveMonth(1)}>
+                <ChevronRight className="size-4" aria-hidden />
+              </IconButton>
+              <Button size="sm" className="ml-1" onClick={() => selectDate(today)}>
+                오늘
+              </Button>
             </div>
-            {Array.from({ length: 6 }, (_, row) => (
-              <div role="row" key={row} className="grid grid-cols-7 border-t border-line">
-                {days.slice(row * 7, row * 7 + 7).map((d) => {
-                  const inMonth = d.slice(0, 7) === month;
-                  const list = sortEvents(events.filter((e) => occursOn(e, d)));
-                  const selected = d === date;
-                  const isToday = d === today;
-                  return (
-                    <div role="gridcell" key={d} aria-selected={selected} className="min-w-0 border-l border-line first:border-l-0">
-                      <button
-                        type="button"
-                        data-date={d}
-                        tabIndex={selected ? 0 : -1}
-                        onClick={() => selectDate(d)}
-                        aria-label={`${formatLocalDate(d)}${isToday ? ", 오늘" : ""}, 일정 ${list.length}개`}
-                        className={cn(
-                          "flex h-20 w-full flex-col items-stretch gap-0.5 p-1 text-left transition-colors md:h-24",
-                          selected ? "bg-accent-soft" : "hover:bg-subtle",
-                          !inMonth && "opacity-45",
-                        )}
-                      >
-                        <span
+            <div ref={gridRef} role="grid" aria-labelledby="month-title" onKeyDown={onGridKey} className="p-2">
+              <div role="row" className="grid grid-cols-7 text-center text-xs text-muted">
+                {WEEK.map((w, i) => (
+                  <span key={w} role="columnheader" className={cn("py-1.5", i === 0 && "text-danger")}>
+                    {w}
+                  </span>
+                ))}
+              </div>
+              {Array.from({ length: 6 }, (_, row) => (
+                <div role="row" key={row} className="grid grid-cols-7 border-t border-line">
+                  {days.slice(row * 7, row * 7 + 7).map((d) => {
+                    const inMonth = d.slice(0, 7) === month;
+                    const list = sortEvents(events.filter((e) => occursOn(e, d)));
+                    const selected = d === date;
+                    const isToday = d === today;
+                    return (
+                      <div role="gridcell" key={d} aria-selected={selected} className="min-w-0 border-l border-line first:border-l-0">
+                        <button
+                          type="button"
+                          data-date={d}
+                          tabIndex={selected ? 0 : -1}
+                          onClick={() => selectDate(d)}
+                          aria-label={`${formatLocalDate(d)}${isToday ? ", 오늘" : ""}, 일정 ${list.length}개`}
                           className={cn(
-                            "num inline-flex size-6 items-center justify-center self-start rounded-full text-xs font-semibold",
-                            isToday && "bg-accent text-accent-fg",
+                            "flex h-16 w-full flex-col items-stretch gap-0.5 p-1 text-left transition-colors sm:h-20 xl:h-[88px]",
+                            // 선택한 날은 테두리, 오늘은 숫자 원으로 서로 다르게 보인다
+                            selected ? "bg-accent-soft shadow-[inset_0_0_0_2px_var(--accent)]" : "hover:bg-subtle",
+                            !inMonth && "opacity-45",
                           )}
                         >
-                          {Number(d.slice(8))}
-                        </span>
-                        {list.slice(0, 2).map((e) => (
-                          <span key={e.id} className="flex min-w-0 items-center gap-1 text-[11px] leading-tight">
-                            <KindTag kind={e.kind} className="h-4 px-0.5 text-[10px]" />
-                            <span className="hidden truncate md:inline">{e.title}</span>
+                          <span
+                            className={cn(
+                              "num inline-flex size-6 items-center justify-center self-start rounded-full text-xs font-semibold",
+                              isToday && "bg-accent text-accent-fg",
+                            )}
+                          >
+                            {Number(d.slice(8))}
                           </span>
-                        ))}
-                        {list.length > 2 ? <span className="num text-[11px] text-muted">+{list.length - 2}</span> : null}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <div className="space-y-4">
-          <section aria-labelledby="day-title" className="rounded-lg border border-line bg-panel">
-            <h2 id="day-title" className="border-b border-line px-4 py-2.5 text-sm font-bold">
-              {formatLocalDate(date)} {date === today ? "· 오늘" : ""}
-            </h2>
-            {dayEvents.length === 0 ? (
-              <p className="px-4 py-6 text-center text-[13px] text-muted">이 날짜에는 일정이 없어요.</p>
-            ) : (
-              <EventList items={dayEvents} onEdit={(id) => set({ event: id }, "push")} byId={byId} />
-            )}
+                          {list.slice(0, 2).map((e) => (
+                            <span key={e.id} className="flex min-w-0 items-center gap-1 text-[11px] leading-tight">
+                              <KindTag kind={e.kind} className="h-4 px-0.5 text-[10px]" />
+                              <span className="hidden truncate md:inline">{e.title}</span>
+                            </span>
+                          ))}
+                          {list.length > 2 ? <span className="num text-[11px] text-muted">+{list.length - 2}</span> : null}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </section>
-          <section aria-labelledby="upcoming-title" className="rounded-lg border border-line bg-panel">
-            <h2 id="upcoming-title" className="border-b border-line px-4 py-2.5 text-sm font-bold">
-              다가오는 일정
-            </h2>
-            {upcoming.length === 0 ? (
-              <div className="p-4">
+
+          <div className="min-w-0 space-y-6">
+            <section aria-labelledby="day-title">
+              <h2 id="day-title" className="mb-2 flex items-baseline gap-2 text-[17px] font-bold">
+                {formatLocalDate(date)}
+                {date === today ? <span className="text-[13px] font-semibold text-accent-text">오늘</span> : null}
+              </h2>
+              {dayEvents.length === 0 ? (
+                <div className="rounded-lg bg-subtle px-4 py-4 text-[13px] text-muted">
+                  <p>이날은 일정이 없어요.</p>
+                  {next ? (
+                    <button
+                      type="button"
+                      onClick={() => selectDate(timingStartDate(next.timing))}
+                      className="mt-1.5 inline-flex items-center gap-1 text-left font-semibold text-accent-text hover:underline"
+                    >
+                      다음 일정 {formatLocalDateShort(timingStartDate(next.timing))} · {next.title}
+                      <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <EventList items={dayEvents} onEdit={edit} byId={byId} />
+              )}
+            </section>
+            <section aria-labelledby="upcoming-title">
+              <h2 id="upcoming-title" className="mb-2 text-[17px] font-bold">
+                다가오는 일정
+              </h2>
+              {noEvents ? (
                 <EmptyState
                   icon={<CalendarDays className="size-6 text-faint" aria-hidden />}
-                  title="다가오는 일정이 없어요"
+                  title="아직 일정이 없어요"
                   description="공고 상세에서 ‘내 캘린더에 추가’를 눌러 보세요."
                   action={
                     <Link href="/discover" className={buttonClass("primary", "sm")}>
@@ -303,13 +373,15 @@ function CalendarBody() {
                     </Link>
                   }
                 />
-              </div>
-            ) : (
-              <EventList items={upcoming} onEdit={(id) => set({ event: id }, "push")} byId={byId} showDate />
-            )}
-          </section>
+              ) : upcoming.length === 0 ? (
+                <p className="text-[13px] text-muted">{dayEvents.length ? "이 밖에 다가오는 일정은 없어요." : "다가오는 일정이 없어요."}</p>
+              ) : (
+                <EventList items={upcoming} onEdit={edit} byId={byId} showDate />
+              )}
+            </section>
+          </div>
         </div>
-      </div>
+      )}
 
       {editingEvent ? (
         <EventEditor
@@ -329,7 +401,56 @@ function CalendarBody() {
           }}
         />
       ) : null}
-    </>
+    </div>
+  );
+}
+
+/** 일정 목록 보기: 오늘부터 날짜별로 묶어 읽기 쉽게 */
+function Agenda({
+  events,
+  today,
+  byId,
+  onEdit,
+  emptyAll,
+}: {
+  events: CalendarEvent[];
+  today: string;
+  byId: ReturnType<typeof useAnnouncements>["byId"];
+  onEdit: (id: string) => void;
+  emptyAll: boolean;
+}) {
+  const groups = agendaGroups(events, today);
+  if (groups.length === 0) {
+    return (
+      <EmptyState
+        icon={<CalendarDays className="size-6 text-faint" aria-hidden />}
+        title={emptyAll ? "아직 일정이 없어요" : "다가오는 일정이 없어요"}
+        description="공고 상세에서 ‘내 캘린더에 추가’를 눌러 보세요."
+        action={
+          <Link href="/discover" className={buttonClass("primary", "sm")}>
+            공고 둘러보기
+          </Link>
+        }
+      />
+    );
+  }
+  return (
+    <ol className="space-y-6">
+      {groups.map((g) => {
+        const days = localDaysBetween(today, g.date);
+        return (
+          <li key={g.date}>
+            <h3 className="mb-1 flex items-baseline gap-2 border-b border-line pb-2 text-[15px] font-bold">
+              <span className="num">{formatLocalDate(g.date)}</span>
+              <span className={cn("text-[13px] font-semibold", days === 0 ? "text-accent-text" : "text-muted")}>
+                {days === 0 ? "오늘" : days === 1 ? "내일" : `${days}일 후`}
+              </span>
+            </h3>
+            <EventList items={g.events} onEdit={onEdit} byId={byId} />
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -345,7 +466,7 @@ function EventList({
   showDate?: boolean;
 }) {
   return (
-    <ul className="divide-y divide-line">
+    <ul className="divide-y divide-line rounded-lg border border-line bg-panel">
       {items.map((e) => {
         const a = e.announcementId ? byId.get(e.announcementId) : undefined;
         const changed = pendingRevisions(e, a).length > 0;

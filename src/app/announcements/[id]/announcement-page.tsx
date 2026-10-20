@@ -27,7 +27,7 @@ export function AnnouncementPage({ id }: { id: string }) {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pt-6 pb-16 sm:px-6 md:pt-8">
+    <div className="mx-auto w-full max-w-[1240px] px-4 pt-4 pb-28 sm:px-6 md:pt-6 lg:px-10 lg:pb-20">
       <Link
         href={discoverHref}
         onClick={(e) => {
@@ -35,14 +35,14 @@ export function AnnouncementPage({ id }: { id: string }) {
           e.preventDefault();
           router.back();
         }}
-        className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-md px-1 text-[15px] font-medium text-muted hover:text-fg"
+        className="mb-4 inline-flex h-10 items-center gap-1.5 rounded-md px-1 text-sm font-medium text-muted hover:text-fg lg:mb-6"
       >
         <ArrowLeft className="size-4" aria-hidden />
         공고 둘러보기
       </Link>
       {a ? (
-        <section aria-label="공고 상세" className="overflow-hidden rounded-xl border border-line bg-panel">
-          <AnnouncementDetail key={a.id} a={a} headingLevel={2} variant="page" />
+        <section aria-label="공고 상세">
+          <AnnouncementDetail key={a.id} a={a} headingLevel={1} variant="page" />
         </section>
       ) : (
         <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-6 py-16 text-center">

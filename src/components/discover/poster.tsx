@@ -12,24 +12,44 @@ import { cn } from "@/lib/cn";
  * 자체 표지는 실제 기관이 만든 공식 포스터처럼 보이지 않도록 사진·로고 없이 단색과 글자·단순 도형만 쓴다.
  * 템플릿은 공고 id로 정해져 렌더링마다 바뀌지 않는다. 색은 globals.css의 --poster-* 토큰.
  */
-export function Poster({ a, className }: { a: Announcement; className?: string }) {
+export function Poster({ a, className, variant = "card" }: { a: Announcement; className?: string; variant?: "card" | "detail" }) {
   const [failed, setFailed] = useState(false);
   const image = a.image && !failed ? a.image : null;
+  const contain = image?.kind === "poster";
   return (
-    <div className={cn("relative aspect-[16/10] w-full overflow-hidden rounded-[10px] bg-subtle", className)}>
+    <div
+      className={cn(
+        "relative aspect-[16/10] w-full overflow-hidden bg-subtle",
+        variant === "detail" ? "rounded-xl" : "rounded-[10px]",
+        className,
+      )}
+    >
       {image ? (
-        // 출처 이미지는 크기를 모르는 외부 주소라 next/image 대신 img를 쓰고, 고정 비율 상자로 레이아웃 이동을 막는다
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={image.url}
-          alt={image.alt ?? ""}
-          loading="lazy"
-          decoding="async"
-          // 일부 사이트는 다른 출처의 이미지 요청을 막으므로 출처 정보를 보내지 않는다
-          referrerPolicy="no-referrer"
-          onError={() => setFailed(true)}
-          className={cn("absolute inset-0 size-full", image.kind === "poster" ? "object-contain" : "object-cover")}
-        />
+        <>
+          {contain ? (
+            // 포스터는 글자가 잘리지 않게 contain으로 두고, 남는 여백은 같은 이미지를 흐리게 깔아 채운다
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={image.url}
+              alt=""
+              aria-hidden
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 size-full scale-110 object-cover opacity-35 blur-2xl"
+            />
+          ) : null}
+          {/* 출처 이미지는 크기를 모르는 외부 주소라 next/image 대신 img를 쓰고, 고정 비율 상자로 레이아웃 이동을 막는다 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={image.url}
+            alt={image.alt ?? ""}
+            loading={variant === "detail" ? "eager" : "lazy"}
+            decoding="async"
+            // 일부 사이트는 다른 출처의 이미지 요청을 막으므로 출처 정보를 보내지 않는다
+            referrerPolicy="no-referrer"
+            onError={() => setFailed(true)}
+            className={cn("absolute inset-0 size-full", contain ? "object-contain" : "object-cover")}
+          />
+        </>
       ) : (
         <GeneratedPoster a={a} />
       )}
@@ -70,7 +90,7 @@ function Shape({ variant }: { variant: number }) {
       );
     case 2:
       return (
-        <svg className="absolute top-0 right-[6%] h-[40%]" viewBox="0 0 100 100" preserveAspectRatio="xMaxYMin meet">
+        <svg className="absolute top-0 right-[17%] h-[40%]" viewBox="0 0 100 100" preserveAspectRatio="xMaxYMin meet">
           {[0, 1, 2, 3].map((i) => (
             <rect key={i} x={20 + i * 20} y="0" width="10" height={40 + i * 20} fill={fill} />
           ))}
@@ -84,7 +104,7 @@ function Shape({ variant }: { variant: number }) {
       );
     case 4:
       return (
-        <svg className="absolute top-[9%] right-[6.5%] h-[30%]" viewBox="0 0 100 100">
+        <svg className="absolute top-[9%] right-[17%] h-[30%]" viewBox="0 0 100 100">
           {[0, 1, 2].map((r) => [0, 1, 2].map((c) => <rect key={`${r}${c}`} x={c * 36} y={r * 36} width="26" height="26" rx="3" fill={fill} opacity={(r + c) % 2 ? 0.55 : 1} />))}
         </svg>
       );

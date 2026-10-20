@@ -121,9 +121,12 @@ export function MapCanvas({ items, selectedId, onSelect, onPickPlace, pickedIds 
 
   function labelOf(g: Group): string {
     if (g.cluster) return `공고 ${g.ids.length}건이 모인 지역. 눌러서 확대`;
-    if (g.ids.length > 1) return `같은 장소의 공고 ${g.ids.length}건${g.precision === "area" ? " · 대략 위치" : ""}`;
-    const title = latest.current.items.find((a) => a.id === g.ids[0])?.title ?? "공고";
-    return g.precision === "area" ? `${title} · 대략 위치` : title;
+    const first = latest.current.items.find((a) => a.id === g.ids[0]);
+    const area = first?.venue.status === "tbd" ? first.venue.area?.label : undefined;
+    // 시·구만 알려진 공고 여러 건을 한 행사장에 모인 것처럼 말하지 않는다
+    if (g.ids.length > 1) return g.precision === "area" ? `${area ?? "이 지역"} 내 공고 ${g.ids.length}건 · 정확한 장소 미확인` : `같은 장소의 공고 ${g.ids.length}건`;
+    const title = first?.title ?? "공고";
+    return g.precision === "area" ? `${title} · ${area ?? "지역"} 대략 위치` : title;
   }
 
   function syncMarkers() {
@@ -372,7 +375,7 @@ export function MapCanvas({ items, selectedId, onSelect, onPickPlace, pickedIds 
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="size-2.5 rounded-full bg-[#5b6573] shadow-[0_0_0_3px_rgb(91_101_115/0.25)]" aria-hidden />
-          번진 원 = 대략 위치(시·구)
+          번진 원 = 대략 위치(시·구 단위)
         </span>
       </div>
 

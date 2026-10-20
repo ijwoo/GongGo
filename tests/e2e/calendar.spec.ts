@@ -41,7 +41,7 @@ test("캘린더 등록 → 수정 → 삭제", async ({ page }) => {
 
   await page.reload();
   await page.getByRole("button", { name: "일정 수정: 판교 해커톤 지원서 마감" }).first().click();
-  await page.getByRole("dialog", { name: "일정 수정" }).getByRole("button", { name: "삭제", exact: true }).click();
+  await page.getByRole("dialog", { name: "일정 수정" }).getByRole("button", { name: "일정 삭제" }).click();
   await expect(page.getByText("이 일정과 예약된 알림을 삭제할까요?")).toBeVisible();
   await page.getByRole("dialog", { name: "일정 수정" }).getByRole("button", { name: "삭제", exact: true }).click();
   await expectToast(page, "일정을 삭제했어요");

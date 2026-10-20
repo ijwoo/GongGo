@@ -81,8 +81,8 @@ export function DiscoverHead({ query, setQuery }: { query: DiscoverQuery; setQue
             온라인 포함
           </button>
         </div>
-        <h1 className="mt-3 text-[28px] leading-tight font-bold tracking-[-0.02em] break-keep text-fg md:text-[34px]">다음 도전을 발견하세요.</h1>
-        <p className="mt-2 text-base text-muted md:text-[17px]">함께 만들고, 배우고, 성장할 기회를 모았어요.</p>
+        <h1 className="mt-2 text-[28px] leading-tight font-bold tracking-[-0.02em] break-keep text-fg md:text-[32px]">공고 둘러보기</h1>
+        <p className="mt-1.5 text-[15px] text-muted">해커톤·개발자 행사·교육·창업 지원·채용 공고를 모아 신청 마감과 일정을 함께 보여 줘요.</p>
       </div>
       <button
         type="button"
@@ -119,11 +119,11 @@ export function CategoryNav({ query, setQuery }: { query: DiscoverQuery; setQuer
               aria-pressed={active}
               onClick={onClick}
               className={cn(
-                "inline-flex h-12 items-center gap-2 rounded-t-lg border-b-2 px-4 text-[15px] whitespace-nowrap transition-colors md:px-5",
-                active ? "border-accent bg-accent-soft font-semibold text-accent-text" : "border-transparent font-medium text-muted hover:text-fg",
+                "inline-flex h-12 items-center gap-2 border-b-2 px-3 text-[15px] whitespace-nowrap transition-colors md:px-4",
+                active ? "border-accent font-semibold text-fg" : "border-transparent font-medium text-muted hover:text-fg",
               )}
             >
-              <Icon className="size-5" strokeWidth={1.8} aria-hidden />
+              <Icon className={cn("size-[18px]", active && "text-accent")} strokeWidth={1.8} aria-hidden />
               {label}
             </button>
           </li>
@@ -133,14 +133,30 @@ export function CategoryNav({ query, setQuery }: { query: DiscoverQuery; setQuer
   );
 }
 
-export function SectionHeader({ id, title, description, actions }: { id: string; title: string; description?: string; actions?: ReactNode }) {
+/** 섹션 머리: 작은 녹색 머리말 → 섹션 제목(24px) · 오른쪽 동작. 섹션 제목과 카드 제목(17px)의 크기 차이로 위계를 만든다 */
+export function SectionHeader({
+  id,
+  title,
+  eyebrow,
+  description,
+  actions,
+}: {
+  id: string;
+  title: string;
+  eyebrow?: string;
+  description?: string;
+  actions?: ReactNode;
+}) {
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 id={id} className="text-[22px] leading-tight font-bold tracking-[-0.01em]">
-          {title}
-        </h2>
-        {description ? <p className="text-sm text-muted">{description}</p> : null}
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
+      <div className="min-w-0">
+        {eyebrow ? <p className="mb-1 text-[13px] font-semibold text-accent-text">{eyebrow}</p> : null}
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 id={id} className="text-[24px] leading-tight font-bold tracking-[-0.02em]">
+            {title}
+          </h2>
+          {description ? <p className="text-sm text-muted">{description}</p> : null}
+        </div>
       </div>
       {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
     </div>
@@ -149,7 +165,7 @@ export function SectionHeader({ id, title, description, actions }: { id: string;
 
 export function CardGrid({ items, now, label }: { items: Announcement[]; now: string; label: string }) {
   return (
-    <ul aria-label={label} className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+    <ul aria-label={label} className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((a) => (
         <li key={a.id} className="min-w-0">
           <AnnouncementCard a={a} now={now} />

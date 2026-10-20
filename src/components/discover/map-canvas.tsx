@@ -184,9 +184,18 @@ export function MapCanvas({ items, selectedId, onSelect, onPickPlace, pickedIds 
     const lib = libRef.current;
     if (!map || !lib) return;
     if (g.cluster) {
+      // 묶음 안의 공고가 패널에 가리지 않는 영역에 모두 보이게 맞춘다
       programmaticRef.current = true;
       setMoved(true);
-      map.setLevel(Math.max(MIN_LEVEL, map.getLevel() - 2), { animate: true, anchor: new lib.LatLng(g.lat, g.lng) });
+      const ids = new Set(g.ids);
+      const bounds = new lib.LatLngBounds();
+      for (const a of latest.current.items) {
+        const p = ids.has(a.id) ? mapPointOf(a) : null;
+        if (p) bounds.extend(new lib.LatLng(p.lat, p.lng));
+      }
+      const { insetLeft: left, insetRight: right } = latest.current;
+      map.setBounds(bounds, 80, 80 + right, 80, 80 + left);
+      if (map.getLevel() < MIN_LEVEL) map.setLevel(MIN_LEVEL);
       return;
     }
     if (g.ids.length === 1) {

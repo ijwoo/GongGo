@@ -287,7 +287,7 @@ export function MapCanvas({ items, selectedId, onSelect, onPickPlace, pickedIds 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bboxKey]);
 
-  /* 선택한 공고가 화면 밖이면 옮긴다 */
+  /* 공고를 고르면 그 위치로 확대한다. 정확한 장소는 동네 수준, 시·구 단위 위치는 그 구가 보이는 정도 */
   useEffect(() => {
     const map = mapRef.current;
     const lib = libRef.current;
@@ -295,11 +295,14 @@ export function MapCanvas({ items, selectedId, onSelect, onPickPlace, pickedIds 
     const a = items.find((x) => x.id === selectedId);
     const p = a ? mapPointOf(a) : null;
     if (!p) return;
-    const pos = new lib.LatLng(p.lat, p.lng);
-    if (!map.getBounds().contain(pos)) {
-      programmaticRef.current = true;
-      map.panTo(pos);
-    }
+    const d = p.precision === "exact" ? 0.004 : 0.03;
+    const bounds = new lib.LatLngBounds();
+    bounds.extend(new lib.LatLng(p.lat - d, p.lng - d));
+    bounds.extend(new lib.LatLng(p.lat + d, p.lng + d));
+    programmaticRef.current = true;
+    setMoved(true);
+    const { insetLeft: left, insetRight: right } = latest.current;
+    map.setBounds(bounds, 40, 40 + right, 40, 40 + left);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, status]);
 

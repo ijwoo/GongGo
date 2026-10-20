@@ -5,6 +5,7 @@ import {
   mapPointOf,
   type ApplicationState,
 } from "./announcement";
+import { COMPANY_SIZES, JOB_LEVELS, JOB_ROLES, companySizeOf, jobLevelsOf, jobRolesOf, type CompanySize, type JobLevel, type JobRole } from "./job";
 import { addLocalDays, seoulDateOf, weekdayOf } from "./time";
 import { CATEGORIES, PARTICIPATION_MODES, type Announcement, type Category, type ParticipationMode } from "./types";
 
@@ -61,6 +62,11 @@ export interface DiscoverQuery {
   online: boolean;
   /** 큐레이션 섹션 대신 전체 결과를 한 그리드로 */
   all: boolean;
+  /** 채용 공고 조건. 하나라도 고르면 채용 공고만 남는다 */
+  roles: JobRole[];
+  levels: JobLevel[];
+  sizes: CompanySize[];
+  companies: string[];
 }
 
 export const DEFAULT_QUERY: DiscoverQuery = {
@@ -77,6 +83,10 @@ export const DEFAULT_QUERY: DiscoverQuery = {
   quick: null,
   online: true,
   all: false,
+  roles: [],
+  levels: [],
+  sizes: [],
+  companies: [],
 };
 
 function csvOf<T extends string>(allowed: readonly T[]) {
@@ -116,6 +126,15 @@ const querySchema = z.object({
   quick: z.enum(["today", "week"]).optional().catch(undefined),
   online: z.literal("0").optional().catch(undefined),
   all: z.literal("1").optional().catch(undefined),
+  role: csvOf(JOB_ROLES),
+  level: csvOf(JOB_LEVELS),
+  size: csvOf(COMPANY_SIZES),
+  co: z
+    .string()
+    .max(400)
+    .optional()
+    .catch(undefined)
+    .transform((v) => [...new Set((v ?? "").split(",").map((x) => x.trim()).filter((x) => x && x.length <= 40))].slice(0, 20)),
 });
 
 /** 잘못된 값은 버리고 기본값으로 돌린다. URL을 손으로 고쳐도 화면이 깨지지 않게 한다 */
@@ -138,6 +157,10 @@ export function parseDiscoverQuery(params: URLSearchParams | Record<string, stri
     quick: p.quick ?? null,
     online: p.online !== "0",
     all: p.all === "1",
+    roles: p.role,
+    levels: p.level,
+    sizes: p.size,
+    companies: p.co,
   };
 }
 
@@ -153,6 +176,10 @@ export function serializeDiscoverQuery(q: DiscoverQuery): string {
   if (q.quick) s.set("quick", q.quick);
   if (!q.online) s.set("online", "0");
   if (q.all) s.set("all", "1");
+  if (q.roles.length) s.set("role", q.roles.join(","));
+  if (q.levels.length) s.set("level", q.levels.join(","));
+  if (q.sizes.length) s.set("size", q.sizes.join(","));
+  if (q.companies.length) s.set("co", q.companies.join(","));
   if (q.view !== "list") s.set("view", q.view);
   if (q.bbox) s.set("bbox", q.bbox.map((n) => n.toFixed(4)).join(","));
   if (q.id) s.set("id", q.id);
@@ -169,8 +196,27 @@ export function activeFilterCount(q: DiscoverQuery): number {
     (q.status !== "all" ? 1 : 0) +
     (q.includeClosed ? 1 : 0) +
     (q.quick ? 1 : 0) +
-    (q.online ? 0 : 1)
+    (q.online ? 0 : 1) +
+    jobFilterCount(q)
   );
+}
+
+export function jobFilterCount(q: DiscoverQuery): number {
+  return q.roles.length + q.levels.length + q.sizes.length + q.companies.length;
+}
+
+/** 채용 조건(직무·경력·규모·회사). 각 조건 안에서는 하나라도 맞으면, 조건끼리는 모두 맞아야 통과 */
+export function matchesJobFilters(a: Announcement, q: DiscoverQuery): boolean {
+  if (jobFilterCount(q) === 0) return true;
+  if (a.category !== "job") return false;
+  if (q.roles.length && !jobRolesOf(a.title).some((r) => q.roles.includes(r))) return false;
+  if (q.levels.length && !jobLevelsOf(a.title).some((l) => q.levels.includes(l))) return false;
+  if (q.sizes.length) {
+    const size = companySizeOf(a);
+    if (!size || !q.sizes.includes(size)) return false;
+  }
+  if (q.companies.length && !q.companies.includes(a.organizer.name)) return false;
+  return true;
 }
 
 /**
@@ -178,7 +224,7 @@ export function activeFilterCount(q: DiscoverQuery): number {
  * 분야·지역·온라인 포함은 화면 위쪽의 기본 조건이라 큐레이션 안에서도 그대로 적용한다.
  */
 export function isCuratedQuery(q: DiscoverQuery): boolean {
-  return !q.all && !q.q && q.modes.length === 0 && q.status === "all" && !q.includeClosed && !q.quick && q.sort === "deadline";
+  return !q.all && !q.q && jobFilterCount(q) === 0 && q.modes.length === 0 && q.status === "all" && !q.includeClosed && !q.quick && q.sort === "deadline";
 }
 
 /** 온라인으로만 진행하는 공고(장소가 없다) */
@@ -243,6 +289,7 @@ export function filterAnnouncements(list: Announcement[], q: DiscoverQuery, nowI
     }
     if (q.quick === "today" && !isPublishedToday(a, nowIso)) return false;
     if (q.quick === "week" && !isDueThisWeek(a, nowIso)) return false;
+    if (!matchesJobFilters(a, q)) return false;
     return matchesText(a, q.q);
   });
   return sortAnnouncements(result, q.sort, nowIso);

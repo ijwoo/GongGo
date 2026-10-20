@@ -9,12 +9,23 @@ import { MODE_LABEL } from "@/domain/announcement";
 import {
   activeFilterCount,
   DEFAULT_QUERY,
+  jobFilterCount,
   type DiscoverQuery,
   type Sort,
   type StatusFilter,
 } from "@/domain/discover";
+import {
+  COMPANY_SIZE_LABEL,
+  COMPANY_SIZES,
+  JOB_LEVEL_LABEL,
+  JOB_LEVELS,
+  JOB_ROLE_LABEL,
+  JOB_ROLES,
+  jobCompanies,
+} from "@/domain/job";
 import { PARTICIPATION_MODES } from "@/domain/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useAnnouncements } from "@/lib/app-data";
 import { cn } from "@/lib/cn";
 
 export type SetQuery = (patch: Partial<DiscoverQuery>, mode?: "push" | "replace") => void;
@@ -64,6 +75,84 @@ export function SortSelect({ query, setQuery, className }: { query: DiscoverQuer
   );
 }
 
+/** 직무 칩 한 줄. 채용 분야를 고른 화면 위쪽에 바로 보인다 */
+export function JobRoleChips({ query, setQuery }: { query: DiscoverQuery; setQuery: SetQuery }) {
+  return (
+    <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]" role="group" aria-label="직무">
+      <Chip pressed={query.roles.length === 0} onClick={() => setQuery({ roles: [], id: null })}>
+        전체 직무
+      </Chip>
+      {JOB_ROLES.map((r) => (
+        <Chip key={r} pressed={query.roles.includes(r)} onClick={() => setQuery({ roles: toggle(query.roles, r), id: null })}>
+          {JOB_ROLE_LABEL[r]}
+        </Chip>
+      ))}
+    </div>
+  );
+}
+
+/** 채용 조건: 직무·경력·기업 규모·회사. 하나라도 고르면 채용 공고만 보인다 */
+function JobFilters({ query, setQuery }: { query: DiscoverQuery; setQuery: SetQuery }) {
+  const { list } = useAnnouncements();
+  const companies = jobCompanies(list);
+  const legend = "mb-2 block text-xs font-semibold text-muted";
+  return (
+    <div className="space-y-4 rounded-lg border border-line p-3">
+      <p className="text-[13px] font-bold">
+        채용 조건 <span className="font-normal text-muted">· 고르면 채용 공고만 보여요</span>
+      </p>
+      <fieldset>
+        <legend className={legend}>직무</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {JOB_ROLES.map((r) => (
+            <Chip key={r} size="sm" pressed={query.roles.includes(r)} onClick={() => setQuery({ roles: toggle(query.roles, r), id: null })}>
+              {JOB_ROLE_LABEL[r]}
+            </Chip>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className={legend}>경력</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {JOB_LEVELS.map((l) => (
+            <Chip key={l} size="sm" pressed={query.levels.includes(l)} onClick={() => setQuery({ levels: toggle(query.levels, l), id: null })}>
+              {JOB_LEVEL_LABEL[l]}
+            </Chip>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className={legend}>기업 규모</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {COMPANY_SIZES.map((z) => (
+            <Chip key={z} size="sm" pressed={query.sizes.includes(z)} onClick={() => setQuery({ sizes: toggle(query.sizes, z), id: null })}>
+              {COMPANY_SIZE_LABEL[z]}
+            </Chip>
+          ))}
+        </div>
+      </fieldset>
+      {companies.length ? (
+        <fieldset>
+          <legend className={legend}>회사</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {companies.map((c) => (
+              <Chip
+                key={c.name}
+                size="sm"
+                pressed={query.companies.includes(c.name)}
+                onClick={() => setQuery({ companies: toggle(query.companies, c.name), id: null })}
+              >
+                {c.name} <span className="num font-normal text-muted">{c.count}</span>
+              </Chip>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
+      <p className="text-[11px] text-faint">직무·경력은 공고 제목으로 분류해요. 제목에 단서가 없으면 해당 조건에서 빠질 수 있어요.</p>
+    </div>
+  );
+}
+
 /** 방식·상태·마감 포함. 팝오버(데스크톱)와 시트(모바일)가 같은 컨트롤을 쓴다. 지역·온라인은 화면 위쪽에서 고른다 */
 function MoreFilters({ query, setQuery }: { query: DiscoverQuery; setQuery: SetQuery }) {
   const legend = "mb-2 block text-xs font-semibold text-muted";
@@ -98,6 +187,7 @@ function MoreFilters({ query, setQuery }: { query: DiscoverQuery; setQuery: SetQ
         />
         마감·취소 공고 포함
       </label>
+      {query.categories.length === 0 || query.categories.includes("job") ? <JobFilters query={query} setQuery={setQuery} /> : null}
     </div>
   );
 }
@@ -111,6 +201,10 @@ export function ActiveTokens({ query, setQuery }: { query: DiscoverQuery; setQue
     ...query.modes.map((m) => ({ key: `m-${m}`, label: MODE_LABEL[m], clear: () => setQuery({ modes: query.modes.filter((x) => x !== m) }) })),
     ...(query.status !== "all" ? [{ key: "status", label: STATUS_LABEL[query.status], clear: () => setQuery({ status: "all" }) }] : []),
     ...(query.includeClosed ? [{ key: "closed", label: "마감·취소 포함", clear: () => setQuery({ includeClosed: false }) }] : []),
+    ...query.roles.map((r) => ({ key: `r-${r}`, label: JOB_ROLE_LABEL[r], clear: () => setQuery({ roles: query.roles.filter((x) => x !== r) }) })),
+    ...query.levels.map((l) => ({ key: `l-${l}`, label: JOB_LEVEL_LABEL[l], clear: () => setQuery({ levels: query.levels.filter((x) => x !== l) }) })),
+    ...query.sizes.map((z) => ({ key: `s-${z}`, label: COMPANY_SIZE_LABEL[z], clear: () => setQuery({ sizes: query.sizes.filter((x) => x !== z) }) })),
+    ...query.companies.map((c) => ({ key: `c-${c}`, label: c, clear: () => setQuery({ companies: query.companies.filter((x) => x !== c) }) })),
   ];
   return (
     <>
@@ -146,7 +240,7 @@ export function FilterButton({
   onOpenChange: (open: boolean) => void;
 }) {
   const wide = useMediaQuery("(min-width: 768px)");
-  const moreCount = query.modes.length + (query.status !== "all" ? 1 : 0) + (query.includeClosed ? 1 : 0);
+  const moreCount = query.modes.length + (query.status !== "all" ? 1 : 0) + (query.includeClosed ? 1 : 0) + jobFilterCount(query);
   const label = `필터${moreCount ? `, ${moreCount}개 적용됨` : ""}`;
   return (
     <Popover.Root modal={false} open={open && wide} onOpenChange={onOpenChange}>
@@ -175,7 +269,7 @@ export function FilterButton({
           align="end"
           sideOffset={8}
           aria-label="필터"
-          className="z-40 w-[340px] rounded-lg border border-line bg-elevated p-4 shadow-[var(--shadow)]"
+          className="z-40 max-h-[min(80dvh,720px)] w-[380px] overflow-y-auto rounded-lg border border-line bg-elevated p-4 shadow-[var(--shadow)]"
         >
           <MoreFilters query={query} setQuery={setQuery} />
         </Popover.Content>

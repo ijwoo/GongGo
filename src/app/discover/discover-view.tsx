@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowRight, List, RefreshCw, SearchX } from "lucide-reac
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ActiveFilters, FilterButton, FilterSheet, SortSelect } from "@/components/discover/filters";
+import { ActiveFilters, FilterButton, FilterSheet, JobRoleChips, SortSelect } from "@/components/discover/filters";
 import { CardGrid, CategoryNav, DiscoverHead, SectionHeader } from "@/components/discover/gallery";
 import { ClosingSoon, MySchedule } from "@/components/discover/side-rail";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,11 @@ export function DiscoverView() {
       <FilterSheet query={query} setQuery={setQuery} total={results.length} open={filterOpen} onOpenChange={setFilterOpen} />
       <div className="mt-7">
         <CategoryNav query={query} setQuery={setQuery} />
+        {query.categories.length === 1 && query.categories[0] === "job" ? (
+          <div className="mt-4">
+            <JobRoleChips query={query} setQuery={setQuery} />
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-x-9">

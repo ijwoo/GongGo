@@ -105,7 +105,8 @@ export function CategoryNav({ query, setQuery }: { query: DiscoverQuery; setQuer
       label: CATEGORY_LABEL[c],
       icon: CATEGORY_ICON[c],
       active: query.categories.length === 1 && query.categories[0] === c,
-      onClick: () => setQuery({ categories: [c], id: null }),
+      // 채용이 아닌 분야로 옮기면 채용 조건은 의미가 없으니 지운다
+      onClick: () => setQuery(c === "job" ? { categories: [c], id: null } : { categories: [c], id: null, roles: [], levels: [], sizes: [], companies: [] }),
     })),
   ];
   return (

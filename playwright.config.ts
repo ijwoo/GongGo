@@ -1,11 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT ?? 3200);
-/** E2E는 기준 시각을 고정한다: 2026-10-21(수) 10:00 KST */
-const FIXED_NOW = "2026-10-21T01:00:00Z";
+/**
+ * E2E는 실제 백엔드에 붙는다. globalSetup이 scripts/e2e-api.sh로 새 DB + 테스트 고정 공고 + 고정 시각
+ * (2026-10-21 10:00 KST) + 테스트 로그인을 켠 API를 띄운다(도커·자바 필요).
+ * 테스트마다 새 테스트 계정으로 로그인하므로 병렬로 돌아도 서로 데이터가 섞이지 않는다.
+ */
+const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8080";
 
 export default defineConfig({
   testDir: "tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
@@ -24,8 +29,8 @@ export default defineConfig({
     command: `pnpm start --port ${PORT}`,
     url: `http://localhost:${PORT}/discover`,
     reuseExistingServer: !process.env.CI,
-    // API_BASE_URL이 있으면 백엔드 모드로 돌린다. 백엔드도 같은 시각으로 고정해 띄워야 한다(README 참고)
-    env: { DEMO_FIXED_NOW: FIXED_NOW, ...(process.env.API_BASE_URL ? { API_BASE_URL: process.env.API_BASE_URL } : {}) },
+    // 지도 키는 아무 값이나 넣고, SDK 요청은 테스트가 가짜 SDK로 바꾼다(tests/e2e/fixtures.ts)
+    env: { API_BASE_URL, KAKAO_MAP_JS_KEY: "e2e-test-key" },
     timeout: 120_000,
   },
 });

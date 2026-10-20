@@ -2,17 +2,17 @@
 
 import { Lock } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { EmptyState } from "@/components/common/page";
-import { Button, buttonClass } from "@/components/ui/button";
+import { buttonClass } from "@/components/ui/button";
 import { usePersonal } from "@/hooks/use-personal";
-import { useNow } from "@/lib/app-data";
-import { startDemoSession } from "@/lib/personal-store";
+import { KakaoLoginButton, TestLoginButton } from "./kakao-login-button";
 
-/** 로그인이 필요한 화면. 비로그인이면 이유를 설명하고 데모 체험을 제안한다 */
+/** 로그인이 필요한 화면. 비로그인이면 이유를 설명하고 로그인을 안내한다 */
 export function LoginRequired({ reason, children, fallback }: { reason: string; children: ReactNode; fallback?: ReactNode }) {
   const { hydrated, loggedIn } = usePersonal();
-  const now = useNow();
+  const pathname = usePathname();
   if (!hydrated) {
     return (
       <div aria-busy="true" className="space-y-2">
@@ -28,21 +28,14 @@ export function LoginRequired({ reason, children, fallback }: { reason: string; 
     <EmptyState
       icon={<Lock className="size-6 text-faint" aria-hidden />}
       title="로그인이 필요한 화면이에요"
-      description={
-        <>
-          {reason}
-          <br />
-          실제 로그인은 아직 연결되지 않아 데모로 체험할 수 있어요.
-        </>
-      }
+      description={reason}
       action={
-        <div className="flex gap-2">
-          <Link href="/discover" className={buttonClass("secondary")}>
+        <div className="w-64 space-y-2">
+          <KakaoLoginButton returnTo={pathname} />
+          <TestLoginButton />
+          <Link href="/discover" className={buttonClass("ghost", "md", "w-full")}>
             공고 둘러보기
           </Link>
-          <Button variant="primary" onClick={() => startDemoSession(now)}>
-            데모로 체험하기
-          </Button>
         </div>
       }
     />

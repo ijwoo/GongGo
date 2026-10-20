@@ -1,8 +1,8 @@
-// 백엔드 API가 웹 데모 데이터·필터와 같은 결과를 내는지 확인한다.
-// 사용: API를 GONGGO_DEMO_ANCHOR_DATE=2026-10-21, 고정 시각 2026-10-21T01:00:00Z로 띄운 뒤
+// 백엔드 API의 필터·정렬이 웹(filterAnnouncements)과 같은 결과를 내는지 테스트 고정 공고로 확인한다.
+// 사용: scripts/e2e-api.sh로 API를 띄운 뒤(고정 공고, 기준일 2026-10-21, 고정 시각 2026-10-21T01:00:00Z)
 //   API_BASE_URL=http://localhost:8080 npx -y tsx@4.19.2 --tsconfig tsconfig.json scripts/check-api-parity.ts
 import { isDeepStrictEqual } from "node:util";
-import { buildDemoAnnouncements } from "../src/data/demo-announcements";
+import { buildFixtureAnnouncements } from "../tests/fixtures/announcements";
 import {
   filterAnnouncements,
   parseDiscoverQuery,
@@ -41,7 +41,7 @@ async function main() {
   const all = await get("/api/announcements?includeClosed=true&size=500");
   const now = all.serverTime;
   const api = announcementSchema.array().parse(all.items);
-  const web = buildDemoAnnouncements(seoulDateOf(now));
+  const web = buildFixtureAnnouncements(seoulDateOf(now));
   console.log(
     `serverTime ${now}, API ${api.length}건, 웹 데모 ${web.length}건 — zod 검증 통과`,
   );

@@ -1,10 +1,8 @@
 "use client";
 
 import { createContext, useContext, useMemo, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { applyDemoChanges } from "@/data/demo-changes";
 import { seoulDateOf } from "@/domain/time";
 import type { Announcement } from "@/domain/types";
-import { usePersonalState } from "./personal-store";
 
 interface AppDataValue {
   /** 서버가 정한 요청 시점 */
@@ -12,6 +10,8 @@ interface AppDataValue {
   baseAnnouncements: Announcement[];
   /** 서버에 이메일 발송 제공자가 설정되어 있는지 */
   emailConfigured: boolean;
+  /** 카카오맵 JavaScript 키(도메인 제한이 걸린 공개 키). 없으면 지도 대신 안내를 보여 준다 */
+  kakaoMapKey: string | null;
   clock: Clock;
 }
 
@@ -46,11 +46,13 @@ export function AppDataProvider({
   serverNow,
   announcements,
   emailConfigured,
+  kakaoMapKey,
   children,
 }: {
   serverNow: string;
   announcements: Announcement[];
   emailConfigured: boolean;
+  kakaoMapKey: string | null;
   children: ReactNode;
 }) {
   const clockRef = useRef<Clock | null>(null);
@@ -59,8 +61,8 @@ export function AppDataProvider({
   // eslint-disable-next-line react-hooks/refs
   const clock = clockRef.current;
   const value = useMemo(
-    () => ({ serverNow, baseAnnouncements: announcements, emailConfigured, clock }),
-    [serverNow, announcements, emailConfigured, clock],
+    () => ({ serverNow, baseAnnouncements: announcements, emailConfigured, kakaoMapKey, clock }),
+    [serverNow, announcements, emailConfigured, kakaoMapKey, clock],
   );
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }
@@ -85,12 +87,12 @@ export function useEmailConfigured(): boolean {
   return useAppData().emailConfigured;
 }
 
-/** 데모 변경까지 반영된 공고 목록. 목록·지도·캘린더·요약이 모두 이 값을 쓴다 */
+export function useKakaoMapKey(): string | null {
+  return useAppData().kakaoMapKey;
+}
+
+/** 공고 목록. 목록·지도·캘린더·요약이 모두 이 값을 쓴다 */
 export function useAnnouncements(): { list: Announcement[]; byId: Map<string, Announcement> } {
-  const { baseAnnouncements, serverNow } = useAppData();
-  const { appliedChanges } = usePersonalState();
-  return useMemo(() => {
-    const list = applyDemoChanges(baseAnnouncements, appliedChanges, seoulDateOf(serverNow));
-    return { list, byId: new Map(list.map((a) => [a.id, a])) };
-  }, [baseAnnouncements, appliedChanges, serverNow]);
+  const { baseAnnouncements } = useAppData();
+  return useMemo(() => ({ list: baseAnnouncements, byId: new Map(baseAnnouncements.map((a) => [a.id, a])) }), [baseAnnouncements]);
 }

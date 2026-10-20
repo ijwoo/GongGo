@@ -66,7 +66,8 @@ class DevEventNormalizerTest {
         assertThat(c.category()).isEqualTo("event");
         assertThat(c.applicationDeadline()).isEqualTo(new Deadline.OnDate(LocalDate.of(2026, 10, 20)));
         assertThat(c.participationMode()).isEqualTo("offline");
-        assertThat(c.venue()).isEqualTo(new Venue.Tbd("서울 강남구 · 상세 장소는 원문 확인"));
+        // 정확한 장소는 모르고 구 단위 지역만 안다. 좌표는 수집 때 지오코딩으로 채운다
+        assertThat(c.venue()).isEqualTo(new Venue.Tbd("서울 강남구 · 상세 장소는 원문 확인", new Venue.Area("서울 강남구", null)));
         assertThat(c.cost()).isNull();
         assertThat(c.checkPoints()).anyMatch(p -> p.contains("참가비"));
     }

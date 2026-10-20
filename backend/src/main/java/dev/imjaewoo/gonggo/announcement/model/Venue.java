@@ -19,8 +19,24 @@ public sealed interface Venue {
     record Confirmed(String name, String address, String district, Coordinates coordinates) implements Venue {
     }
 
+    /**
+     * 정확한 장소는 모르지만 시·구 단위 지역은 아는 경우(예: '서울 강남구').
+     * coordinates는 그 지역의 대략 위치(지오코딩 결과)이고, 아직 찾지 못했으면 null이다.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record Tbd(String note) implements Venue {
+    record Area(String label, Coordinates coordinates) {
+
+        public Area withCoordinates(Coordinates c) {
+            return new Area(label, c);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record Tbd(String note, Area area) implements Venue {
+
+        public Tbd(String note) {
+            this(note, null);
+        }
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

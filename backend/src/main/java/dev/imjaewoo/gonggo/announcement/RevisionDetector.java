@@ -24,7 +24,8 @@ public final class RevisionDetector {
             changes.add(new Change("deadline", "신청 마감이 변경되었습니다.",
                     before.applicationDeadline().format(), after.applicationDeadline().format()));
         }
-        if (!Objects.equals(before.venue(), after.venue())) {
+        // 표기가 같으면 같은 장소다(대략 위치 좌표를 새로 찾은 것은 알릴 변경이 아니다)
+        if (!Objects.equals(before.venue().format(), after.venue().format())) {
             changes.add(new Change("venue", "행사 장소가 변경되었습니다.", before.venue().format(), after.venue().format()));
         }
         if (!Objects.equals(before.requiredDocuments(), after.requiredDocuments())) {

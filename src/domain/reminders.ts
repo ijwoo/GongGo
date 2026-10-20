@@ -60,7 +60,7 @@ export function dueReminders(events: CalendarEvent[], nowIso: string, sentKeys: 
     .sort((a, b) => a.fireAt.localeCompare(b.fireAt));
 }
 
-/** 다음에 보낼 알림(데모 발송·미리보기용) */
+/** 다음에 보낼 알림(미리보기용) */
 export function nextReminders(events: CalendarEvent[], nowIso: string, sentKeys: ReadonlySet<string>, limit = 5): ScheduledReminder[] {
   return events
     .flatMap(scheduleFor)

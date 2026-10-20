@@ -13,7 +13,8 @@ import { DeadlineCell, StateBadge } from "./status";
 
 /**
  * 지도 모드. 목록(현재 범위) | 지도 | 상세(바깥 패널) 3열.
- * 지도와 왼쪽 목록은 같은 결과(필터 결과 ∩ 지도 범위 ∩ 장소 확정)를 쓴다.
+ * 지도와 왼쪽 목록은 같은 결과(필터 결과 ∩ 지도 범위 ∩ 위치 있음)를 쓴다.
+ * 위치는 확정된 행사 장소이거나, 시·구 단위로만 알려진 지역의 대략 위치다.
  */
 export function MapMode({
   results,
@@ -96,7 +97,7 @@ export function MapMode({
             <div className="flex items-start gap-2 border-t border-line px-4 py-3 text-xs text-muted">
               <MapPinOff className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               <p>
-                온라인·장소 미정 공고 {unlocated.length}건은 지도에 표시하지 않아요.{" "}
+                온라인이거나 지역을 알 수 없는 공고 {unlocated.length}건은 지도에 표시하지 않아요.{" "}
                 <button type="button" className="font-semibold text-accent-text hover:underline" onClick={() => setQuery({ view: "list", bbox: null })}>
                   목록에서 보기
                 </button>
@@ -115,7 +116,7 @@ export function MapMode({
           onShowList={() => setQuery({ view: "list" })}
         />
         <p className="pointer-events-none absolute bottom-2 left-2 z-[2] rounded-sm bg-panel/95 px-2 py-1 text-xs shadow-sm md:hidden">
-          지도의 공고 <b className="num">{located.length}</b>건 · 온라인·미정 {unlocated.length}건 제외
+          지도의 공고 <b className="num">{located.length}</b>건 · 온라인·지역 미상 {unlocated.length}건 제외
         </p>
       </div>
     </div>

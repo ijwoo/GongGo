@@ -1,79 +1,76 @@
 "use client";
 
-import "maplibre-gl/dist/maplibre-gl.css";
 import { AlertTriangle, LocateFixed, Minus, Plus, RefreshCw, ScanSearch } from "lucide-react";
-import type { GeoJSONSource, Map as MlMap, Marker, Popup, StyleSpecification } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
-import { AREA_LABELS } from "@/data/places";
-import type { Bbox } from "@/domain/discover";
-import type { LocatedAnnouncement } from "@/domain/announcement";
 import { Button } from "@/components/ui/button";
+import { mapPointOf, type MapPoint } from "@/domain/announcement";
+import type { Bbox } from "@/domain/discover";
+import type { Announcement } from "@/domain/types";
+import { useKakaoMapKey } from "@/lib/app-data";
 import { cn } from "@/lib/cn";
+import { loadKakaoMaps, type KakaoMaps, type KCustomOverlay, type KMap } from "@/lib/kakao-maps";
 
-type Located = LocatedAnnouncement;
+/** 카카오맵 확대 수준: 1(가장 가까이) ~ 14(가장 멀리). 전국이 보이는 정도까지만 허용한다 */
+const MIN_LEVEL = 3;
+const MAX_LEVEL = 13;
+/** 이 수준부터는 가까운 공고를 한 원으로 묶는다 */
+const CLUSTER_FROM_LEVEL = 7;
+const KOREA = { minLat: 33, maxLat: 38.7, minLng: 124.5, maxLng: 131 };
 
-/** 운영용 지도 스타일 URL. 없으면 외부 타일 없이 그리는 예시 지도를 쓴다 */
-const STYLE_URL = process.env.NEXT_PUBLIC_MAP_STYLE_URL || null;
-/** 서울·경기 밖으로 멀리 나가지 않게 해 불필요한 타일 요청을 막는다 */
-const MAX_BOUNDS: [[number, number], [number, number]] = [
-  [125.9, 36.6],
-  [128.3, 38.4],
-];
-const DEFAULT_CENTER: [number, number] = [126.98, 37.5];
-
-function cssVar(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888";
-}
-
-/** 외부 타일 없이 배경과 위경도 격자만 그리는 예시 지도 스타일 */
-function demoStyle(): StyleSpecification {
-  const lines: GeoJSON.Feature[] = [];
-  for (let lng = 126; lng <= 128.2; lng += 0.1)
-    lines.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[lng, 36.6], [lng, 38.4]] } });
-  for (let lat = 36.6; lat <= 38.4; lat += 0.1)
-    lines.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[125.9, lat], [128.3, lat]] } });
-  return {
-    version: 8,
-    sources: { grid: { type: "geojson", data: { type: "FeatureCollection", features: lines } } },
-    layers: [
-      { id: "bg", type: "background", paint: { "background-color": cssVar("--map-bg") } },
-      { id: "grid", type: "line", source: "grid", paint: { "line-color": cssVar("--map-grid"), "line-width": 1 } },
-    ],
-  };
-}
-
-interface LocationGroup {
+interface Group {
   key: string;
-  coordinates: [number, number];
+  lat: number;
+  lng: number;
   ids: string[];
+  /** 서로 다른 장소를 화면 축척 때문에 묶은 것 */
+  cluster: boolean;
+  precision: MapPoint["precision"];
 }
 
-/** 같은 장소의 공고는 하나의 위치로 묶는다(겹친 마커가 서로 가리지 않게) */
-function groupByLocation(items: Located[]): LocationGroup[] {
-  const map = new Map<string, LocationGroup>();
+/** 같은 위치의 공고는 하나로, 멀리서 볼 때는 가까운 위치끼리 격자로 묶는다 */
+export function groupForLevel(items: Announcement[], level: number): Group[] {
+  const places = new Map<string, Group>();
   for (const a of items) {
-    const { lat, lng } = a.venue.coordinates;
-    const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
-    const g = map.get(key) ?? { key, coordinates: [lng, lat], ids: [] };
+    const p = mapPointOf(a);
+    if (!p) continue;
+    const key = `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
+    const g = places.get(key) ?? { key: `p${key}`, lat: p.lat, lng: p.lng, ids: [], cluster: false, precision: p.precision };
     g.ids.push(a.id);
-    map.set(key, g);
+    if (p.precision === "exact") g.precision = "exact";
+    places.set(key, g);
   }
-  return [...map.values()];
-}
-
-function toGeoJson(groups: LocationGroup[]): GeoJSON.FeatureCollection {
-  return {
-    type: "FeatureCollection",
-    features: groups.map((g) => ({
-      type: "Feature",
-      properties: { key: g.key, count: g.ids.length },
-      geometry: { type: "Point", coordinates: g.coordinates },
-    })),
-  };
+  if (level < CLUSTER_FROM_LEVEL) return [...places.values()];
+  // 화면 너비의 약 1/10 거리 안의 위치를 한 원으로 묶는다(레벨이 하나 오를 때마다 두 배).
+  // 고정 격자는 경계 양쪽의 가까운 위치를 갈라 놓으므로, 묶음 중심과의 거리로 정한다
+  const reach = 0.0005 * 2 ** (level - 3);
+  const clusters: { lat: number; lng: number; members: Group[] }[] = [];
+  for (const g of [...places.values()].sort((x, y) => y.ids.length - x.ids.length || x.key.localeCompare(y.key))) {
+    const c = clusters.find((k) => Math.abs(k.lat - g.lat) < reach && Math.abs(k.lng - g.lng) < reach);
+    if (!c) {
+      clusters.push({ lat: g.lat, lng: g.lng, members: [g] });
+      continue;
+    }
+    c.members.push(g);
+    const total = c.members.reduce((n, m) => n + m.ids.length, 0);
+    c.lat = c.members.reduce((sum, m) => sum + m.lat * m.ids.length, 0) / total;
+    c.lng = c.members.reduce((sum, m) => sum + m.lng * m.ids.length, 0) / total;
+  }
+  return clusters.map((c) =>
+    c.members.length === 1
+      ? c.members[0]
+      : {
+          key: `c${c.members.map((m) => m.key).sort()[0]}`,
+          lat: c.lat,
+          lng: c.lng,
+          ids: c.members.flatMap((m) => m.ids),
+          cluster: true,
+          precision: c.members.some((m) => m.precision === "exact") ? "exact" : "area",
+        },
+  );
 }
 
 export interface MapCanvasProps {
-  items: Located[];
+  items: Announcement[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   /** 적용된 지도 범위(URL) */
@@ -82,263 +79,250 @@ export interface MapCanvasProps {
   onShowList: () => void;
 }
 
-type Status = "loading" | "ready" | "error";
+type Status = "loading" | "ready" | "error" | "nokey";
+
+interface Marker {
+  overlay: KCustomOverlay;
+  button: HTMLButtonElement;
+  group: Group;
+}
 
 export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchArea, onShowList }: MapCanvasProps) {
+  const appKey = useKakaoMapKey();
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MlMap | null>(null);
+  const mapRef = useRef<KMap | null>(null);
+  const libRef = useRef<KakaoMaps | null>(null);
   const markersRef = useRef(new Map<string, Marker>());
-  const popupRef = useRef<Popup | null>(null);
-  const libRef = useRef<typeof import("maplibre-gl") | null>(null);
-  const [status, setStatus] = useState<Status>("loading");
+  const popupRef = useRef<KCustomOverlay | null>(null);
+  const programmaticRef = useRef(false);
+  const [status, setStatus] = useState<Status>(appKey ? "loading" : "nokey");
   const [error, setError] = useState<string | null>(null);
-  const [moved, setMoved] = useState(false);
+  /** 사용자가 지도를 움직였을 때의 적용 범위. 범위가 바뀌면(뒤로 가기 등) 자연히 '움직이지 않음'이 된다 */
+  const [movedAt, setMovedAt] = useState<string | null>(null);
+  const bboxKey = appliedBbox?.join(",") ?? "";
+  const bboxKeyRef = useRef(bboxKey);
+  const moved = movedAt === bboxKey;
+  const setMoved = (value: boolean) => setMovedAt(value ? bboxKeyRef.current : null);
   const [geoMessage, setGeoMessage] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const appliedBboxRef = useRef(appliedBbox);
-  const userMoveRef = useRef(false);
 
   // 최신 props를 지도 이벤트 핸들러에서 읽기 위한 참조
-  const latest = useRef({ items, selectedId, onSelect });
+  const latest = useRef({ items, selectedId, onSelect, appliedBbox });
   useEffect(() => {
-    latest.current = { items, selectedId, onSelect };
+    latest.current = { items, selectedId, onSelect, appliedBbox };
+    bboxKeyRef.current = bboxKey;
   });
 
-  const groups = groupByLocation(items);
-  const groupsRef = useRef(groups);
-  useEffect(() => {
-    groupsRef.current = groups;
-  });
+  function closePopup() {
+    popupRef.current?.setMap(null);
+    popupRef.current = null;
+  }
+
+  function labelOf(g: Group): string {
+    if (g.cluster) return `공고 ${g.ids.length}건이 모인 지역. 눌러서 확대`;
+    if (g.ids.length > 1) return `같은 장소의 공고 ${g.ids.length}건${g.precision === "area" ? " · 대략 위치" : ""}`;
+    const title = latest.current.items.find((a) => a.id === g.ids[0])?.title ?? "공고";
+    return g.precision === "area" ? `${title} · 대략 위치` : title;
+  }
 
   function syncMarkers() {
     const map = mapRef.current;
     const lib = libRef.current;
-    if (!map || !lib || !map.getSource("ann") || !map.isSourceLoaded("ann")) return;
-    const { items: currentItems, selectedId: sel } = latest.current;
-    const byKey = new Map(groupsRef.current.map((g) => [g.key, g]));
+    if (!map || !lib) return;
+    const { items: current, selectedId: sel } = latest.current;
+    const groups = groupForLevel(current, map.getLevel());
     const seen = new Set<string>();
-    for (const f of map.querySourceFeatures("ann")) {
-      const props = f.properties as Record<string, unknown>;
-      const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
-      const isCluster = Boolean(props.cluster);
-      const id = isCluster ? `c${props.cluster_id}` : `p${props.key}`;
-      if (seen.has(id)) continue;
-      seen.add(id);
-      const group = isCluster ? null : byKey.get(String(props.key));
-      const containsSelected = group ? group.ids.includes(sel ?? "") : false;
-      const label = isCluster
-        ? `공고 ${props.total}건이 모인 지역. 눌러서 확대`
-        : group && group.ids.length > 1
-          ? `같은 장소의 공고 ${group.ids.length}건`
-          : (currentItems.find((a) => a.id === group?.ids[0])?.title ?? "공고");
-      let marker = markersRef.current.get(id);
-      if (!marker) {
-        // MapLibre가 바깥 요소의 class·transform을 관리하므로 모양은 안쪽 버튼에만 준다
+    for (const g of groups) {
+      seen.add(g.key);
+      const selected = sel !== null && g.ids.includes(sel);
+      let m = markersRef.current.get(g.key);
+      if (!m) {
         const wrapper = document.createElement("div");
         const button = document.createElement("button");
         button.type = "button";
         wrapper.append(button);
-        marker = new lib.Marker({ element: wrapper }).setLngLat(coords).addTo(map);
-        markersRef.current.set(id, marker);
+        const overlay = new lib.CustomOverlay({ position: new lib.LatLng(g.lat, g.lng), content: wrapper, clickable: true, map });
+        m = { overlay, button, group: g };
+        markersRef.current.set(g.key, m);
+        const key = g.key;
         button.addEventListener("click", (ev) => {
           ev.stopPropagation();
-          handleMarkerClick(id, coords, props);
+          const marker = markersRef.current.get(key);
+          if (marker) handleMarkerClick(marker.group);
         });
       }
-      marker.getElement().style.zIndex = containsSelected ? "5" : isCluster ? "2" : "1";
-      const el = marker.getElement().firstElementChild as HTMLButtonElement;
-      el.setAttribute("aria-label", label);
-      el.title = label;
-      el.dataset.markerId = id;
-      el.className = markerClass(isCluster, containsSelected);
-      el.textContent = isCluster ? String(props.total) : group && group.ids.length > 1 ? String(group.ids.length) : "";
-      el.setAttribute("aria-pressed", String(containsSelected));
+      m.group = g;
+      m.overlay.setZIndex(selected ? 5 : g.cluster ? 2 : 1);
+      const label = labelOf(g);
+      m.button.setAttribute("aria-label", label);
+      m.button.title = label;
+      m.button.dataset.markerId = g.key;
+      m.button.dataset.precision = g.precision;
+      m.button.className = markerClass(g, selected);
+      m.button.textContent = g.cluster || g.ids.length > 1 ? String(g.ids.length) : "";
+      m.button.setAttribute("aria-pressed", String(selected));
     }
-    for (const [id, m] of markersRef.current) {
-      if (!seen.has(id)) {
-        m.remove();
-        markersRef.current.delete(id);
+    for (const [key, m] of markersRef.current) {
+      if (!seen.has(key)) {
+        m.overlay.setMap(null);
+        markersRef.current.delete(key);
       }
     }
   }
 
-  async function handleMarkerClick(id: string, coords: [number, number], props: Record<string, unknown>) {
+  function handleMarkerClick(g: Group) {
     const map = mapRef.current;
     const lib = libRef.current;
     if (!map || !lib) return;
-    if (id.startsWith("c")) {
-      const source = map.getSource("ann") as GeoJSONSource;
-      const zoom = await source.getClusterExpansionZoom(Number(props.cluster_id));
-      userMoveRef.current = true;
-      map.easeTo({ center: coords, zoom: Math.min(zoom, 16) });
+    closePopup();
+    if (g.cluster) {
+      programmaticRef.current = true;
+      setMoved(true);
+      map.setLevel(Math.max(MIN_LEVEL, map.getLevel() - 2), { animate: true, anchor: new lib.LatLng(g.lat, g.lng) });
       return;
     }
-    const group = groupsRef.current.find((g) => g.key === props.key);
-    if (!group) return;
-    if (group.ids.length === 1) {
-      latest.current.onSelect(group.ids[0]);
+    if (g.ids.length === 1) {
+      latest.current.onSelect(g.ids[0]);
       return;
     }
     // 같은 장소의 여러 공고: 작은 목록을 띄워 고르게 한다
-    popupRef.current?.remove();
     const box = document.createElement("div");
-    box.className = "min-w-52 text-[13px]";
+    box.className = "mb-3 min-w-52 max-w-72 rounded-md border border-[var(--line)] bg-[var(--elevated)] p-2 text-[13px] text-[var(--fg)] shadow-[var(--shadow)]";
+    const head = document.createElement("div");
+    head.className = "mb-1 flex items-center justify-between gap-2";
     const heading = document.createElement("p");
-    heading.className = "mb-1 text-xs font-semibold text-[var(--muted)]";
-    heading.textContent = `같은 장소의 공고 ${group.ids.length}건`;
-    box.append(heading);
-    for (const aid of group.ids) {
-      const a = latest.current.items.find((x) => x.id === aid);
+    heading.className = "text-xs font-semibold text-[var(--muted)]";
+    heading.textContent = `같은 장소의 공고 ${g.ids.length}건`;
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "rounded px-1 text-[var(--muted)] hover:bg-[var(--subtle)]";
+    close.setAttribute("aria-label", "닫기");
+    close.textContent = "×";
+    close.addEventListener("click", closePopup);
+    head.append(heading, close);
+    box.append(head);
+    for (const id of g.ids) {
+      const a = latest.current.items.find((x) => x.id === id);
       if (!a) continue;
       const b = document.createElement("button");
       b.type = "button";
       b.className = "block w-full rounded px-1.5 py-1 text-left hover:bg-[var(--subtle)]";
       b.textContent = a.title;
       b.addEventListener("click", () => {
-        latest.current.onSelect(aid);
-        popupRef.current?.remove();
+        latest.current.onSelect(id);
+        closePopup();
       });
       box.append(b);
     }
-    popupRef.current = new lib.Popup({ closeButton: true, offset: 14, className: "gg-popup", maxWidth: "280px" })
-      .setLngLat(coords)
-      .setDOMContent(box)
-      .addTo(map);
-    box.querySelector("button")?.focus();
+    popupRef.current = new lib.CustomOverlay({ position: new lib.LatLng(g.lat, g.lng), content: box, yAnchor: 1, zIndex: 10, clickable: true, map });
+    box.querySelector<HTMLButtonElement>("button:not([aria-label])")?.focus();
+  }
+
+  function fitTo(bbox: Bbox | null) {
+    const map = mapRef.current;
+    const lib = libRef.current;
+    if (!map || !lib) return;
+    const bounds = new lib.LatLngBounds();
+    if (bbox) {
+      bounds.extend(new lib.LatLng(bbox[1], bbox[0]));
+      bounds.extend(new lib.LatLng(bbox[3], bbox[2]));
+    } else {
+      const points = latest.current.items.map(mapPointOf).filter((p): p is MapPoint => p !== null);
+      if (points.length === 0) return;
+      for (const p of points) bounds.extend(new lib.LatLng(p.lat, p.lng));
+    }
+    programmaticRef.current = true;
+    map.setBounds(bounds, 40, 40, 40, 40);
   }
 
   /* 지도 생성 */
   useEffect(() => {
+    if (!appKey) return;
     let cancelled = false;
     const markers = markersRef.current;
-    (async () => {
-      try {
-        const lib = await import("maplibre-gl");
+    loadKakaoMaps(appKey)
+      .then((lib) => {
         if (cancelled || !containerRef.current) return;
         libRef.current = lib;
-        lib.setWorkerUrl("/vendor/maplibre-gl-worker.mjs");
-        const map = new lib.Map({
-          container: containerRef.current,
-          style: STYLE_URL ?? demoStyle(),
-          center: DEFAULT_CENTER,
-          zoom: 9.3,
-          minZoom: 8,
-          maxZoom: 16,
-          maxBounds: MAX_BOUNDS,
-          attributionControl: STYLE_URL ? { compact: true } : false,
-          dragRotate: false,
-          pitchWithRotate: false,
-          touchPitch: false,
-        });
+        const map = new lib.Map(containerRef.current, { center: new lib.LatLng(37.5665, 126.978), level: 9 });
+        map.setMinLevel(MIN_LEVEL);
+        map.setMaxLevel(MAX_LEVEL);
         mapRef.current = map;
-        map.touchZoomRotate.disableRotation();
-
-        map.on("error", (e) => {
-          // 스타일·타일을 못 불러온 경우. 목록은 계속 쓸 수 있도록 지도 영역에만 안내한다
-          if (!map.isStyleLoaded()) {
-            setStatus("error");
-            setError(e.error?.message ?? "지도 데이터를 불러오지 못했어요.");
-          }
+        lib.event.addListener(map, "dragend", () => setMoved(true));
+        lib.event.addListener(map, "zoom_changed", () => {
+          closePopup();
+          if (!programmaticRef.current) setMoved(true);
         });
-
-        map.on("load", () => {
-          if (cancelled) return;
-          map.addSource("ann", {
-            type: "geojson",
-            data: toGeoJson(groupsRef.current),
-            cluster: true,
-            clusterRadius: 44,
-            clusterMaxZoom: 13,
-            clusterProperties: { total: ["+", ["get", "count"]] },
-          });
-          // 마커는 HTML로 그리지만, 소스 데이터를 계산하려면 소스를 쓰는 레이어가 하나 필요하다
-          map.addLayer({ id: "ann-anchor", type: "circle", source: "ann", paint: { "circle-radius": 0, "circle-opacity": 0 } });
-          if (!STYLE_URL) addAreaLabels(lib, map);
-          setStatus("ready");
-          if (appliedBboxRef.current) {
-            const [a, b, c, d] = appliedBboxRef.current;
-            map.fitBounds([[a, b], [c, d]], { duration: 0 });
-          } else fitToItems(map, groupsRef.current, 0);
-          setMoved(false);
+        lib.event.addListener(map, "idle", () => {
+          programmaticRef.current = false;
+          syncMarkers();
         });
-
-        map.on("moveend", (e) => {
-          // 사용자가 직접 움직인 경우에만 '이 지역 다시 검색'을 보여 준다
-          if ((e as { originalEvent?: unknown }).originalEvent || userMoveRef.current) setMoved(true);
-          userMoveRef.current = false;
-        });
-        map.on("render", () => syncMarkers());
-      } catch (e) {
+        lib.event.addListener(map, "click", closePopup);
+        fitTo(latest.current.appliedBbox);
+        syncMarkers();
+        setMoved(false);
+        setStatus("ready");
+      })
+      .catch((e: unknown) => {
         if (cancelled) return;
         setStatus("error");
         setError(e instanceof Error ? e.message : String(e));
-      }
-    })();
+      });
     return () => {
       cancelled = true;
-      markers.forEach((m) => m.remove());
+      markers.forEach((m) => m.overlay.setMap(null));
       markers.clear();
-      popupRef.current?.remove();
-      mapRef.current?.remove();
+      closePopup();
       mapRef.current = null;
     };
     // attempt가 바뀌면 다시 시도한다
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attempt]);
+  }, [attempt, appKey]);
 
-  /* 데이터가 바뀌면 소스를 갱신 */
-  const dataKey = groups.map((g) => `${g.key}:${g.ids.join("|")}`).join(";");
+  /* 지도 영역 크기가 바뀌면(패널 열고 닫기 등) 다시 그린다 */
   useEffect(() => {
-    const map = mapRef.current;
-    const source = map?.getSource("ann") as GeoJSONSource | undefined;
-    if (!map || !source) return;
-    source.setData(toGeoJson(groupsRef.current));
-    syncMarkers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataKey, status]);
-
-  /* 적용 범위가 바뀌면(뒤로 가기 등) 지도도 맞춘다 */
-  const bboxKey = appliedBbox?.join(",") ?? "";
-  useEffect(() => {
-    appliedBboxRef.current = appliedBbox;
-    const map = mapRef.current;
-    if (!map || status !== "ready") return;
-    if (appliedBbox) {
-      const [a, b, c, d] = appliedBbox;
-      map.fitBounds([[a, b], [c, d]], { duration: 0 });
-    }
-    setMoved(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bboxKey, status]);
-
-  /* 선택이 바뀌면 마커를 강조하고, 보이지 않으면 지도를 옮긴다 */
-  useEffect(() => {
-    const map = mapRef.current;
-    syncMarkers();
-    if (!map || status !== "ready" || !selectedId) return;
-    const a = items.find((x) => x.id === selectedId);
-    if (!a) return;
-    const { lng, lat } = a.venue.coordinates;
-    if (!map.getBounds().contains([lng, lat])) map.easeTo({ center: [lng, lat], duration: 300 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, status]);
-
-  /* 테마가 바뀌면 예시 지도 색을 맞춘다 */
-  useEffect(() => {
-    if (STYLE_URL) return;
-    const observer = new MutationObserver(() => {
-      const map = mapRef.current;
-      if (!map || !map.isStyleLoaded()) return;
-      map.setPaintProperty("bg", "background-color", cssVar("--map-bg"));
-      map.setPaintProperty("grid", "line-color", cssVar("--map-grid"));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => mapRef.current?.relayout());
+    observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
+  /* 데이터·선택이 바뀌면 마커를 맞춘다 */
+  const dataKey = items.map((a) => a.id).join("|");
+  useEffect(() => {
+    syncMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataKey, selectedId, status]);
+
+  /* 적용 범위가 바뀌면(뒤로 가기 등) 지도도 맞춘다 */
+  useEffect(() => {
+    if (status === "ready" && appliedBbox) fitTo(appliedBbox);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bboxKey]);
+
+  /* 선택한 공고가 화면 밖이면 옮긴다 */
+  useEffect(() => {
+    const map = mapRef.current;
+    const lib = libRef.current;
+    if (!map || !lib || status !== "ready" || !selectedId) return;
+    const a = items.find((x) => x.id === selectedId);
+    const p = a ? mapPointOf(a) : null;
+    if (!p) return;
+    const pos = new lib.LatLng(p.lat, p.lng);
+    if (!map.getBounds().contain(pos)) {
+      programmaticRef.current = true;
+      map.panTo(pos);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, status]);
+
   const zoomBy = (delta: number) => {
-    userMoveRef.current = true;
-    mapRef.current?.zoomTo((mapRef.current?.getZoom() ?? 10) + delta, { duration: 200 });
+    const map = mapRef.current;
+    if (!map) return;
+    setMoved(true);
+    programmaticRef.current = true;
+    map.setLevel(Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, map.getLevel() - delta)), { animate: true });
   };
 
   const locate = () => {
@@ -350,13 +334,17 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { longitude, latitude } = pos.coords;
-        const [[minLng, minLat], [maxLng, maxLat]] = MAX_BOUNDS;
-        if (longitude < minLng || longitude > maxLng || latitude < minLat || latitude > maxLat) {
-          setGeoMessage("현재 위치가 서비스 지역(서울·경기) 밖이에요.");
+        if (longitude < KOREA.minLng || longitude > KOREA.maxLng || latitude < KOREA.minLat || latitude > KOREA.maxLat) {
+          setGeoMessage("현재 위치가 국내가 아니에요.");
           return;
         }
-        userMoveRef.current = true;
-        mapRef.current?.easeTo({ center: [longitude, latitude], zoom: 13 });
+        const map = mapRef.current;
+        const lib = libRef.current;
+        if (!map || !lib) return;
+        setMoved(true);
+        programmaticRef.current = true;
+        map.setLevel(6);
+        map.panTo(new lib.LatLng(latitude, longitude));
       },
       (err) =>
         setGeoMessage(
@@ -371,7 +359,9 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
   const searchHere = () => {
     const b = mapRef.current?.getBounds();
     if (!b) return;
-    onSearchArea([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+    const sw = b.getSouthWest();
+    const ne = b.getNorthEast();
+    onSearchArea([sw.getLng(), sw.getLat(), ne.getLng(), ne.getLat()]);
     setMoved(false);
   };
 
@@ -380,12 +370,16 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
       <div ref={containerRef} className="h-full w-full" aria-label="공고 위치 지도. 모든 공고는 목록에서도 볼 수 있습니다." role="region" />
 
       <div className="pointer-events-none absolute top-2 left-2 z-[2] flex max-w-[calc(100%-64px)] flex-col items-start gap-1">
-        <p className="rounded-sm bg-panel/95 px-2 py-1 text-xs font-semibold shadow-sm">
-          {STYLE_URL ? "행사·교육 장소 기준" : "예시 지도 · 실제 지도 타일이 아니에요"}
+        <p className="flex items-center gap-2 rounded-sm bg-panel/95 px-2 py-1 text-[11px] text-muted shadow-sm">
+          <span className="inline-flex items-center gap-1">
+            <span className="size-2.5 rounded-full bg-[#5b6573]" aria-hidden />
+            정확한 장소
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="size-2.5 rounded-full border-2 border-dashed border-[#5b6573]" aria-hidden />
+            대략 위치(시·구 단위)
+          </span>
         </p>
-        {!STYLE_URL ? (
-          <p className="rounded-sm bg-panel/95 px-2 py-1 text-[11px] text-muted shadow-sm">행사·교육 장소만 표시 · 지역명 위치는 대략적이에요</p>
-        ) : null}
       </div>
 
       {moved && status === "ready" ? (
@@ -420,19 +414,31 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
         </div>
       ) : null}
 
-      {status === "error" ? (
+      {status === "error" || status === "nokey" ? (
         <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-3 bg-[var(--map-bg)] px-6 text-center" role="alert">
           <AlertTriangle className="size-6 text-warning" aria-hidden />
           <div>
-            <p className="font-semibold">지도를 불러오지 못했어요</p>
+            <p className="font-semibold">{status === "nokey" ? "지도가 아직 설정되지 않았어요" : "지도를 불러오지 못했어요"}</p>
             <p className="mt-1 text-[13px] text-muted">목록은 그대로 사용할 수 있어요. 모든 공고를 목록에서 볼 수 있어요.</p>
-            {error ? <p className="mt-1 text-xs text-faint">({error})</p> : null}
+            {status === "nokey" ? (
+              <p className="mt-1 text-xs text-faint">(서버에 KAKAO_MAP_JS_KEY가 없어요)</p>
+            ) : error ? (
+              <p className="mt-1 text-xs text-faint">({error})</p>
+            ) : null}
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setAttempt((n) => n + 1)}>
-              <RefreshCw className="size-4" aria-hidden />
-              다시 시도
-            </Button>
+            {status === "error" ? (
+              <Button
+                onClick={() => {
+                  setStatus("loading");
+                  setError(null);
+                  setAttempt((n) => n + 1);
+                }}
+              >
+                <RefreshCw className="size-4" aria-hidden />
+                다시 시도
+              </Button>
+            ) : null}
             <Button variant="primary" onClick={onShowList}>
               목록으로 보기
             </Button>
@@ -443,36 +449,16 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
   );
 }
 
-function markerClass(cluster: boolean, selected: boolean): string {
-  if (cluster) {
-    return "flex size-9 items-center justify-center rounded-full border-2 border-[var(--panel)] bg-[var(--fg)] text-[13px] font-bold text-[var(--page)] shadow-md hover:scale-105 focus-visible:outline-2";
+function markerClass(g: Group, selected: boolean): string {
+  if (g.cluster) {
+    return "flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#191f28] text-[13px] font-bold text-white shadow-md hover:scale-105 focus-visible:outline-2";
   }
+  const area = g.precision === "area";
   return cn(
-    "flex items-center justify-center rounded-full border-2 border-[var(--panel)] text-[11px] font-bold text-white shadow-md transition-transform hover:scale-110",
-    selected ? "z-10 size-8 scale-110 bg-[var(--accent)] ring-4 ring-[var(--accent)]/30" : "size-6 bg-[#5b6573]",
+    "flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[11px] font-bold shadow-md transition-transform hover:scale-110 focus-visible:outline-2",
+    area ? "border-2 border-dashed" : "border-2 border-white",
+    selected
+      ? cn("size-8 scale-110 ring-4 ring-[#3182f6]/30", area ? "border-[#3182f6] bg-[#3182f6]/25 text-[#1b64da]" : "bg-[#3182f6] text-white")
+      : cn("size-6", area ? "border-[#5b6573] bg-white/80 text-[#333d4b]" : "bg-[#5b6573] text-white"),
   );
-}
-
-function fitToItems(map: MlMap, groups: LocationGroup[], duration: number) {
-  if (groups.length === 0) return;
-  const lngs = groups.map((g) => g.coordinates[0]);
-  const lats = groups.map((g) => g.coordinates[1]);
-  map.fitBounds(
-    [
-      [Math.min(...lngs), Math.min(...lats)],
-      [Math.max(...lngs), Math.max(...lats)],
-    ],
-    { padding: 48, maxZoom: 13, duration },
-  );
-}
-
-/** 예시 지도의 지역 이름 표식(외부 글꼴 없이 HTML로 그린다) */
-function addAreaLabels(lib: typeof import("maplibre-gl"), map: MlMap) {
-  for (const l of AREA_LABELS) {
-    const el = document.createElement("span");
-    el.className = "pointer-events-none select-none text-[11px] font-medium text-[var(--faint)]";
-    el.setAttribute("aria-hidden", "true");
-    el.textContent = l.name;
-    new lib.Marker({ element: el }).setLngLat([l.coordinates.lng, l.coordinates.lat]).addTo(map);
-  }
 }

@@ -16,6 +16,10 @@ public record Incoming(
         int initialVersion,
         List<AnnouncementRevisionView> history) {
 
+    public Incoming withContent(AnnouncementContent c) {
+        return new Incoming(externalId, c, checkedAt, initialVersion, history);
+    }
+
     public static Incoming fresh(String externalId, AnnouncementContent content, Instant checkedAt) {
         return new Incoming(externalId, content, checkedAt, 1, List.of());
     }

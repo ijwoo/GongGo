@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildDemoAnnouncements } from "@/data/demo-announcements";
+import { buildFixtureAnnouncements } from "../fixtures/announcements";
 import {
   AnnouncementApiError,
   fetchAnnouncements,
@@ -7,7 +7,7 @@ import {
   MAX_PAGES,
 } from "@/repositories/http-announcements";
 
-const items = buildDemoAnnouncements("2026-10-21");
+const items = buildFixtureAnnouncements("2026-10-21");
 
 function respond(body: unknown, status = 200) {
   return vi.fn(

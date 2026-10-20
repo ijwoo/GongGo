@@ -1,6 +1,8 @@
 package dev.imjaewoo.gonggo.ingestion;
 
 import dev.imjaewoo.gonggo.announcement.AnnouncementUpserter;
+import dev.imjaewoo.gonggo.announcement.Incoming;
+import dev.imjaewoo.gonggo.geo.AreaGeocoder;
 import dev.imjaewoo.gonggo.announcement.AnnouncementUpserter.Outcome;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -36,14 +38,16 @@ public class IngestionService {
 
     private final Map<String, SourceAdapter> adapters;
     private final AnnouncementUpserter upserter;
+    private final AreaGeocoder geocoder;
     private final JdbcClient jdbc;
     private final JsonMapper json;
     private final Clock clock;
     /** 같은 출처가 동시에 두 번 돌지 않게 한다(서버 1대 전제. 여러 대면 DB advisory lock으로 바꾼다) */
     private final Set<String> running = ConcurrentHashMap.newKeySet();
 
-    public IngestionService(List<SourceAdapter> adapters, AnnouncementUpserter upserter, JdbcClient jdbc,
-            JsonMapper json, Clock clock) {
+    public IngestionService(List<SourceAdapter> adapters, AnnouncementUpserter upserter, AreaGeocoder geocoder,
+            JdbcClient jdbc, JsonMapper json, Clock clock) {
+        this.geocoder = geocoder;
         this.adapters = adapters.stream().collect(Collectors.toMap(SourceAdapter::sourceId, Function.identity()));
         this.upserter = upserter;
         this.jdbc = jdbc;
@@ -92,7 +96,9 @@ public class IngestionService {
             for (SourceRecord record : records) {
                 saveRaw(adapter.sourceId(), record);
                 try {
-                    Outcome outcome = upserter.upsert(adapter.normalize(record, clock.instant()), clock.instant());
+                    Incoming in = adapter.normalize(record, clock.instant());
+                    in = in.withContent(geocoder.enrich(in.content()));
+                    Outcome outcome = upserter.upsert(in, clock.instant());
                     counts.merge(outcome, 1, Integer::sum);
                 } catch (RuntimeException e) {
                     errors++;

@@ -2,9 +2,8 @@ import { z } from "zod";
 import {
   applicationState,
   deadlineDate,
-  hasCoordinates,
+  mapPointOf,
   type ApplicationState,
-  type LocatedAnnouncement,
 } from "./announcement";
 import { addLocalDays, seoulDateOf, weekdayOf } from "./time";
 import { CATEGORIES, PARTICIPATION_MODES, type Announcement, type Category, type ParticipationMode } from "./types";
@@ -13,7 +12,26 @@ import { CATEGORIES, PARTICIPATION_MODES, type Announcement, type Category, type
  * 발견 화면의 탐색 상태. 전부 URL query에 담는다(공유·뒤로 가기 복원).
  * 사용자 개인 상태(관심 저장, 비교 선택 등)는 여기에 넣지 않는다.
  */
-export const VENUE_REGIONS = ["서울", "경기"] as const;
+/** 행사 장소의 시·도(약칭). 확정 장소의 주소 또는 시·구 단위 지역의 첫 단어와 맞춘다 */
+export const VENUE_REGIONS = [
+  "서울",
+  "경기",
+  "인천",
+  "강원",
+  "충북",
+  "충남",
+  "대전",
+  "세종",
+  "전북",
+  "전남",
+  "광주",
+  "경북",
+  "경남",
+  "대구",
+  "부산",
+  "울산",
+  "제주",
+] as const;
 export type VenueRegion = (typeof VENUE_REGIONS)[number];
 
 export const STATUS_FILTERS = ["all", "open", "upcoming", "rolling"] as const;
@@ -143,8 +161,9 @@ export function activeFilterCount(q: DiscoverQuery): number {
 }
 
 export function venueRegionOf(a: Announcement): VenueRegion | null {
-  if (a.venue.status !== "confirmed") return null;
-  return a.venue.address.startsWith("서울") ? "서울" : a.venue.address.startsWith("경기") ? "경기" : null;
+  const v = a.venue;
+  const text = v.status === "confirmed" ? v.address : v.status === "tbd" ? (v.area?.label ?? "") : "";
+  return VENUE_REGIONS.find((r) => text.startsWith(r)) ?? null;
 }
 
 /** 이번 주(서울 기준 월~일)의 마지막 날 */
@@ -171,7 +190,9 @@ const CLOSED_STATES: ApplicationState[] = ["closed", "cancelled"];
 function matchesText(a: Announcement, q: string): boolean {
   if (!q) return true;
   const needle = q.toLowerCase();
-  const hay = [a.title, a.organizer.name, a.venue.status === "confirmed" ? `${a.venue.district} ${a.venue.name}` : ""]
+  const v = a.venue;
+  const place = v.status === "confirmed" ? `${v.district} ${v.name}` : v.status === "tbd" ? (v.area?.label ?? "") : "";
+  const hay = [a.title, a.organizer.name, place]
     .join(" ")
     .toLowerCase();
   return needle.split(/\s+/).every((t) => hay.includes(t));
@@ -198,14 +219,14 @@ export function filterAnnouncements(list: Announcement[], q: DiscoverQuery, nowI
   return sortAnnouncements(result, q.sort, nowIso);
 }
 
-/** 지도 범위 필터. 좌표가 있는 공고만 남는다 */
-export function withinBbox(list: Announcement[], bbox: Bbox | null): LocatedAnnouncement[] {
-  const located = list.filter(hasCoordinates);
-  if (!bbox) return located;
-  const [minLng, minLat, maxLng, maxLat] = bbox;
-  return located.filter((a) => {
-    const { lat, lng } = a.venue.coordinates;
-    return lng >= minLng && lng <= maxLng && lat >= minLat && lat <= maxLat;
+/** 지도 범위 필터. 위치(정확한 장소 또는 지역의 대략 위치)가 있는 공고만 남는다 */
+export function withinBbox(list: Announcement[], bbox: Bbox | null): Announcement[] {
+  return list.filter((a) => {
+    const p = mapPointOf(a);
+    if (!p) return false;
+    if (!bbox) return true;
+    const [minLng, minLat, maxLng, maxLat] = bbox;
+    return p.lng >= minLng && p.lng <= maxLng && p.lat >= minLat && p.lat <= maxLat;
   });
 }
 

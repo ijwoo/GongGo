@@ -18,14 +18,31 @@ export interface SourcePolicy {
   permissionNote: string;
 }
 
+/** 백엔드 sources 표(V1·V2 마이그레이션)와 같은 내용 */
 export const SOURCE_POLICIES: Record<string, SourcePolicy> = {
-  demo: {
-    id: "demo",
-    name: "데모 공고 게시판",
-    allowedUses: ["link", "summary", "fullText"],
-    attribution: "공고·기관·장소는 데모용 예시입니다.",
+  devevent: {
+    id: "devevent",
+    name: "Dev-Event",
+    allowedUses: ["link"],
+    attribution: "출처: Dev-Event (github.com/brave-people/Dev-Event). 행사명·일정·주최·링크만 표시하며, 자세한 내용은 원문에서 확인하세요.",
     allowTransform: true,
-    permissionNote: "직접 만든 합성 데이터",
+    permissionNote: "커뮤니티가 관리하는 공개 목록. 라이선스 표기가 없어 최소 정보와 원문 링크만 쓴다.",
+  },
+  greenhouse: {
+    id: "greenhouse",
+    name: "Greenhouse 채용 공고",
+    allowedUses: ["link"],
+    attribution: "출처: 각 회사 Greenhouse 채용 페이지. 지원은 원문에서 하세요.",
+    allowTransform: true,
+    permissionNote: "회사가 공개한 Greenhouse Job Board API.",
+  },
+  kstartup: {
+    id: "kstartup",
+    name: "K-Startup 사업공고",
+    allowedUses: ["link", "summary"],
+    attribution: "출처: 창업진흥원 K-Startup, 공공데이터포털",
+    allowTransform: true,
+    permissionNote: "공공데이터포털 오픈 API. 이용허락범위는 데이터셋 페이지 표시를 따른다.",
   },
 };
 

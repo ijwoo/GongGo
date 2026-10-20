@@ -7,7 +7,7 @@ import { AppShell, AppShellFallback } from "./app-shell";
 
 export const metadata: Metadata = {
   title: { default: "공고함", template: "%s · 공고함" },
-  description: "해커톤·창업 지원사업·교육·개발자 행사 공고를 비교하고 지원 일정을 관리하는 서비스 (데모)",
+  description: "해커톤·창업 지원사업·교육·개발자 행사 공고를 비교하고 지원 일정을 관리하는 서비스",
 };
 
 export const viewport: Viewport = {

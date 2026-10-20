@@ -33,6 +33,12 @@ public record AnnouncementContent(
         List<String> checkPoints,
         String status) {
 
+    public AnnouncementContent withVenue(Venue venue) {
+        return new AnnouncementContent(id, title, organizer, category, sourceId, sourceUrl, sourceName, publishedAt,
+                sourceUpdatedAt, applicationStart, applicationDeadline, event, participationMode, venue,
+                eligibilityRegions, teamSize, cost, supportAmount, conditions, requiredDocuments, checkPoints, status);
+    }
+
     public AnnouncementContent withStatus(String status) {
         return new AnnouncementContent(id, title, organizer, category, sourceId, sourceUrl, sourceName, publishedAt,
                 sourceUpdatedAt, applicationStart, applicationDeadline, event, participationMode, venue,

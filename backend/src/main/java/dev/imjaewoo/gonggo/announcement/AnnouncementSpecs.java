@@ -34,10 +34,15 @@ final class AnnouncementSpecs {
                 where.add(root.get("participationMode").in(s.modes()));
             }
             if (!s.regions().isEmpty()) {
-                // 지역 필터는 행사 장소 기준. 장소가 확정되지 않은 공고는 빠진다
+                // 지역 필터는 행사 장소 기준(확정 장소의 주소 또는 시·구 단위 지역). 온라인·지역 미상은 빠진다
                 List<Predicate> any = s.regions().stream()
-                        .map(r -> cb.like(root.get("venueAddress"), escapeLike(r) + "%", '\\')).toList();
-                where.add(cb.and(cb.equal(root.get("venueStatus"), "confirmed"), cb.or(any.toArray(Predicate[]::new))));
+                        .map(r -> cb.or(
+                                cb.and(cb.equal(root.get("venueStatus"), "confirmed"),
+                                        cb.like(root.get("venueAddress"), escapeLike(r) + "%", '\\')),
+                                cb.and(cb.equal(root.get("venueStatus"), "tbd"),
+                                        cb.like(root.get("venueArea"), escapeLike(r) + "%", '\\'))))
+                        .toList();
+                where.add(cb.or(any.toArray(Predicate[]::new)));
             }
             if (!s.includeClosed()) {
                 where.add(cb.not(closed(root, cb, now)));
@@ -100,6 +105,8 @@ final class AnnouncementSpecs {
         text = cb.concat(text, cb.coalesce(root.<String>get("venueDistrict"), ""));
         text = cb.concat(text, " ");
         text = cb.concat(text, cb.coalesce(root.<String>get("venueName"), ""));
+        text = cb.concat(text, " ");
+        text = cb.concat(text, cb.coalesce(root.<String>get("venueArea"), ""));
         return cb.lower(text);
     }
 

@@ -6,42 +6,37 @@ import {
   applicationRecordSchema,
   calendarEventSchema,
   changeAlertPrefsSchema,
-  isoInstant,
   notificationSchema,
   savedAnnouncementSchema,
   userProfileSchema,
-  type UserProfile,
 } from "@/domain/types";
+import { diffPersonal, type SyncOp } from "./personal-sync";
 
 /**
- * 데모 모드의 개인 상태 저장소.
+ * 개인 상태 저장소(로그인한 사용자의 관심 공고·일정·알림·지원 현황·설정).
  *
- * - 브라우저 localStorage에만 저장한다. 서버로 보내지 않는다.
- * - 비밀번호·토큰 같은 인증 정보는 저장하지 않는다. 데모 세션은 '데모로 체험 중'이라는 표시일 뿐이다.
- * - 실제 인증·DB를 붙이면 이 모듈의 읽기/쓰기를 API 호출로 바꾸고, 화면 컴포넌트는 그대로 둔다.
- * - 서버 렌더링 때는 빈 상태(EMPTY)를 쓰고, hydration 직후 저장된 값으로 바뀐다.
+ * - 원본은 서버(DB)에 있다. 화면을 열 때 GET /api/me로 한 번 읽고, 이후 변경은 화면에 바로 반영한 뒤
+ *   차이(personal-sync)만 서버에 보낸다. 서버가 거절하면 최신 상태를 다시 읽어 화면을 맞춘다.
+ * - 로그인은 카카오(서버 세션 쿠키, HttpOnly). 브라우저에는 토큰을 저장하지 않는다.
+ * - 서버 렌더링 때는 빈 상태(EMPTY)를 쓰고, 불러오기가 끝나면 hydrated가 된다.
+ * - 비교 선택은 로그인 없이도 쓰는 임시 선택이라 이 브라우저(localStorage)에만 둔다.
  */
 
-const demoSessionSchema = z.object({
-  kind: z.literal("demo"),
+const sessionSchema = z.object({
   userId: z.string(),
   displayName: z.string(),
-  startedAt: isoInstant,
 });
-export type DemoSession = z.infer<typeof demoSessionSchema>;
-
-const appliedChangeSchema = z.object({ id: z.string(), appliedAt: isoInstant });
+export type UserSession = z.infer<typeof sessionSchema>;
 
 export const personalStateSchema = z.object({
   version: z.literal(1),
-  session: demoSessionSchema.nullable(),
+  session: sessionSchema.nullable(),
   profile: userProfileSchema.nullable(),
   saved: z.array(savedAnnouncementSchema),
   events: z.array(calendarEventSchema),
   notifications: z.array(notificationSchema),
   applications: z.array(applicationRecordSchema),
   changeAlerts: changeAlertPrefsSchema,
-  appliedChanges: z.array(appliedChangeSchema),
   sentReminderKeys: z.array(z.string()),
 });
 export type PersonalState = z.infer<typeof personalStateSchema>;
@@ -55,11 +50,45 @@ export const EMPTY_STATE: PersonalState = {
   notifications: [],
   applications: [],
   changeAlerts: { deadline: true, venue: true, conditions: true, cancel: true },
-  appliedChanges: [],
   sentReminderKeys: [],
 };
 
-const STATE_KEY = "gonggoham:personal:v1";
+/** GET /api/me 응답 */
+export const meResponseSchema = z.object({
+  user: z.object({ id: z.number().int(), nickname: z.string().nullable() }),
+  profile: userProfileSchema.nullable(),
+  saved: z.array(savedAnnouncementSchema),
+  events: z.array(calendarEventSchema),
+  notifications: z.array(notificationSchema),
+  applications: z.array(applicationRecordSchema),
+  changeAlerts: changeAlertPrefsSchema,
+  sentReminderKeys: z.array(z.string()),
+});
+
+export function stateFromMe(me: z.infer<typeof meResponseSchema>): PersonalState {
+  return {
+    version: 1,
+    session: { userId: String(me.user.id), displayName: me.user.nickname ?? "카카오 사용자" },
+    profile: me.profile,
+    saved: me.saved,
+    events: me.events,
+    notifications: me.notifications,
+    applications: me.applications,
+    changeAlerts: me.changeAlerts,
+    sentReminderKeys: me.sentReminderKeys,
+  };
+}
+
+const authSessionSchema = z.object({
+  authenticated: z.boolean(),
+  kakaoEnabled: z.boolean(),
+  testLoginEnabled: z.boolean(),
+});
+export interface AuthConfig {
+  kakaoEnabled: boolean;
+  testLoginEnabled: boolean;
+}
+
 const COMPARE_KEY = "gonggoham:compare:v1";
 export const COMPARE_LIMIT = 3;
 
@@ -90,7 +119,7 @@ function writeRaw(key: string, value: string | null) {
 function subscribe(listener: Listener) {
   listeners.add(listener);
   const onStorage = (e: StorageEvent) => {
-    if (e.key === STATE_KEY || e.key === COMPARE_KEY) listener();
+    if (e.key === COMPARE_KEY) listener();
   };
   window.addEventListener("storage", onStorage);
   return () => {
@@ -99,46 +128,164 @@ function subscribe(listener: Listener) {
   };
 }
 
-/* 같은 원문 문자열이면 같은 객체를 돌려줘야 useSyncExternalStore가 무한 렌더링하지 않는다 */
-let cachedRaw: string | null | undefined;
-let cachedState: PersonalState = EMPTY_STATE;
+/* ───────── 서버와 맞춘 상태 ───────── */
+
+type Status = "loading" | "ready" | "error";
+let state: PersonalState = EMPTY_STATE;
+let status: Status = "loading";
+let auth: AuthConfig = { kakaoEnabled: false, testLoginEnabled: false };
+const errorListeners = new Set<(message: string) => void>();
+
+let loadedWaiters: (() => void)[] = [];
+
+function set(next: PersonalState, nextStatus: Status = status) {
+  state = next;
+  status = nextStatus;
+  if (status !== "loading") {
+    loadedWaiters.forEach((w) => w());
+    loadedWaiters = [];
+  }
+  listeners.forEach((l) => l());
+}
+
+/** 로그인 상태를 아직 불러오는 중이면 끝날 때까지 기다린다(화면을 열자마자 누른 동작이 로그인 안내로 새지 않게) */
+export function whenPersonalLoaded(): Promise<void> {
+  if (status !== "loading") return Promise.resolve();
+  return new Promise((resolve) => loadedWaiters.push(resolve));
+}
+
+function csrfToken(): string | null {
+  const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+async function api(method: string, path: string, body?: unknown): Promise<Response> {
+  const headers: Record<string, string> = { accept: "application/json" };
+  if (body !== undefined) headers["content-type"] = "application/json";
+  if (method !== "GET") {
+    const token = csrfToken();
+    if (token) headers["x-xsrf-token"] = token;
+  }
+  const res = await fetch(path, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = ((await res.json()) as { detail?: string; title?: string }).detail ?? "";
+    } catch {
+      // 본문 없음
+    }
+    throw new ApiError(res.status, detail || `요청이 실패했어요 (${res.status})`);
+  }
+  return res;
+}
+
+/** 로그인 상태와 개인 데이터를 서버에서 읽는다. 화면을 열 때와 저장 실패 뒤에 부른다 */
+export async function loadPersonal(): Promise<void> {
+  try {
+    const session = authSessionSchema.parse(await (await api("GET", "/api/auth/session")).json());
+    auth = { kakaoEnabled: session.kakaoEnabled, testLoginEnabled: session.testLoginEnabled };
+    if (!session.authenticated) {
+      set(EMPTY_STATE, "ready");
+      return;
+    }
+    const me = meResponseSchema.parse(await (await api("GET", "/api/me")).json());
+    set(stateFromMe(me), "ready");
+  } catch (error) {
+    console.error("[공고함] 개인 데이터를 불러오지 못했습니다", error);
+    set(EMPTY_STATE, "error");
+  }
+}
+
+let started = false;
+/** 앱에서 한 번만 불러온다 */
+export function ensurePersonalLoaded() {
+  if (started) return;
+  started = true;
+  void loadPersonal();
+}
+
+export function onSyncError(listener: (message: string) => void): () => void {
+  errorListeners.add(listener);
+  return () => {
+    errorListeners.delete(listener);
+  };
+}
+
+/* 서버에 보낼 변경은 순서대로 하나씩 보낸다 */
+let queue: Promise<void> = Promise.resolve();
+
+function enqueue(ops: SyncOp[]) {
+  if (ops.length === 0) return;
+  queue = queue.then(async () => {
+    try {
+      for (const op of ops) await api(op.method, op.path, op.body);
+    } catch (error) {
+      const e = error instanceof ApiError ? error : null;
+      const message =
+        e?.status === 401
+          ? "로그인이 만료됐어요. 다시 로그인해 주세요."
+          : e?.status === 409
+            ? e.message
+            : "저장하지 못했어요. 최신 상태를 다시 불러왔어요.";
+      errorListeners.forEach((l) => l(message));
+      await loadPersonal();
+    }
+  });
+}
 
 export function readPersonalState(): PersonalState {
-  const raw = readRaw(STATE_KEY);
-  if (raw === cachedRaw) return cachedState;
-  cachedRaw = raw;
-  if (!raw) {
-    cachedState = EMPTY_STATE;
-    return cachedState;
-  }
-  try {
-    const parsed = personalStateSchema.safeParse(JSON.parse(raw));
-    cachedState = parsed.success ? parsed.data : EMPTY_STATE;
-    if (!parsed.success) console.warn("[공고함] 저장된 개인 상태 형식이 맞지 않아 초기화합니다.", parsed.error.issues.slice(0, 3));
-  } catch {
-    cachedState = EMPTY_STATE;
-  }
-  return cachedState;
+  return state;
 }
 
 export function updatePersonalState(updater: (prev: PersonalState) => PersonalState) {
-  const next = personalStateSchema.parse(updater(readPersonalState()));
-  writeRaw(STATE_KEY, JSON.stringify(next));
+  const prev = state;
+  if (!prev.session) return; // 로그인 전에는 저장할 곳이 없다(화면은 로그인 안내를 먼저 띄운다)
+  const next = personalStateSchema.parse(updater(prev));
+  if (next === prev) return;
+  set(next);
+  enqueue(diffPersonal(prev, next));
+}
+
+/** 서버에 보낸 변경이 모두 끝날 때까지 기다린다(로그아웃 직전 등) */
+export function flushPersonal(): Promise<void> {
+  return queue;
 }
 
 export function usePersonalState(): PersonalState {
   return useSyncExternalStore(subscribe, readPersonalState, () => EMPTY_STATE);
 }
 
-/** hydration 이후인지. 서버 스냅샷과 구분해 '불러오는 중'을 표시할 때 쓴다 */
+/** 불러오기가 끝났는지. 끝나기 전에는 '불러오는 중'을 보여 준다 */
 export function useHydrated(): boolean {
   return useSyncExternalStore(
-    noopSubscribe,
-    () => true,
+    subscribe,
+    () => status !== "loading",
     () => false,
   );
 }
-const noopSubscribe = () => () => {};
+
+export function useAuthConfig(): AuthConfig {
+  return useSyncExternalStore(
+    subscribe,
+    () => auth,
+    () => auth,
+  );
+}
 
 /* ───────── 비교 선택: 비로그인도 쓸 수 있으므로 따로 저장 ───────── */
 
@@ -180,41 +327,54 @@ export function clearCompare() {
   writeRaw(COMPARE_KEY, null);
 }
 
-/* ───────── 데모 세션 ───────── */
+/* ───────── 로그인·로그아웃·탈퇴 ───────── */
 
-/** 데모용 합성 프로필. 실존 인물과 무관하다 */
-export const DEMO_PROFILE: UserProfile = {
-  interests: ["hackathon", "startup"],
-  region: "서울",
-  career: "3-5",
-  teamSize: 3,
-  startupYears: 0,
-};
+const RETURN_TO_KEY = "gonggoham:returnTo";
 
-export function startDemoSession(nowIso: string) {
-  updatePersonalState((prev) => {
-    if (prev.session) return prev;
-    return {
-      ...prev,
-      session: { kind: "demo", userId: "demo-user", displayName: "데모 사용자", startedAt: nowIso },
-      profile: prev.profile ?? DEMO_PROFILE,
-      // 첫 체험이 비어 보이지 않도록 관심 공고 두 개를 미리 넣어 둔다(변경 이력이 있는 공고)
-      saved: prev.saved.length
-        ? prev.saved
-        : [
-            { announcementId: "hk-seongsu-climate", savedAt: nowIso, seenVersion: 1 },
-            { announcementId: "su-seoul-prestartup", savedAt: nowIso, seenVersion: 1 },
-          ],
-    };
-  });
+/** 같은 사이트 안의 경로만 돌아갈 곳으로 허용한다(외부 주소로 보내는 열린 리다이렉트 방지) */
+export function safeReturnTo(value: string | null | undefined): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return "/discover";
+  return value;
 }
 
-export function endDemoSession() {
-  updatePersonalState((prev) => ({ ...prev, session: null }));
+/** 카카오 로그인 화면으로 이동한다. 로그인이 끝나면 /login/complete가 returnTo로 되돌려 보낸다 */
+export function startKakaoLogin(returnTo: string) {
+  try {
+    window.sessionStorage.setItem(RETURN_TO_KEY, safeReturnTo(returnTo));
+  } catch {
+    // 저장할 수 없으면 기본 화면으로 돌아간다
+  }
+  // 페이지가 아니라 백엔드로 프록시되는 경로(카카오 인증 화면으로 리다이렉트)라 전체 이동이 맞다
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+  window.location.assign("/oauth2/authorization/kakao");
 }
 
-/** 데모 데이터 초기화: 개인 상태와 비교 선택을 모두 지운다 */
-export function resetDemoData() {
-  writeRaw(STATE_KEY, null);
-  writeRaw(COMPARE_KEY, null);
+export function takeReturnTo(): string {
+  try {
+    const v = window.sessionStorage.getItem(RETURN_TO_KEY);
+    window.sessionStorage.removeItem(RETURN_TO_KEY);
+    return safeReturnTo(v);
+  } catch {
+    return "/discover";
+  }
+}
+
+/** 테스트 전용 로그인(E2E·로컬). 서버가 켜 둔 경우에만 화면에 버튼이 보인다 */
+export async function testLogin(nickname: string): Promise<void> {
+  await api("POST", "/api/auth/test-login", { nickname });
+  await loadPersonal();
+}
+
+export async function signOut(): Promise<void> {
+  await flushPersonal();
+  await api("POST", "/api/auth/logout");
+  await loadPersonal();
+}
+
+/** 탈퇴: 계정과 서버의 개인 데이터를 모두 지운다 */
+export async function deleteAccount(): Promise<void> {
+  await flushPersonal();
+  await api("DELETE", "/api/me");
+  clearCompare();
+  await loadPersonal();
 }

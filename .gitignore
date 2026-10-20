@@ -39,7 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-public/vendor/
 .shots/
 test-results/
 playwright-report/
+
+# E2E 백엔드 상태(scripts/e2e-api.sh)
+.e2e/

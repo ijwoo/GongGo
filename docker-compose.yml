@@ -29,8 +29,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       KSTARTUP_SERVICE_KEY: ${KSTARTUP_SERVICE_KEY:-}
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       GONGGO_INGESTION_CRON: ${GONGGO_INGESTION_CRON:-0 10 6 * * *}
-      GONGGO_DEMO_ENABLED: ${GONGGO_DEMO_ENABLED:-true}
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /actuator/health HTTP/1.0\\r\\n\\r\\n\" >&3 && grep -q UP <&3'"]
       interval: 10s
@@ -42,16 +44,14 @@ services:
     #     http://api:8080/api/admin/ingestions/kstartup
 
   web:
-    build:
-      context: .
-      args:
-        NEXT_PUBLIC_MAP_STYLE_URL: ${NEXT_PUBLIC_MAP_STYLE_URL:-}
+    build: .
     restart: unless-stopped
     depends_on:
       api:
         condition: service_healthy
     environment:
       API_BASE_URL: http://api:8080
+      KAKAO_MAP_JS_KEY: ${KAKAO_MAP_JS_KEY:-}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
       EMAIL_API_KEY: ${EMAIL_API_KEY:-}
     ports:

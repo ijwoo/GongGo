@@ -33,7 +33,6 @@
   --focus: #3182f6;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 20px rgb(0 0 0 / 0.08);
   --map-bg: #eef1f4;
-  --map-grid: #dde2e7;
 }
 
 [data-theme="dark"] {
@@ -62,7 +61,6 @@
   --focus: #6ea4fb;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
   --map-bg: #13151a;
-  --map-grid: #20232b;
 }
 
 @theme inline {
@@ -134,16 +132,4 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* 지도 컨트롤(MapLibre)을 테마에 맞춘다 */
-.maplibregl-ctrl-attrib {
-  font-size: 11px;
-}
-[data-theme="dark"] .maplibregl-ctrl-attrib {
-  background: rgb(23 24 29 / 0.8) !important;
-  color: var(--muted);
-}
-[data-theme="dark"] .maplibregl-ctrl-attrib a {
-  color: var(--muted);
 }

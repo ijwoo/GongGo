@@ -120,7 +120,7 @@ export function venueShort(a: Announcement): string {
   const v = a.venue;
   if (v.status === "confirmed") return v.district;
   if (v.status === "online") return "온라인";
-  return "장소 미정";
+  return v.area ? v.area.label : "장소 미정";
 }
 
 export function formatTeamSize(t: Announcement["teamSize"]): string {
@@ -148,8 +148,23 @@ export function formatSupport(s: Announcement["supportAmount"]): string {
   return `최대 ${formatKrw(s.maxKrw)}${s.note ? ` · ${s.note}` : ""}`;
 }
 
-export type LocatedAnnouncement = Announcement & { venue: Extract<Venue, { status: "confirmed" }> };
+/**
+ * 지도에 찍을 위치. exact는 확정된 행사 장소, area는 시·구 단위 지역의 대략 위치다.
+ * 주최기관 주소는 쓰지 않는다.
+ */
+export interface MapPoint {
+  lat: number;
+  lng: number;
+  precision: "exact" | "area";
+}
 
-export function hasCoordinates(a: Announcement): a is LocatedAnnouncement {
-  return a.venue.status === "confirmed";
+export function mapPointOf(a: Announcement): MapPoint | null {
+  const v = a.venue;
+  if (v.status === "confirmed") return { ...v.coordinates, precision: "exact" };
+  if (v.status === "tbd" && v.area?.coordinates) return { ...v.area.coordinates, precision: "area" };
+  return null;
+}
+
+export function hasCoordinates(a: Announcement): boolean {
+  return mapPointOf(a) !== null;
 }

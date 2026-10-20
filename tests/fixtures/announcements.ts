@@ -14,7 +14,9 @@ import { addLocalDays, seoulInstant, type LocalDate } from "@/domain/time";
 import { PLACES } from "./places";
 
 /**
- * 합성 공고 데이터.
+ * 테스트 전용 합성 공고(실제 기관·장소가 아니다). 화면에는 나오지 않는다.
+ * 웹 단위 테스트가 직접 쓰고, scripts/export-fixtures.ts로 JSON(tests/fixtures/announcements.json)을 만들어
+ * 백엔드 통합 테스트와 E2E가 백엔드의 테스트 전용 출처(fixture)로 넣는다.
  * 모든 날짜는 기준일(anchor, 서울 기준 오늘)에서 며칠 떨어졌는지로 정의한다.
  * 같은 anchor를 넣으면 서버와 브라우저에서 항상 같은 결과가 나온다.
  */
@@ -832,7 +834,7 @@ const SPECS: Spec[] = [
 ];
 
 /** 공고별 '확인할 사항'이 없는 경우를 대비한 기본값 없이 그대로 둔다. */
-export function buildDemoAnnouncements(anchor: LocalDate): Announcement[] {
+export function buildFixtureAnnouncements(anchor: LocalDate): Announcement[] {
   const ctx: Ctx = {
     d: (n) => addLocalDays(anchor, n),
     at: (n, time) => seoulInstant(addLocalDays(anchor, n), time),
@@ -853,9 +855,9 @@ export function buildDemoAnnouncements(anchor: LocalDate): Announcement[] {
       title: s.title,
       organizer: { name: s.org, address: s.orgAddress ?? null, color: s.orgColor },
       category: s.category,
-      sourceId: "demo",
+      sourceId: "fixture",
       sourceUrl: `https://example.com/notices/${s.id}`,
-      sourceName: "데모 공고 게시판",
+      sourceName: "테스트 고정 공고",
       publishedAt,
       sourceUpdatedAt: lastRevision && lastRevision > publishedAt ? lastRevision : publishedAt,
       lastCheckedAt: ctx.at(-1, "21:00"),

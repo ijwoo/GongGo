@@ -92,7 +92,8 @@ public class DevEventNormalizer {
         String place = tags.stream().map(OFFLINE_PLACE::matcher).filter(Matcher::find).map(m -> m.group(1).strip())
                 .findFirst().orElse(null);
         Venue venue = offline
-                ? new Venue.Tbd(place != null ? place + " · 상세 장소는 원문 확인" : null)
+                ? new Venue.Tbd(place != null ? place + " · 상세 장소는 원문 확인" : null,
+                        place != null ? new Venue.Area(place, null) : null)
                 : new Venue.Online(null);
 
         JsonNode cost = null;

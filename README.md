@@ -3,7 +3,8 @@
 해커톤·창업 지원사업·교육·개발자 행사 공고를 **탐색 → 조건 검토 → 관심 저장 → 내 캘린더 → 알림**까지 한 흐름으로 관리하는 웹앱입니다.
 2인 개발 포트폴리오를 가정해, 기능 수보다 핵심 흐름의 완성도와 상태 관리·접근성·반응형·데이터 설계·오류 처리를 드러내는 데 집중했습니다.
 
-> 기본 공고 34건은 **데모용 합성 데이터**입니다(원문 링크는 `example.com`). 백엔드에 K-Startup API 키를 넣으면 공공 오픈 API의 실제 공고가 함께 수집됩니다.
+> 공고는 모두 **실제 출처에서 수집**합니다: Dev-Event(개발자 행사 커뮤니티 목록), 회사별 Greenhouse 채용 게시판, (키가 있으면) 공공데이터포털 K-Startup. 로그인은 **카카오**, 개인 데이터는 **서버(DB)** 에 저장하고, 지도는 **카카오맵**입니다.
+> 아래 화면 캡처는 테스트 고정 공고로 찍은 것입니다.
 
 ![발견 화면(다크, 2560px)](docs/screenshots/discover-dark-wide.png)
 
@@ -14,34 +15,46 @@
 ## 구성
 
 ```
-[브라우저] ─► web (Next.js, 저장소 루트) ──서버에서 fetch──► api (Spring Boot, backend/) ─► PostgreSQL
-                │ API_BASE_URL이 없으면 내장 데모 데이터                │
-                └ 개인 데이터: 브라우저 localStorage(1단계)              └ 매일 수집: 공공데이터포털 K-Startup
+[브라우저] ─► web (Next.js, 저장소 루트) ─┬─ 공고: 서버 컴포넌트가 fetch ───────────► api (Spring Boot, backend/) ─► PostgreSQL
+     │                                    └─ /api/**·/oauth2/**·/login/oauth2/** 프록시 ─►  ├─ 카카오 로그인(OAuth) · 세션(DB)
+     └─ 카카오맵 SDK(브라우저)                                                             ├─ 개인 데이터 API(/api/me)
+                                                                                            ├─ 매일 수집: Dev-Event · Greenhouse · K-Startup
+                                                                                            └─ 지오코딩: 카카오 로컬 API(시·구 → 대략 좌표)
 ```
 
-- **web**은 `API_BASE_URL`이 있으면 백엔드에서 공고를 읽고, 없으면 내장 데모 데이터로 혼자 동작합니다. 두 모드 모두 같은 화면 코드와 같은 E2E를 통과합니다.
-- **api**(`backend/`): Spring Boot 4 · Java 21 · JPA · Flyway · PostgreSQL 17. 공고 조회 API, 수집 파이프라인(원본 보관 → 정규화 → 멱등 저장 → 변경 이력), 스케줄러, 운영자 API.
+- **web**: 공고는 서버에서 API를 불러 그리고, 로그인·개인 데이터 요청은 같은 주소(`/api/**` 등)로 받아 백엔드에 넘깁니다. 세션 쿠키가 웹 주소에 붙으므로 CORS·브라우저 토큰 저장이 없습니다. `/api/admin/**`은 웹으로 열지 않습니다.
+- **api**(`backend/`): Spring Boot 4 · Java 21 · Spring Security(OAuth2 Client) · Spring Session JDBC · JPA · Flyway · PostgreSQL 17. 공고 조회, 수집 파이프라인(원본 보관 → 정규화 → 지오코딩 → 멱등 저장 → 변경 이력 → 변경 알림), 개인 데이터, 운영자 API.
 - 설계·데이터 모델·API·2~4단계 계획: [`docs/backend-design.md`](docs/backend-design.md)
 
 ## 실행
 
-```bash
-pnpm install          # postinstall이 MapLibre worker를 public/vendor로 복사
-pnpm dev              # http://localhost:3000 (데모 데이터)
-```
-
-백엔드까지 함께:
+웹은 백엔드 없이 동작하지 않습니다(공고·로그인 모두 백엔드).
 
 ```bash
 # 1) DB
 docker run -d --name gonggo-db -e POSTGRES_DB=gonggo -e POSTGRES_USER=gonggo -e POSTGRES_PASSWORD=gonggo -p 5432:5432 postgres:17-alpine
-# 2) API (처음 뜰 때 데모 공고 34건을 넣는다)
-cd backend && ./gradlew bootRun          # http://localhost:8080/api/announcements
+# 2) API: 띄운 뒤 운영자 API로 한 번 수집하거나 다음 정기 수집(매일 06:10)을 기다린다
+cd backend && ADMIN_TOKEN=local KAKAO_REST_API_KEY=… ./gradlew bootRun   # http://localhost:8080
+curl -X POST -H 'X-Admin-Token: local' localhost:8080/api/admin/ingestions/devevent
 # 3) web
-API_BASE_URL=http://localhost:8080 pnpm dev
+pnpm install
+API_BASE_URL=http://localhost:8080 KAKAO_MAP_JS_KEY=… pnpm dev            # http://localhost:3000
 ```
 
-서버 1대 배포(Lightsail 등): `.env`에 `DB_PASSWORD`·`ADMIN_TOKEN`을 채운 뒤 `docker compose up -d --build` (db·api·web, web만 외부 포트).
+카카오 키 없이 화면만 보려면 API를 `GONGGO_TEST_LOGIN_ENABLED=true`로 띄우면 로그인 화면에 ‘테스트 계정으로 로그인’이 나옵니다(**운영에서는 켜지 않습니다**).
+
+배포: `main`에 push하면 GitHub Actions(`.github/workflows/deploy.yml`)가 Lightsail로 배포합니다. 서버 1대에 직접 올릴 때는 `docker compose up -d --build`(db·api·web, web만 외부 포트)도 쓸 수 있습니다.
+
+### 카카오 개발자 콘솔 설정
+
+| 항목 | 값 |
+|---|---|
+| 앱 키 | REST API 키 → 백엔드 `KAKAO_REST_API_KEY`(로그인 client_id + 주소 검색), JavaScript 키 → 웹 `KAKAO_MAP_JS_KEY`(지도) |
+| 플랫폼 > Web 사이트 도메인 | `http://13.124.30.241:3000`, `http://localhost:3000` (JavaScript 키는 등록한 도메인에서만 동작) |
+| 카카오 로그인 | 활성화 ON, Redirect URI `http://13.124.30.241:3000/login/oauth2/code/kakao` (로컬은 `http://localhost:3000/login/oauth2/code/kakao`) |
+| 동의 항목 | 닉네임(`profile_nickname`)만. 이메일·전화번호는 받지 않음 |
+| 보안 > Client Secret | 켰다면 백엔드 `KAKAO_CLIENT_SECRET`에 넣는다 |
+| 카카오맵·로컬 API | 앱에서 카카오맵(지도·로컬) 사용 설정 ON |
 
 | 명령 | 설명 |
 |---|---|
@@ -49,65 +62,60 @@ API_BASE_URL=http://localhost:8080 pnpm dev
 | `pnpm lint` | ESLint (next core-web-vitals + typescript) |
 | `pnpm test` | Vitest 단위 테스트 (일부러 `TZ=America/Los_Angeles`에서 실행) |
 | `pnpm build` | 프로덕션 빌드 |
-| `pnpm test:e2e` | Playwright E2E. 먼저 `pnpm build` 필요. 서버를 `DEMO_FIXED_NOW`로 띄워 날짜를 고정 |
-| `API_BASE_URL=… pnpm test:e2e` | 같은 E2E를 백엔드 모드로. API를 `GONGGO_DEMO_ANCHOR_DATE=2026-10-21`, `-Dgonggo.clock.fixed-now=2026-10-21T01:00:00Z`로 띄운다 |
-| `API_BASE_URL=http://localhost:8080 npx -y tsx@4.19.2 --tsconfig tsconfig.json scripts/check-api-parity.ts` | 백엔드 응답이 웹 계약(Zod)·데모 데이터·필터/정렬 결과와 같은지 비교 |
+| `pnpm test:e2e` | Playwright E2E. 먼저 `pnpm build`와 `cd backend && ./gradlew bootJar`. 실행마다 `scripts/e2e-api.sh`가 새 DB + 테스트 고정 공고 + 고정 시각(2026-10-21 10:00 KST) + 테스트 로그인으로 백엔드를 띄운다(Docker·Java 필요). 카카오맵 SDK는 가짜 SDK(`tests/e2e/fake-kakao-maps.js`)로 바꿔 끼운다 |
+| `npx -y tsx@4.19.2 --tsconfig tsconfig.json scripts/check-api-parity.ts` | (`scripts/e2e-api.sh`로 띄운 뒤) 백엔드 필터·정렬이 웹 `filterAnnouncements`와 같은지 비교 |
 | `cd backend && ./gradlew test` | 백엔드 테스트. Testcontainers라 Docker 필요 |
 
 Node 22, pnpm 10, Java 21 기준입니다.
 
 ## 환경변수
 
-`.env.example` 참고. **아무것도 설정하지 않아도 모든 화면이 동작합니다.**
+`.env.example` 참고. 키가 없으면 그 기능만 꺼지고 화면이 안내합니다.
 
-| 변수 | 없을 때 동작 |
+| 변수(어디) | 없을 때 |
 |---|---|
-| `NEXT_PUBLIC_MAP_STYLE_URL` | 외부 타일 없는 ‘예시 지도’(배경·격자·대략적 지역명). 화면에 “예시 지도 · 실제 지도 타일이 아니에요” 표시 |
-| `EMAIL_PROVIDER`, `EMAIL_API_KEY` | 이메일 채널 선택 불가, ‘설정되지 않음’ 표시 |
-| `AI_API_KEY` | 데모 분석기(준비된 구조화 결과) 사용 |
-| `DEMO_FIXED_NOW` | 요청 시각 기준으로 데모 날짜 생성 (데모 모드 전용. 백엔드 모드는 API의 `serverTime`을 기준 시각으로 씀) |
-| `API_BASE_URL` | 내장 데모 데이터 사용. 있으면 백엔드에서 읽고, 연결 실패 시 ‘공고를 불러오지 못했어요’ 화면 |
+| `API_BASE_URL` (web) | 필수. 없거나 연결이 안 되면 ‘공고를 불러오지 못했어요’ 화면 |
+| `KAKAO_MAP_JS_KEY` (web, 실행 시 읽음) | 지도 자리에 ‘지도가 아직 설정되지 않았어요’ + 목록으로 보기 |
+| `KAKAO_REST_API_KEY` (api) | 카카오 로그인 버튼 비활성 + 안내, 지오코딩 꺼짐(지역 공고가 지도에 안 나옴) |
+| `KAKAO_CLIENT_SECRET` (api) | Client Secret을 켜지 않았으면 비워 둔다 |
+| `COOKIE_SECURE` (api) | https로 서비스하면 `true` (지금은 http IP라 `false`) |
+| `ADMIN_TOKEN` (api) | 운영자 API(수동 수집·수집 기록) 모두 거절 |
+| `KSTARTUP_SERVICE_KEY` (api) | K-Startup 수집 꺼짐 |
+| `GONGGO_DEVEVENT_ENABLED`, `GONGGO_GREENHOUSE_ENABLED` (api) | 기본 켜짐 |
+| `EMAIL_PROVIDER`, `EMAIL_API_KEY` (web) | 이메일 채널 ‘설정되지 않음’ (실제 발송은 미구현) |
+| `AI_API_KEY` | 미사용(조건 구조화 어댑터만 있음) |
 
-백엔드 환경변수(`DB_URL`, `DB_USER`, `DB_PASSWORD`, `ADMIN_TOKEN`, `KSTARTUP_SERVICE_KEY`, `GONGGO_INGESTION_CRON` 등)는 `.env.example`과 설계 문서 9장 참고.
+DB(`DB_URL`, `DB_USER`, `DB_PASSWORD`)와 수집 주기(`GONGGO_INGESTION_CRON`)는 설계 문서 9장 참고.
 
 ## 화면·기능
 
 | 화면 | 주요 기능 |
 |---|---|
 | 발견 `/discover` | 촘촘한 표(데스크톱)·목록(모바일), 검색·분야·장소 지역·진행 방식·접수 상태·마감 포함·정렬, 목록/지도 전환, 오른쪽 상세 패널(태블릿 서랍, 모바일 바텀시트). **모든 탐색 상태는 URL query** (`q, cat, region, mode, status, closed, sort, view, id, bbox, quick`) |
-| 지도 모드 `?view=map` | 목록 29% · 지도 43% · 상세 28%(1280px 이상), 같은 장소 묶음 마커, 클러스터, 목록↔마커 선택 연동, ‘이 지역 다시 검색’, 확대·축소, 내 위치(권한 거부 안내), 로딩·오류 상태 |
+| 지도 모드 `?view=map` | 카카오맵. 정확한 장소(실선 원)와 시·구 단위 대략 위치(점선 원)를 구분, 같은 장소 묶음, 축척에 따른 묶음, 목록↔마커 선택 연동, ‘이 지역 다시 검색’, 확대·축소, 내 위치(권한 거부 안내), 로딩·오류·키 없음 상태 |
 | 상단 요약 | 오늘 등록·이번 주 마감·관심 공고 변경·7일 내 일정. 같은 데이터에서 계산, 누르면 해당 필터/화면 |
 | 관심 공고 `/saved` | 저장 목록, 저장 이후 변경된 공고만 보기, 되돌리기 |
 | 공고 비교 `/compare` | 최대 3개, 항목명 고정 + 가로 스크롤, 없는 값은 ‘정보 없음’, 확인 필요 항목 모음 |
 | 내 캘린더 `/calendar` | 월간 보기(방향키 이동), 날짜별·다가오는 일정, 종류 필터, 수정·삭제, 변경 확인 필요 처리, `.ics` 내보내기 |
-| 알림 `/notifications` | 읽음/안 읽음, 모두 읽음, 관련 공고·일정 이동, 발송 실패 표시, 예약 알림 미리보기, 데모 알림 보내기, 데모 공고 변경 발생 |
+| 알림 `/notifications` | 읽음/안 읽음, 모두 읽음, 관련 공고·일정 이동, 발송 실패 표시, 예약 알림 미리보기. 공고 변경 알림은 서버가 수집할 때 만든다 |
 | 지원 현황 `/applications` | 검토 중·준비 중·지원 완료·종료, 준비 서류 체크리스트, 메모, 연결 일정 |
-| 설정 `/settings` | 최소 프로필(관심 분야·시도 단위 지역·경력 구간·팀 규모·필요 시 창업 업력), 공고 변경 알림 종류, 테마, 데모 초기화 |
+| 설정 `/settings` | 최소 프로필(관심 분야·시도 단위 지역·경력 구간·팀 규모·필요 시 창업 업력), 공고 변경 알림 종류, 테마, 로그아웃, 회원 탈퇴(모든 데이터 삭제) |
+| 로그인 `/login` | 카카오 로그인. 로그인 뒤 원래 화면으로 돌아감(같은 사이트 경로만 허용) |
 
-## 실제 구현과 데모의 구분
+## 구현 상태
 
 | 영역 | 상태 |
 |---|---|
-| 공고 데이터 | **실제 백엔드**(PostgreSQL + Spring Boot API, `API_BASE_URL` 설정 시) 또는 내장 데모. 어느 쪽이든 경계(`src/repositories`)에서 Zod 검증 |
-| 공고 수집 | **구현.** 공공데이터포털 K-Startup 어댑터(키가 있을 때만 켜짐), 원본 보관·멱등 저장·실행 기록. 단, 응답 필드명은 **실제 응답으로 확인하지 못함** → 아래 ‘알려진 한계’ |
-| 인증 | **데모.** ‘데모로 체험하기’는 합성 프로필로 로그인 상태만 표시. 비밀번호·토큰을 받거나 저장하지 않음 |
-| 개인 상태(관심·일정·알림·지원 현황) | **데모.** 브라우저 localStorage에만 저장, Zod로 읽을 때 검증 |
+| 공고 데이터·수집 | **구현.** Dev-Event(README 파싱), Greenhouse(회사별 게시판, 목록에서 내려가면 마감 처리), K-Startup(키 필요, **응답 필드 미확인** → 알려진 한계). 원본 보관·멱등 저장·변경 이력·실행 기록 |
+| 로그인 | **구현.** 카카오 OAuth(Spring Security, PKCE), 서버 세션(Spring Session JDBC, `HttpOnly`·`SameSite=Lax` 쿠키, 30일), CSRF 토큰. 카카오 토큰은 저장하지 않고 회원번호·닉네임만 저장 |
+| 개인 데이터(관심·일정·알림·지원 현황·프로필·설정) | **구현.** 서버 DB(`/api/me`). 화면은 변경을 바로 반영하고 차이만 서버로 보내며, 실패하면 서버 상태로 되돌린다. 탈퇴하면 모두 삭제 |
+| 공고 변경 알림 | **구현.** 수집 때 알릴 변경(마감·장소·조건·취소)이 생기면 그 공고를 저장했거나 일정에 연결한 사용자에게 서버가 알림을 만든다(사용자 설정 반영, 중복 방지) |
+| 일정 알림 | **부분.** 예약 시각이 지난 뒤 앱을 열면(열어 둔 동안 포함) 앱 내 알림으로 만들어 서버에 저장. 앱을 열지 않은 동안 보내는 서버 발송·이메일은 아직 없음(설계 문서 6장) |
+| 지도·위치 | **구현.** 카카오맵. 시·구 단위로만 알려진 장소는 카카오 로컬 API로 대략 좌표를 구해(결과 캐시) ‘대략 위치’로 표시 |
 | 조건 비교 | **실제 규칙.** 프로필 구간과 구조화 조건을 규칙으로 비교. 단정 불가 시 ‘확인 필요’. 점수 없음 |
-| 조건 구조화·변경 요약(AI) | **데모.** 준비된 결과에 ‘AI 구조화(데모 데이터)’ 표시. 어댑터·스키마 검증·근거 확인은 구현 (`src/lib/ai`) |
-| 일정·알림 시각 계산, `.ics` | **실제 구현** (단위 테스트) |
-| 알림 발송 | **데모.** 서버 스케줄러 없음. 앱이 열려 있을 때(또는 다시 열 때) 도래한 알림을 앱 내 알림으로 생성. 브라우저를 닫은 동안에는 발송되지 않음 |
-| 이메일 | **미구현.** 발송 인터페이스만 있음. 설정돼 있어도 실제 발송했다고 표시하지 않음 |
-| 공고 변경 감지 | **백엔드 구현.** 수집 때 내용 해시로 변경을 찾아 마감·장소·조건·취소 이력과 버전을 남김. 화면의 ‘데모 공고 변경 발생’은 그대로 데모 |
-| 지도 | 예시 지도(기본) 또는 환경변수의 실제 스타일 |
-| 외부 캘린더 | `.ics` 일회성 내보내기만. 자동 동기화 없음 |
-
-## 지도·이메일·AI·인증 연결
-
-- **지도**: `NEXT_PUBLIC_MAP_STYLE_URL`에 MapLibre 스타일 URL을 넣으면 됩니다. 제공자의 attribution은 MapLibre 기본 컨트롤로 표시됩니다. 지도는 서울·경기 범위(`maxBounds`) 안에서만 움직이고 줌 8~16으로 제한해 불필요한 타일 요청을 줄입니다. 공개 타일 서버(예: OSM 기본 타일)를 운영에 직접 쓰지 마세요.
-- **이메일**: `src/lib/notify/email.ts`의 `EmailSender`를 구현합니다. 발송은 서버 작업으로 옮기고, 아래 ‘서버 알림’ 조건을 지켜야 합니다.
-- **AI**: `src/lib/ai/analyzer.ts`의 `AnnouncementAnalyzer`를 서버 전용 파일에서 구현합니다. 키는 서버에서만 쓰고, 공고 본문은 신뢰할 수 없는 입력으로 다루며(본문 속 지시 무시, 도구 권한 없음), 결과는 `schema.ts`로 검증하고 `keepGroundedConditions`로 원문에 없는 근거를 버립니다. 결과는 `공고 id + contentVersion`으로 캐시하고, 실패하면 원문 정보만 보여 줍니다. 사용자 프로필은 모델에 보내지 않습니다.
-- **인증**: `src/lib/personal-store.ts`의 읽기·쓰기를 API 호출로 바꾸고, `LoginGateProvider`의 데모 시작 부분을 실제 로그인으로 교체합니다. 화면 컴포넌트는 `usePersonal()`만 쓰므로 그대로 둘 수 있습니다.
-- **서버 알림(운영 시)**: 영속 예약 작업, 발송 시점에 최신 일정·설정 재확인, 중복 방지 키(현재 `eventId:reminderId:channel:timingKey` 규칙 재사용), 재시도·실패 기록, 일정 수정·삭제·알림 해제 시 이전 예약 무효화, 알림 링크의 소유자 검증이 필요합니다.
+| 조건 구조화(AI) | **미연결.** 어댑터·스키마 검증·근거 확인만 있음(`src/lib/ai`). 실제 수집 공고는 원문 문장을 그대로 보여 줌 |
+| 비교 선택 | 로그인 없이 쓰는 임시 선택이라 브라우저에만 저장 |
+| 외부 캘린더 | `.ics` 일회성 내보내기만 |
 
 ## 날짜·시간대 정책
 
@@ -117,39 +125,42 @@ Node 22, pnpm 10, Java 21 기준입니다.
 - **상시 모집·예산 소진 시·미정**은 고정 마감일로 바꾸지 않고, 캘린더 마감 일정도 만들지 않습니다(준비 일정은 가능).
 - 복수일 행사는 시작일·종료일을 유지합니다. 종일 일정은 `.ics`에서 `VALUE=DATE`, DTEND는 마지막 날 다음 날입니다.
 - 알림: 종일 일정은 N일 전 오전 9시, 시각 일정은 N×24시간 전, ‘당일’은 오전 9시(일정이 9시 이전이면 1시간 전).
-- **hydration**: 서버가 요청 시각을 한 번 정해(`connection()` 이후) 내려 주고, 데모 데이터는 그 날짜로 결정적으로 생성합니다. 브라우저는 서버 시각에 맞춘 시계를 1분 단위로만 갱신합니다.
+- **hydration**: 기준 시각은 백엔드 응답의 `serverTime`입니다. 서버 렌더링과 브라우저가 같은 값을 쓰고, 브라우저는 그 시각에 맞춘 시계를 1분 단위로만 갱신합니다.
 
 ## 주요 설계 판단
 
 - **URL 상태와 개인 상태 분리**: 탐색 상태(필터·정렬·뷰·선택·지도 범위)는 URL, 개인 상태(관심·비교·일정·알림)는 저장소. 필터 변경은 history push, 공고 선택·검색어 입력은 replace.
-- **목록·지도·요약이 같은 함수 사용**: `filterAnnouncements` 결과를 목록·지도·요약 수치가 함께 씁니다. 지도에는 그중 좌표가 있는 공고만, 나머지는 “온라인·장소 미정 N건” 안내.
-- **위치 세 종류 분리**: 행사·교육 장소(`venue`, 지도 표시), 지원 자격 지역(`eligibilityRegions`, 조건), 기관 주소(`organizer.address`, 텍스트만). 장소 미정·온라인은 좌표 없음.
+- **목록·지도·요약이 같은 함수 사용**: `filterAnnouncements` 결과를 목록·지도·요약 수치가 함께 씁니다. 지도에는 그중 위치가 있는 공고만, 나머지는 “온라인이거나 지역을 알 수 없는 공고 N건” 안내. 백엔드 필터도 같은 규칙이며 `check-api-parity`로 대조합니다.
+- **위치 세 종류 분리**: 행사·교육 장소(`venue`, 지도 표시), 지원 자격 지역(`eligibilityRegions`, 조건), 기관 주소(`organizer.address`, 텍스트만). 장소가 ‘서울 강남구’처럼만 알려지면 `venue.area`에 지역과 대략 좌표를 두고, 정확한 장소와 다른 모양으로 그립니다(대략 좌표를 새로 찾은 것은 ‘장소 변경’ 알림으로 보지 않음). 온라인·지역 미상은 좌표 없음.
+- **개인 데이터 동기화**: 화면은 순수 함수(`personal-actions.ts`)로 다음 상태를 만들고, 저장소가 이전·다음 상태의 차이(`personal-sync.ts`)를 자원 단위 PUT/DELETE로 보냅니다. 서버는 모든 쿼리를 세션의 사용자로 묶고(`(user_id, id)` 키), 같은 공고의 같은 종류 일정 중복을 부분 유일 인덱스로 막습니다.
 - **같은 장소 마커 묶음**: 겹친 마커를 하나로 묶고 눌러서 고르게 했습니다. 마커는 HTML 버튼이라 키보드·스크린 리더로 접근 가능하고, 지도 없이도 목록으로 모든 공고에 접근할 수 있습니다.
 - **변경 확인 흐름**: 일정은 만들 때의 `contentVersion`을 기억합니다. 관련 변경(마감·장소·취소)이 생기면 ‘변경 확인 필요’를 띄우고, 사용자가 갱신하면 일정 시각이 바뀌어 **알림 키가 바뀌므로** 예전 시각 알림은 자동 무효, 새 시각으로 재계산됩니다.
 - **전역 상태 라이브러리 없음**: `useSyncExternalStore` + 순수 상태 전환 함수(`personal-actions.ts`, 단위 테스트 대상).
-- **MapLibre 6 worker**: 번들러가 worker 경로를 처리하지 못해 `public/vendor`로 복사해 `setWorkerUrl`로 지정합니다(postinstall·predev·prebuild).
+- **같은 주소 프록시**: 카카오 로그인 콜백과 세션 쿠키가 웹 주소에서 끝나도록 웹이 `/api/**`·`/oauth2/**`·`/login/oauth2/**`를 백엔드로 넘기고, 백엔드는 `X-Forwarded-*`로 원래 주소(redirect_uri)를 계산합니다. api 포트는 외부에 열지 않는다는 전제입니다.
+- **지도 키는 실행 시 주입**: 카카오맵 JavaScript 키를 빌드에 굽지 않고 서버가 실행 시 읽어 내려 줍니다(배포 빌드를 다시 하지 않고 키를 바꿀 수 있음).
 - **Next.js 16 Cache Components**: 모든 페이지는 정적 셸 + 요청 시각 기반 동적 영역(Partial Prerender).
 
 ## 검증
 
-- 백엔드 테스트(JUnit + Testcontainers PostgreSQL) 22개: 데모 시드 34건과 웹 계약 모양, 시각 미공지 마감, 필터·정렬, ProblemDetail 오류, 관리자 토큰, 수집 멱등성(같은 응답 재수집 시 변경 없음·원본 1건), 마감 변경 시 버전·이력(서울 기준 표기), 알릴 필요 없는 변경은 버전 유지, 한 건 실패 시 나머지 저장, 가져오기 실패 시 failed 기록, K-Startup 정규화(가상 픽스처).
-- 웹↔백엔드 대조(`scripts/check-api-parity.ts`): 34건 전부 웹 데모와 내용 일치, 기본·마감 포함·분야·지역·방식·검색·최신순 등 9개 조건에서 목록 순서까지 일치.
-- 단위 테스트(Vitest + Testing Library) 51개: HTTP 저장소(계약 위반 응답 차단, 연결 실패·오류 응답 구분), URL 직렬화·필터·정렬, 지도 범위 일치, 조건 비교, 공고→일정 변환(시각 미공지·상시 모집·복수일), 중복 등록, 알림 시각·중복 방지·이메일 실패, 공고 변경 후 일정 갱신·알림 재계산, `.ics` 이스케이프·줄 접기·종일 DTEND, AI 결과 스키마·근거 확인, 데모 데이터 요건.
-- E2E(Playwright, 데스크톱 20 + 모바일 2, **데모 모드·백엔드 모드 각각 통과**): 검색·필터 URL 복원과 뒤로 가기, 상세 직접 진입, 저장·비교 클릭이 행 선택을 일으키지 않음, 요약 수치 일치, 지도↔목록 선택 연동·수 일치, WebGL 실패 시 목록 사용, 데모 로그인 후 원래 동작 이어가기, 새로고침 후 유지, 비교 3개 제한, 열린 리다이렉트 차단, 프로필 조건 비교, 캘린더 등록·중복 방지·수정·삭제, 시각 미공지·상시 모집, 변경→알림→갱신, 데모 알림, `.ics` 다운로드, 모바일 시트·가로 넘침.
+- 백엔드 테스트(JUnit + Testcontainers PostgreSQL) 47개: 공고 API 계약·필터·정렬·오류, 수집 멱등성·변경 이력·실패 처리, Dev-Event·Greenhouse·K-Startup 정규화, 로그인 세션·CSRF·HttpOnly 쿠키, 사용자 간 데이터 분리, 개인 데이터 API 모양·검증·중복 일정 409, 탈퇴 시 삭제, 수집 변경 → 관심 사용자에게만 알림(재수집해도 중복 없음), 카카오 로그인 redirect_uri가 웹 주소 기준인지, 지오코딩(캐시·오류 시 재시도·‘시’ 붙여 재검색).
+- 단위 테스트(Vitest) 64개: 도메인 규칙 + 개인 상태 차이 → API 호출, 대략 위치(지도 점·지역 필터·범위), 마커 묶기.
+- E2E(Playwright, 데스크톱 22 + 모바일 2, **실제 백엔드에 붙여** 실행, 3회 연속 통과): 테스트 로그인 → 원래 동작 이어가기 → 새로고침 후 서버에서 유지, 로그아웃·계정 간 분리·탈퇴, 캘린더 등록·중복 방지·수정·삭제, **출처 변경(수집) → 서버 알림 → 일정 변경 확인·갱신**, 지도(가짜 카카오 SDK) 목록↔마커 연동·묶음·SDK 실패 시 목록, 필터 URL 복원, 비교, 프로필 조건 비교, `.ics`, 모바일.
+- 카카오 실제 로그인·실제 지도 타일은 키가 없어 이 저장소를 만든 환경에서 확인하지 못했습니다. 키를 넣은 백엔드가 웹 프록시를 거쳐 카카오 인증 주소(client_id·redirect_uri·PKCE)로 보내는 것까지 확인했습니다.
 
 ## 알려진 한계
 
-- 개인 데이터가 브라우저에만 있어 기기 간 동기화가 없고, 다른 탭의 변경은 `storage` 이벤트로만 반영됩니다.
-- 알림은 앱이 열려 있을 때만 만들어집니다. 브라우저 푸시·이메일 발송은 없습니다.
-- 예시 지도는 실제 도로·지형이 없고, 지역명 위치는 대략적입니다.
+- 일정 알림은 앱을 열어야 만들어집니다(서버 발송·이메일·푸시 없음). 공고 변경 알림은 서버가 만듭니다.
+- 다른 탭·기기에서 바꾼 개인 데이터는 새로고침해야 보입니다(실시간 동기화 없음).
+- 대부분의 실제 공고는 시·구 단위 지역만 알려져 지도 위치가 대략적입니다. 정확한 장소를 지어내지 않습니다.
+- http(IP 주소)로 운영 중이라 세션 쿠키에 `Secure`를 붙이지 못합니다. 도메인·https를 붙이면 `COOKIE_SECURE=true`로 바꾸세요.
 - 월간 캘린더는 직접 구현한 단순 그리드이며 드래그·주간 시간표는 없습니다.
 - **K-Startup 매핑 미확인**: 개발 환경에서 공공데이터포털에 접속할 수 없어 응답 필드명·날짜 형식을 실제로 확인하지 못했습니다. 필드명은 `backend/src/main/resources/sources/kstartup-mapping.yml`에 초안으로 두었고, 필수 필드가 응답에 없으면 수집 실행이 `failed`로 끝나 바로 드러납니다. 켜기 전 확인 절차는 설계 문서 5.1.
-- 공고가 500건을 넘으면 web이 일부만 받습니다(경고 로그). 서버 페이지네이션·지도 마커 API는 2단계 계획입니다.
+- 웹은 공고를 500건씩 최대 10페이지까지 받습니다. 그 이상은 서버 페이지네이션·지도 마커 API가 필요합니다.
 - `docker compose` 이미지 빌드는 이 저장소를 만든 환경의 네트워크 제약(TLS 프록시)으로 끝까지 확인하지 못했습니다. API 이미지의 실행 단계(기동·헬스체크·시드)만 확인했습니다.
 
 ## 운영 전 검토가 필요한 지점
 
 - **데이터 이용 허락**: 실제 공고를 수집하려면 출처별 이용약관·robots 정책·저작권(원문 전재 vs 요약·링크) 확인이 필요합니다. 출처별 허용 범위·출처 표시 문구·가공 허용 여부는 `src/data/sources.ts`의 `SourcePolicy`로 관리하도록 경계를 만들어 두었습니다.
-- **개인정보**: 프로필은 시·도 단위 지역, 경력 구간 등 최소 정보만 받고 이름·연락처·주소·이력서·주민번호는 받지 않습니다. 실제 계정 연결 시 수집·이용 동의, 보관 기간, 삭제 요청 처리, 이메일 주소의 처리 근거가 필요합니다.
+- **개인정보**: 카카오 회원번호·닉네임과, 시·도 단위 지역·경력 구간 등 최소 프로필만 저장합니다. 이름·연락처·주소·이력서·주민번호·카카오 토큰은 저장하지 않습니다. 정식 운영 전 개인정보 처리방침(수집 항목·목적·보관 기간·탈퇴 시 삭제)을 게시해야 합니다.
 - **AI 처리**: 외부 모델에 공고 본문을 보낼 때 출처의 가공 허용 여부를 확인해야 하고, 사용자 데이터는 보내지 않도록 유지해야 합니다.
-- **지도·글꼴**: 지도 제공자 약관과 attribution, Pretendard(OFL-1.1) 라이선스 고지를 확인하세요.
+- **지도·글꼴**: 카카오맵·로컬 API 이용 약관과 일일 호출 한도(지오코딩은 지역별 1회 캐시), Pretendard(OFL-1.1) 라이선스 고지를 확인하세요.

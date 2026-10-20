@@ -46,7 +46,7 @@ jobs:
         run: |
           mkdir -p bundle
           cp -R .next/standalone bundle/web
-          cp -R public bundle/web/
+          if [ -d public ]; then cp -R public bundle/web/; fi
           mkdir -p bundle/web/.next && cp -R .next/static bundle/web/.next/
           cp "$(ls backend/build/libs/*.jar | grep -v plain | head -1)" bundle/api.jar
           echo "${GITHUB_SHA::7}" > bundle/REVISION

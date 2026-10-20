@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/toast";
 import { CATEGORY_LABEL } from "@/domain/announcement";
 import { CAREER_BUCKETS, CATEGORIES, REGIONS, userProfileSchema, type ChangeAlertPrefs, type UserProfile } from "@/domain/types";
 import { usePersonal } from "@/hooks/use-personal";
-import { endDemoSession, resetDemoData } from "@/lib/personal-store";
+import { deleteAccount, signOut } from "@/lib/personal-store";
 import { setThemePreference, useThemePreference, type ThemePreference } from "@/lib/theme";
 
 const CAREER_LABEL: Record<(typeof CAREER_BUCKETS)[number], string> = {
@@ -48,10 +48,10 @@ export function SettingsView() {
         </LoginRequired>
         <div className="space-y-4">
           <ThemeCard />
-          <LoginRequired reason="알림 설정과 데모 데이터는 계정에 저장돼요." fallback={null}>
+          <LoginRequired reason="알림 설정은 계정에 저장돼요." fallback={null}>
             <div className="space-y-4">
               <AlertCard />
-              <DemoCard />
+              <AccountCard />
             </div>
           </LoginRequired>
         </div>
@@ -233,33 +233,44 @@ function AlertCard() {
   );
 }
 
-function DemoCard() {
+function AccountCard() {
   const router = useRouter();
   const toast = useToast();
+  const { state } = usePersonal();
   const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const run = async (action: () => Promise<void>, message: string) => {
+    setBusy(true);
+    try {
+      await action();
+      toast({ message });
+      router.push("/discover");
+    } catch {
+      toast({ message: "처리하지 못했어요. 잠시 후 다시 시도해 주세요.", tone: "error" });
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <Card id="demo" title="데모 데이터" description="체험 중 만든 관심 공고·일정·알림·지원 현황은 이 브라우저에만 저장돼요.">
+    <Card id="account" title="계정" description={`${state.session?.displayName ?? ""} · 카카오 로그인. 관심 공고·일정·알림·지원 현황은 계정에 저장돼요.`}>
       {confirm ? (
         <div className="flex flex-wrap items-center gap-2 text-[13px]">
-          <p className="font-semibold text-danger">모든 데모 데이터를 지울까요? 되돌릴 수 없어요.</p>
-          <Button onClick={() => setConfirm(false)}>취소</Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              resetDemoData();
-              toast({ message: "데모 데이터를 초기화했어요." });
-              router.push("/discover");
-            }}
-          >
-            초기화
+          <p className="font-semibold text-danger">탈퇴하면 계정과 저장한 모든 데이터가 지워져요. 되돌릴 수 없어요.</p>
+          <Button onClick={() => setConfirm(false)} disabled={busy}>
+            취소
+          </Button>
+          <Button variant="danger" disabled={busy} onClick={() => run(deleteAccount, "탈퇴했어요. 저장된 데이터를 모두 지웠어요.")}>
+            탈퇴하기
           </Button>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <Button variant="danger" onClick={() => setConfirm(true)}>
-            데모 데이터 초기화
+          <Button disabled={busy} onClick={() => run(signOut, "로그아웃했어요.")}>
+            로그아웃
           </Button>
-          <Button onClick={() => endDemoSession()}>데모 종료</Button>
+          <Button variant="danger" disabled={busy} onClick={() => setConfirm(true)}>
+            회원 탈퇴
+          </Button>
         </div>
       )}
     </Card>

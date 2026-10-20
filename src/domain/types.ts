@@ -88,8 +88,16 @@ export const venueSchema = z.discriminatedUnion("status", [
     district: z.string(),
     coordinates: coordinatesSchema,
   }),
-  /** 오프라인이지만 장소 미정. 좌표를 만들지 않는다 */
-  z.object({ status: z.literal("tbd"), note: z.string().optional() }),
+  /**
+   * 오프라인이지만 정확한 장소는 미정·미공개. 정확한 좌표를 만들지 않는다.
+   * area: '서울 강남구'처럼 시·구 단위로만 알려진 지역과, 있으면 그 지역의 대략 위치(지오코딩 결과).
+   * 지도에는 '대략 위치'로 정확한 장소와 구분해 표시한다.
+   */
+  z.object({
+    status: z.literal("tbd"),
+    note: z.string().optional(),
+    area: z.object({ label: z.string(), coordinates: coordinatesSchema.optional() }).optional(),
+  }),
   /** 온라인 전용 */
   z.object({ status: z.literal("online"), platform: z.string().optional() }),
 ]);

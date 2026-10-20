@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { applyDemoChanges } from "@/data/demo-changes";
+import { applyFixtureChanges } from "../fixtures/changes";
 import { timingFromAnnouncement } from "@/domain/calendar";
 import { dueReminders, reminderFireAt, scheduleFor } from "@/domain/reminders";
 import { seoulInstant } from "@/domain/time";
 import type { Announcement, Timing } from "@/domain/types";
-import { addEvent, applyDemoChange, deliverDueReminders, resolveEventChange, sendNextReminderNow } from "@/lib/personal-actions";
+import { addEvent, deliverDueReminders, resolveEventChange } from "@/lib/personal-actions";
 import { EMPTY_STATE, type PersonalState } from "@/lib/personal-store";
 import { ANNOUNCEMENTS, NOW, TODAY, byId, testId } from "./fixtures";
 
@@ -33,7 +33,7 @@ function withEvent(a: Announcement): { state: PersonalState; eventId: string } {
   const t = timingFromAnnouncement(a, "deadline");
   if (!t.available) throw new Error();
   const r = addEvent(
-    { ...EMPTY_STATE, session: { kind: "demo", userId: "u", displayName: "d", startedAt: NOW } },
+    { ...EMPTY_STATE, session: { userId: "1", displayName: "테스트" } },
     {
       announcement: a,
       kind: "deadline",
@@ -62,14 +62,6 @@ describe("알림 발송과 중복 방지", () => {
     expect(twice.notifications).toHaveLength(1);
   });
 
-  it("데모로 미리 보낸 알림은 예약 시각에 다시 보내지 않는다", () => {
-    const { state } = withEvent(byId("hk-pangyo-ai"));
-    const { state: sent, sent: r } = sendNextReminderNow(state, NOW, false, testId);
-    expect(r?.reminder.id).toBe("r1");
-    const later = deliverDueReminders(sent, seoulInstant("2026-10-25", "18:30"), false, testId);
-    expect(later.notifications).toHaveLength(1);
-  });
-
   it("이메일 채널인데 제공자가 없으면 발송 실패로 기록한다", () => {
     const { state, eventId } = withEvent(byId("hk-pangyo-ai"));
     const emailState = { ...state, events: state.events.map((e) => (e.id === eventId ? { ...e, reminders: [{ id: "m", offset: { type: "preset" as const, days: 1 as const }, channel: "email" as const }] } : e)) };
@@ -84,15 +76,11 @@ describe("공고 변경 → 일정 갱신 → 알림 재계산", () => {
     const { state, eventId } = withEvent(a);
     const oldKeys = scheduleFor(state.events[0]).map((s) => s.key);
 
-    // 1) 변경 발생 → 연결된 공고라 변경 알림이 생긴다
-    const map = (s: PersonalState) => new Map(applyDemoChanges(ANNOUNCEMENTS, s.appliedChanges, TODAY).map((x) => [x.id, x]));
-    const changed = applyDemoChange(state, "demo-deadline-extend", NOW, map, testId);
-    expect(changed.notifications.map((n) => n.type)).toEqual(["change"]);
-    // 같은 변경은 두 번 적용·알림되지 않는다
-    expect(applyDemoChange(changed, "demo-deadline-extend", NOW, map, testId)).toBe(changed);
+    // 1) 수집기가 마감 변경을 감지했다(변경 알림은 서버가 만든다 — 백엔드 AuthAndMeTest)
+    const changedA = applyFixtureChanges(ANNOUNCEMENTS, [{ id: "demo-deadline-extend", appliedAt: NOW }], TODAY).find((x) => x.id === a.id)!;
 
     // 2) 사용자가 확인하고 갱신
-    const updated = resolveEventChange(changed, eventId, map(changed).get(a.id)!, true, NOW);
+    const updated = resolveEventChange(state, eventId, changedA, true, NOW);
     const event = updated.events[0];
     expect(event.timing).toEqual({ type: "timed", start: seoulInstant("2026-10-29", "18:00"), end: null });
     expect(event.sourceVersion).toBe(2);

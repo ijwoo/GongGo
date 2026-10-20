@@ -120,7 +120,7 @@ export function ReminderFields({
           </label>
           <p id={`${uid}-email-hint`} className="pl-6 text-xs text-faint">
             {emailConfigured
-              ? "이메일 발송 제공자가 설정되어 있어요. 데모에서는 실제 발송 여부를 표시하지 않아요."
+              ? "이메일 발송 제공자가 설정되어 있어요. 실제 발송 기능은 준비 중이에요."
               : "이메일 발송 제공자가 설정되지 않아 선택할 수 없어요."}
           </p>
         </div>
@@ -151,7 +151,7 @@ export function ReminderFields({
           </ul>
         )}
         <p className="mt-1.5 text-xs text-faint">
-          알림 시각은 한국 시간 기준이에요. 종일 일정은 오전 9시에 알려요. 서버 발송 기능이 없는 데모라 공고함이 열려 있을 때만 앱 내 알림이 만들어져요.
+          알림 시각은 한국 시간 기준이에요. 종일 일정은 오전 9시에 알려요. 아직 서버 발송 기능이 없어서, 알림 시각이 지난 뒤 공고함을 열면 앱 내 알림으로 만들어져요.
         </p>
       </div>
     </div>

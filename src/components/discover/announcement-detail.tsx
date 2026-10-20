@@ -280,8 +280,13 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
               `온라인${a.venue.platform ? ` (${a.venue.platform})` : ""}`
             ) : (
               <>
-                장소 미정{a.venue.note ? ` · ${a.venue.note}` : ""}
-                <p className="text-xs text-muted">장소가 정해지지 않아 지도에 표시하지 않아요.</p>
+                {a.venue.area ? `${a.venue.area.label} · 상세 장소 미공개` : "장소 미정"}
+                {a.venue.note && !a.venue.area ? ` · ${a.venue.note}` : ""}
+                <p className="text-xs text-muted">
+                  {a.venue.area?.coordinates
+                    ? "지도에는 지역의 대략 위치로 표시해요. 정확한 장소는 원문에서 확인하세요."
+                    : "장소를 알 수 없어 지도에 표시하지 않아요."}
+                </p>
               </>
             )}
           </Row>
@@ -330,7 +335,7 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
                   {hydrated && loggedIn ? <p className="mt-1 pl-7 text-xs text-muted">{ev.reason}</p> : null}
                   <details className="mt-1.5 pl-7 text-xs">
                     <summary className="cursor-pointer text-muted hover:text-fg">
-                      근거 문장 · {c.origin === "source" ? "원문 그대로" : "AI 구조화(데모 데이터)"}
+                      근거 문장 · {c.origin === "source" ? "원문 그대로" : "AI 구조화"}
                     </summary>
                     <blockquote className="mt-1 border-l-2 border-line-strong pl-2 text-fg">“{c.evidence}”</blockquote>
                   </details>

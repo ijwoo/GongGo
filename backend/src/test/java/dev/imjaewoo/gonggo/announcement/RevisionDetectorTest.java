@@ -55,7 +55,7 @@ class RevisionDetectorTest {
     }
 
     private static AnnouncementContent base(Venue venue, List<String> docs, String status) {
-        return new AnnouncementContent("x", "공고", new Organizer("기관", null, "#000000"), "event", "demo",
+        return new AnnouncementContent("x", "공고", new Organizer("기관", null, "#000000"), "event", "fixture",
                 "https://example.com", "출처", Instant.EPOCH, Instant.EPOCH, new ApplicationStart.Tbd(),
                 new Deadline.Rolling(), new EventSchedule.Tbd(), "offline", venue, List.of(), null, null, null,
                 JsonNodeFactory.instance.arrayNode(), docs, List.of(), status);

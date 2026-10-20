@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("모바일: 목록 → 상세 바텀시트 → 닫기, 필터 시트", async ({ page }) => {
   await page.goto("/discover");

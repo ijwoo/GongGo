@@ -4,10 +4,9 @@ import { addLocalDays, seoulInstant, seoulDateOf, type LocalDate } from "@/domai
 import { PLACES } from "./places";
 
 /**
- * 데모에서 사용자가 직접 발생시킬 수 있는 공고 변경.
- * 실제 서비스에서는 수집기가 원문 변경을 감지해 새 revision을 만든다.
+ * 테스트에서 공고 변경(revision)을 흉내 낸다. 실제 서비스에서는 수집기가 원문 변경을 감지해 revision을 만든다.
  */
-export interface DemoChange {
+export interface FixtureChange {
   id: string;
   announcementId: string;
   kind: RevisionKind;
@@ -15,7 +14,7 @@ export interface DemoChange {
   apply: (a: Announcement, anchor: LocalDate) => { next: Announcement; summary: string; before: string; after: string };
 }
 
-export const DEMO_CHANGES: DemoChange[] = [
+export const FIXTURE_CHANGES: FixtureChange[] = [
   {
     id: "demo-deadline-extend",
     announcementId: "hk-pangyo-ai",
@@ -83,11 +82,11 @@ export interface AppliedChange {
 }
 
 /** 적용된 데모 변경을 공고에 반영한다. 적용 순서대로 revision과 contentVersion이 늘어난다. */
-export function applyDemoChanges(list: Announcement[], applied: AppliedChange[], anchor: LocalDate): Announcement[] {
+export function applyFixtureChanges(list: Announcement[], applied: AppliedChange[], anchor: LocalDate): Announcement[] {
   if (applied.length === 0) return list;
   const byId = new Map(list.map((a) => [a.id, a]));
   for (const { id, appliedAt } of applied) {
-    const change = DEMO_CHANGES.find((c) => c.id === id);
+    const change = FIXTURE_CHANGES.find((c) => c.id === id);
     const target = change && byId.get(change.announcementId);
     if (!change || !target) continue;
     const { next, summary, before, after } = change.apply(target, anchor);

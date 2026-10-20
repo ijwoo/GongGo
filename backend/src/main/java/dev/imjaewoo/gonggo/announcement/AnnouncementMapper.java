@@ -65,9 +65,13 @@ public class AnnouncementMapper {
         }
         switch (c.venue()) {
             case Venue.Confirmed v -> a.setVenue("confirmed", v.name(), v.address(), v.district(),
-                    v.coordinates().lat(), v.coordinates().lng(), null, null);
-            case Venue.Tbd v -> a.setVenue("tbd", null, null, null, null, null, v.note(), null);
-            case Venue.Online v -> a.setVenue("online", null, null, null, null, null, null, v.platform());
+                    v.coordinates().lat(), v.coordinates().lng(), null, null, null);
+            case Venue.Tbd v -> {
+                var xy = v.area() != null ? v.area().coordinates() : null;
+                a.setVenue("tbd", null, null, null, xy != null ? xy.lat() : null, xy != null ? xy.lng() : null, v.note(),
+                        null, v.area() != null ? v.area().label() : null);
+            }
+            case Venue.Online v -> a.setVenue("online", null, null, null, null, null, null, v.platform(), null);
         }
         a.setJson(write(c.eligibilityRegions()), writeNullable(c.teamSize()), writeNullable(c.cost()),
                 writeNullable(c.supportAmount()), write(c.conditions()), write(c.requiredDocuments()),
@@ -108,7 +112,9 @@ public class AnnouncementMapper {
                     case "confirmed" -> new Venue.Confirmed(a.getVenueName(), a.getVenueAddress(), a.getVenueDistrict(),
                             new Venue.Coordinates(a.getVenueLat(), a.getVenueLng()));
                     case "online" -> new Venue.Online(a.getVenuePlatform());
-                    default -> new Venue.Tbd(a.getVenueNote());
+                    default -> new Venue.Tbd(a.getVenueNote(), a.getVenueArea() == null ? null
+                            : new Venue.Area(a.getVenueArea(), a.getVenueLat() == null ? null
+                                    : new Venue.Coordinates(a.getVenueLat(), a.getVenueLng())));
                 },
                 json.readValue(a.getEligibilityRegions(), STRINGS),
                 readNullable(a.getTeamSize()),

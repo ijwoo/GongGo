@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { resultCount } from "./helpers";
 
 test("검색·필터·정렬이 URL에 반영되고, 새로고침·뒤로 가기로 복원된다", async ({ page }) => {

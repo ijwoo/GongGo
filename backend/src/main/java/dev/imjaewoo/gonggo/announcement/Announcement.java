@@ -59,6 +59,7 @@ public class Announcement {
     private Double venueLng;
     private String venueNote;
     private String venuePlatform;
+    private String venueArea;
 
     @Column(columnDefinition = "jsonb")
     @ColumnTransformer(write = "?::jsonb")
@@ -139,6 +140,7 @@ public class Announcement {
     public Double getVenueLng() { return venueLng; }
     public String getVenueNote() { return venueNote; }
     public String getVenuePlatform() { return venuePlatform; }
+    public String getVenueArea() { return venueArea; }
     public String getEligibilityRegions() { return eligibilityRegions; }
     public String getTeamSize() { return teamSize; }
     public String getCost() { return cost; }
@@ -189,7 +191,8 @@ public class Announcement {
     }
 
     void setVenue(String status, String name, String address, String district, Double lat, Double lng, String note,
-            String platform) {
+            String platform, String area) {
+        this.venueArea = area;
         this.venueStatus = status;
         this.venueName = name;
         this.venueAddress = address;

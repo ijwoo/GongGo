@@ -7,10 +7,8 @@ import { ReminderRunner } from "@/components/notifications/reminder-runner";
 import { ToastProvider } from "@/components/ui/toast";
 import { AppDataProvider } from "@/lib/app-data";
 import { isEmailConfigured } from "@/lib/notify/email";
-import {
-  getAnnouncementRepository,
-  type AnnouncementSnapshot,
-} from "@/repositories/announcement-repository";
+import { loadAnnouncements, type AnnouncementSnapshot } from "@/repositories/announcement-repository";
+import { PersonalSync } from "./personal-sync";
 
 /** 요청 시각을 정하고 공고 데이터를 불러와 화면 전체에 내려 준다 */
 export async function AppShell({ children }: { children: ReactNode }) {
@@ -18,7 +16,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
   await connection();
   let snapshot: AnnouncementSnapshot;
   try {
-    snapshot = await getAnnouncementRepository().load();
+    snapshot = await loadAnnouncements();
   } catch (error) {
     console.error("[announcements] 공고를 불러오지 못했습니다", error);
     return <AnnouncementLoadError />;
@@ -28,8 +26,10 @@ export async function AppShell({ children }: { children: ReactNode }) {
       serverNow={snapshot.now}
       announcements={snapshot.announcements}
       emailConfigured={isEmailConfigured()}
+      kakaoMapKey={process.env.KAKAO_MAP_JS_KEY?.trim() || null}
     >
       <ToastProvider>
+        <PersonalSync />
         <LoginGateProvider>
           <a
             href="#main"

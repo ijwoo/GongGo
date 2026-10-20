@@ -18,9 +18,17 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  session:
+    # 로그인 세션을 DB에 둔다(배포·재시작해도 로그인 유지). 표는 Flyway V4가 만든다
+    jdbc:
+      initialize-schema: never
+    timeout: 30d
 
 server:
   port: ${PORT:8080}
+  # 웹(Next.js)이 /api·/oauth2·/login/oauth2 요청을 프록시하며 붙인 X-Forwarded-* 헤더로 원래 주소를 안다.
+  # api 포트는 외부에 열지 않는다는 전제(웹만 이 헤더를 붙일 수 있다)
+  forward-headers-strategy: framework
 
 management:
   endpoints:
@@ -30,10 +38,22 @@ management:
 
 gonggo:
   admin-token: ${ADMIN_TOKEN:}
-  demo:
-    # 데모 공고를 처음 한 번 넣는다. 날짜는 이 날짜(비우면 서울 기준 오늘)로 옮긴다
-    enabled: ${GONGGO_DEMO_ENABLED:true}
-    anchor-date: ${GONGGO_DEMO_ANCHOR_DATE:}
+  kakao:
+    # 카카오 개발자 앱의 REST API 키: 로그인(client_id)과 주소 검색(지오코딩)에 쓴다. 비우면 둘 다 꺼진다
+    rest-api-key: ${KAKAO_REST_API_KEY:}
+    # [카카오 로그인 > 보안]에서 Client Secret을 켰을 때만
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+  session:
+    # 세션 쿠키(GONGGO_SESSION)의 Secure 속성. https로 서비스하면 true로 바꾼다(현재 http IP 주소로 운영)
+    cookie-secure: ${COOKIE_SECURE:false}
+  auth:
+    # 테스트 전용 로그인(POST /api/auth/test-login). 운영에서는 절대 켜지 않는다
+    test-login-enabled: ${GONGGO_TEST_LOGIN_ENABLED:false}
+  fixture:
+    # 테스트 전용 고정 공고 파일(tests/fixtures/announcements.json). 운영에서는 비워 둔다
+    file: ${GONGGO_FIXTURE_FILE:}
+    anchor-date: ${GONGGO_FIXTURE_ANCHOR_DATE:}
+    overrides-file: ${GONGGO_FIXTURE_OVERRIDES:}
   ingestion:
     # 매일 06:10 (서울)
     cron: ${GONGGO_INGESTION_CRON:0 10 6 * * *}

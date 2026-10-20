@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDemoAnnouncements } from "@/data/demo-announcements";
+import { buildFixtureAnnouncements } from "../fixtures/announcements";
 import { announcementSchema } from "@/domain/types";
 import { applicationState } from "@/domain/announcement";
 import { ANNOUNCEMENTS, NOW, TODAY } from "./fixtures";
@@ -11,7 +11,7 @@ describe("데모 데이터", () => {
   });
 
   it("같은 기준일이면 항상 같은 결과(서버·브라우저 hydration 일치)", () => {
-    expect(buildDemoAnnouncements(TODAY)).toEqual(buildDemoAnnouncements(TODAY));
+    expect(buildFixtureAnnouncements(TODAY)).toEqual(buildFixtureAnnouncements(TODAY));
   });
 
   it("요구한 경우를 모두 포함한다", () => {

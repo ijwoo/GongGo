@@ -70,7 +70,7 @@ export function SummaryStrip() {
         ) : (
           <Metric href="/saved" label="관심 공고 변경·내 일정" value="" hint="로그인 후 확인" />
         )}
-        <p className="ml-auto flex shrink-0 items-center pl-4 text-xs text-faint">공고·기관·장소는 데모용 예시입니다</p>
+        <p className="ml-auto flex shrink-0 items-center pl-4 text-xs text-faint">공고 출처: Dev-Event · Greenhouse 등 · 지원 전 원문을 꼭 확인하세요</p>
       </div>
     </div>
   );

@@ -18,7 +18,9 @@ public record AnnouncementSearch(
         String sort) {
 
     static final Set<String> CATEGORIES = Set.of("hackathon", "startup", "education", "event", "job");
-    static final Set<String> REGIONS = Set.of("서울", "경기");
+    /** 행사 장소의 시·도. 웹 VENUE_REGIONS와 같다 */
+    static final Set<String> REGIONS = Set.of("서울", "경기", "인천", "강원", "충북", "충남", "대전", "세종", "전북", "전남",
+            "광주", "경북", "경남", "대구", "부산", "울산", "제주");
     static final Set<String> MODES = Set.of("online", "offline", "hybrid");
 
     public static AnnouncementSearch of(String q, String cat, String region, String mode, boolean includeClosed,

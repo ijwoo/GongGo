@@ -19,9 +19,11 @@ public class AnnouncementUpserter {
     private final AnnouncementRepository announcements;
     private final AnnouncementRevisionRepository revisions;
     private final AnnouncementMapper mapper;
+    private final ChangeNotifier notifier;
 
     public AnnouncementUpserter(AnnouncementRepository announcements, AnnouncementRevisionRepository revisions,
-            AnnouncementMapper mapper) {
+            AnnouncementMapper mapper, ChangeNotifier notifier) {
+        this.notifier = notifier;
         this.announcements = announcements;
         this.revisions = revisions;
         this.mapper = mapper;
@@ -59,6 +61,10 @@ public class AnnouncementUpserter {
                 .map(c -> new AnnouncementRevision(a.getId() + "-v" + version + "-" + c.kind(), a.getId(), version,
                         c.kind(), c.summary(), c.before(), c.after(), now))
                 .toList());
+        if (!changes.isEmpty()) {
+            announcements.flush(); // 알림 본문이 새 내용을 가리키도록 먼저 반영
+            notifier.notify(a, version, changes, now);
+        }
         return Outcome.CHANGED;
     }
 

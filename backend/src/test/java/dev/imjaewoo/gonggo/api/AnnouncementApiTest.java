@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** 데모 34건이 시작할 때 들어가고, 웹 계약 모양으로 조회되는지 확인한다 */
+/** 테스트 고정 공고 34건이 시작할 때 들어가고, 웹 계약 모양으로 조회되는지 확인한다 */
 class AnnouncementApiTest extends IntegrationTest {
 
     @Autowired MockMvc mvc;
@@ -33,7 +33,7 @@ class AnnouncementApiTest extends IntegrationTest {
 
     @Test
     void 마감_포함이어도_오래전에_닫힌_공고는_뺄_수_있다() throws Exception {
-        // 기준 시각 하루 전보다 먼저 마감된 데모 3건(문정·마곡·종로)만 빠진다. 취소 공고는 취소 반영 시각 기준이라 남는다
+        // 기준 시각 하루 전보다 먼저 마감된 고정 공고 3건(문정·마곡·종로)만 빠진다. 취소 공고는 취소 반영 시각 기준이라 남는다
         mvc.perform(get("/api/announcements").param("includeClosed", "true").param("closedWithinDays", "1")
                         .param("size", "500"))
                 .andExpect(status().isOk())
@@ -53,7 +53,7 @@ class AnnouncementApiTest extends IntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total", lessThan(34)))
                 .andExpect(jsonPath("$.items[*].status", everyItem(is("active"))))
-                // 판교 해커톤: 데모 기준일 +5일 18:00 마감 → 가장 가까운 마감 중 하나
+                // 판교 해커톤: 기준일 +5일 18:00 마감 → 가장 가까운 마감 중 하나
                 .andExpect(jsonPath("$.items[0].applicationDeadline.type").value("datetime"));
     }
 
@@ -88,7 +88,7 @@ class AnnouncementApiTest extends IntegrationTest {
     }
 
     @Test
-    void 변경_이력이_있는_데모_공고() throws Exception {
+    void 변경_이력이_있는_공고() throws Exception {
         mvc.perform(get("/api/announcements").param("includeClosed", "true").param("size", "500"))
                 .andExpect(jsonPath("$.items[?(@.revisions.length() > 0)].contentVersion", everyItem(
                         org.hamcrest.Matchers.greaterThan(1))));
@@ -119,14 +119,14 @@ class AnnouncementApiTest extends IntegrationTest {
 
     @Test
     void 관리자_API는_토큰이_있어야_한다() throws Exception {
-        mvc.perform(post("/api/admin/ingestions/demo")).andExpect(status().isUnauthorized());
-        mvc.perform(post("/api/admin/ingestions/demo").header("X-Admin-Token", "wrong"))
+        mvc.perform(post("/api/admin/ingestions/fixture")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/admin/ingestions/fixture").header("X-Admin-Token", "wrong"))
                 .andExpect(status().isUnauthorized());
         // 키 없는 K-Startup은 꺼져 있다
         mvc.perform(post("/api/admin/ingestions/kstartup").header("X-Admin-Token", "test-admin-token"))
                 .andExpect(status().isConflict());
-        // 데모를 다시 돌려도 같은 기준일이면 바뀌는 것이 없다(멱등)
-        mvc.perform(post("/api/admin/ingestions/demo").header("X-Admin-Token", "test-admin-token"))
+        // 고정 공고를 다시 돌려도 같은 기준일이면 바뀌는 것이 없다(멱등)
+        mvc.perform(post("/api/admin/ingestions/fixture").header("X-Admin-Token", "test-admin-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("succeeded"))
                 .andExpect(jsonPath("$.createdCount").value(0))

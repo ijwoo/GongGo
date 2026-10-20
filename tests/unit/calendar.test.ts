@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { findDuplicate, formatTiming, monthGrid, pendingRevisions, proposedTiming, timingFromAnnouncement } from "@/domain/calendar";
 import { addLocalDays, seoulInstant } from "@/domain/time";
 import type { CalendarEvent } from "@/domain/types";
-import { applyDemoChanges } from "@/data/demo-changes";
+import { applyFixtureChanges } from "../fixtures/changes";
 import { ANNOUNCEMENTS, NOW, TODAY, byId } from "./fixtures";
 
 function eventFrom(id: string, kind: "deadline" | "event"): CalendarEvent {
@@ -54,7 +54,7 @@ describe("공고 → 일정 변환", () => {
 describe("공고 변경 확인", () => {
   it("마감이 바뀌면 일정에 확인 필요가 생기고, 새 시각을 제안한다", () => {
     const e = eventFrom("hk-pangyo-ai", "deadline");
-    const changed = applyDemoChanges(ANNOUNCEMENTS, [{ id: "demo-deadline-extend", appliedAt: NOW }], TODAY);
+    const changed = applyFixtureChanges(ANNOUNCEMENTS, [{ id: "demo-deadline-extend", appliedAt: NOW }], TODAY);
     const a = changed.find((x) => x.id === "hk-pangyo-ai")!;
     expect(a.contentVersion).toBe(2);
     expect(pendingRevisions(e, a)).toHaveLength(1);
@@ -63,7 +63,7 @@ describe("공고 변경 확인", () => {
 
   it("관계없는 변경(행사 일정에 서류 변경)은 확인 대상이 아니다", () => {
     const e = eventFrom("su-gwanak-student", "event");
-    const changed = applyDemoChanges(ANNOUNCEMENTS, [{ id: "demo-docs-added", appliedAt: NOW }], TODAY);
+    const changed = applyFixtureChanges(ANNOUNCEMENTS, [{ id: "demo-docs-added", appliedAt: NOW }], TODAY);
     expect(pendingRevisions(e, changed.find((x) => x.id === "su-gwanak-student"))).toHaveLength(0);
   });
 });

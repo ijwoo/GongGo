@@ -11,7 +11,9 @@ import org.springframework.context.annotation.Import;
  */
 @SpringBootTest(properties = {
         "gonggo.clock.fixed-now=2026-10-21T01:00:00Z",
-        "gonggo.demo.anchor-date=2026-10-21",
+        "gonggo.fixture.file=../tests/fixtures/announcements.json",
+        "gonggo.fixture.anchor-date=2026-10-21",
+        "gonggo.auth.test-login-enabled=true",
         "gonggo.admin-token=test-admin-token",
         "gonggo.ingestion.scheduler-enabled=false",
 })

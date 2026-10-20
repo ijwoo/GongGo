@@ -1,6 +1,5 @@
-import { DEMO_CHANGES } from "@/data/demo-changes";
 import { EVENT_KIND_LABEL, findDuplicate, pendingRevisions, proposedTiming } from "@/domain/calendar";
-import { dueReminders, nextReminders, offsetLabel, type ScheduledReminder } from "@/domain/reminders";
+import { dueReminders, offsetLabel, type ScheduledReminder } from "@/domain/reminders";
 import { formatSeoulDateTime } from "@/domain/time";
 import type {
   Announcement,
@@ -9,7 +8,6 @@ import type {
   CalendarEvent,
   EventKind,
   Reminder,
-  RevisionKind,
   Timing,
 } from "@/domain/types";
 import type { PersonalState } from "./personal-store";
@@ -153,68 +151,12 @@ export function deliverDueReminders(s: PersonalState, nowIso: string, emailConfi
   return { ...next, sentReminderKeys: [...s.sentReminderKeys, ...due.map((r) => r.key)].slice(-1000) };
 }
 
-/** 데모: 다음 예약 알림 하나를 지금 보낸다. 보낸 키는 기록해 예약 시각에 다시 보내지 않는다 */
-export function sendNextReminderNow(
-  s: PersonalState,
-  nowIso: string,
-  emailConfigured: boolean,
-  newId: IdFactory,
-): { state: PersonalState; sent: ScheduledReminder | null } {
-  const [next] = nextReminders(s.events, nowIso, new Set(s.sentReminderKeys), 1);
-  if (!next) return { state: s, sent: null };
-  const event = s.events.find((e) => e.id === next.eventId)!;
-  const state = pushNotification(s, reminderNotification(next, event, nowIso, emailConfigured, newId));
-  return { state: { ...state, sentReminderKeys: [...state.sentReminderKeys, next.key] }, sent: next };
-}
-
 export function markNotificationRead(s: PersonalState, id: string): PersonalState {
   return { ...s, notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) };
 }
 
 export function markAllNotificationsRead(s: PersonalState): PersonalState {
   return { ...s, notifications: s.notifications.map((n) => (n.read ? n : { ...n, read: true })) };
-}
-
-const CHANGE_TITLE: Record<RevisionKind, string> = {
-  deadline: "마감일이 바뀌었어요",
-  venue: "장소가 바뀌었어요",
-  conditions: "조건·서류가 바뀌었어요",
-  cancel: "공고가 취소되었어요",
-};
-
-/**
- * 데모: 공고 변경을 발생시킨다.
- * 관심 공고이거나 일정에 연결된 공고면, 사용자의 변경 알림 설정에 따라 알림을 만든다.
- */
-export function applyDemoChange(
-  s: PersonalState,
-  changeId: string,
-  nowIso: string,
-  announcementsAfter: (state: PersonalState) => Map<string, Announcement>,
-  newId: IdFactory,
-): PersonalState {
-  if (s.appliedChanges.some((c) => c.id === changeId)) return s;
-  const change = DEMO_CHANGES.find((c) => c.id === changeId);
-  if (!change) return s;
-  let next: PersonalState = { ...s, appliedChanges: [...s.appliedChanges, { id: changeId, appliedAt: nowIso }] };
-  const a = announcementsAfter(next).get(change.announcementId);
-  if (!a) return next;
-  const relevant = isSaved(next, a.id) || next.events.some((e) => e.announcementId === a.id);
-  if (relevant && next.changeAlerts[change.kind]) {
-    const rev = a.revisions.at(-1)!;
-    next = pushNotification(next, {
-      id: newId(),
-      type: "change",
-      title: CHANGE_TITLE[change.kind],
-      body: `${a.title} · ${rev.before} → ${rev.after}`,
-      createdAt: nowIso,
-      read: false,
-      link: { kind: "announcement", id: a.id },
-      dedupeKey: `change:${a.id}:v${a.contentVersion}`,
-      delivery: "delivered",
-    });
-  }
-  return next;
 }
 
 /** 확인이 필요한 일정(공고가 바뀐 뒤 아직 확인하지 않음) */

@@ -1,11 +1,11 @@
-import { buildDemoAnnouncements } from "@/data/demo-announcements";
+import { buildFixtureAnnouncements } from "../fixtures/announcements";
 import type { Announcement } from "@/domain/types";
 
 /** 테스트용 고정 시각: 2026-10-21(수) 10:00 KST */
 export const NOW = "2026-10-21T01:00:00.000Z";
 export const TODAY = "2026-10-21";
 
-export const ANNOUNCEMENTS: Announcement[] = buildDemoAnnouncements(TODAY);
+export const ANNOUNCEMENTS: Announcement[] = buildFixtureAnnouncements(TODAY);
 
 export function byId(id: string): Announcement {
   const a = ANNOUNCEMENTS.find((x) => x.id === id);

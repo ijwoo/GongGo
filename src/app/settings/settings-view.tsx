@@ -28,11 +28,11 @@ const ALERT_LABEL: Record<keyof ChangeAlertPrefs, string> = {
 
 function Card({ id, title, description, children }: { id: string; title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="rounded-lg border border-line bg-panel p-4 md:p-5">
-      <h2 id={`${id}-title`} className="text-base font-bold">
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 border-t border-line pt-6">
+      <h2 id={`${id}-title`} className="text-[19px] font-bold tracking-[-0.01em]">
         {title}
       </h2>
-      {description ? <p className="mt-0.5 mb-4 text-[13px] text-muted">{description}</p> : <div className="mb-4" />}
+      {description ? <p className="mt-1 mb-4 text-sm text-muted">{description}</p> : <div className="mb-4" />}
       {children}
     </section>
   );
@@ -41,15 +41,15 @@ function Card({ id, title, description, children }: { id: string; title: string;
 export function SettingsView() {
   return (
     <PageFrame>
-      <PageHeader title="프로필·알림 설정" />
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <PageHeader title="프로필·알림 설정" description="자격 조건 비교에 쓰는 프로필과 알림, 화면 테마를 정해요." />
+      <div className="grid items-start gap-x-12 gap-y-10 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <LoginRequired reason="프로필과 알림 설정은 계정에 저장돼요.">
           <ProfileCard />
         </LoginRequired>
-        <div className="space-y-4">
+        <div className="space-y-10">
           <ThemeCard />
           <LoginRequired reason="알림 설정은 계정에 저장돼요." fallback={null}>
-            <div className="space-y-4">
+            <div className="space-y-10">
               <AlertCard />
               <AccountCard />
             </div>

@@ -45,7 +45,7 @@ export function AnnouncementPage({ id }: { id: string }) {
           <AnnouncementDetail key={a.id} a={a} headingLevel={1} variant="page" />
         </section>
       ) : (
-        <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-6 py-16 text-center">
+        <div role="alert" className="flex flex-col items-center gap-3 rounded-lg bg-subtle px-6 py-16 text-center">
           <FileSearch className="size-7 text-faint" aria-hidden />
           <div>
             <p className="font-semibold">공고를 찾을 수 없어요</p>

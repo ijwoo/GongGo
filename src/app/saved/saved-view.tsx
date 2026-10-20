@@ -1,28 +1,27 @@
 "use client";
 
-import { Star, Trash2 } from "lucide-react";
+import { Bookmark, History, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoginRequired } from "@/components/auth/login-required";
-import { EmptyState, PageFrame, PageHeader } from "@/components/common/page";
+import { EmptyState, PageFrame, PageHeader, ViewTabs } from "@/components/common/page";
 import { CompareCheckbox } from "@/components/discover/compare-toggle";
-import { OrgMark } from "@/components/discover/org-mark";
+import { Poster } from "@/components/discover/poster";
 import { DeadlineCell, StateBadge } from "@/components/discover/status";
-import { Badge } from "@/components/ui/badge";
 import { buttonClass, IconButton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { CATEGORY_LABEL, MODE_LABEL, venueShort } from "@/domain/announcement";
+import { CATEGORY_LABEL, venueShort } from "@/domain/announcement";
+import { cardEventLabel } from "@/domain/card";
 import { sortAnnouncements } from "@/domain/discover";
 import { usePersonal } from "@/hooks/use-personal";
 import { useAnnouncements, useNow } from "@/lib/app-data";
-import { cn } from "@/lib/cn";
 import { toggleSaved } from "@/lib/personal-actions";
 import { announcementHref } from "@/lib/announcement-href";
 
 export function SavedView() {
   return (
     <PageFrame>
-      <PageHeader title="관심 공고" description="저장한 공고와 저장 이후 바뀐 내용을 확인해요." />
+      <PageHeader title="관심 공고" description="저장한 공고를 마감이 가까운 순으로 보고, 저장한 뒤 바뀐 내용을 확인해요." />
       <LoginRequired reason="관심 공고는 계정에 저장돼요.">
         <SavedList />
       </LoginRequired>
@@ -30,6 +29,7 @@ export function SavedView() {
   );
 }
 
+/** 관심 공고: 갤러리 카드와 같은 표지·분야·제목·주최·날짜 순서를 가로 한 줄로 */
 function SavedList() {
   const { state, update } = usePersonal();
   const { byId } = useAnnouncements();
@@ -43,15 +43,15 @@ function SavedList() {
     .map((s) => ({ saved: s, a: byId.get(s.announcementId) }))
     .filter((x): x is { saved: typeof x.saved; a: NonNullable<typeof x.a> } => Boolean(x.a));
   const changedCount = entries.filter((e) => e.a.contentVersion > e.saved.seenVersion).length;
-  const visible = (changedOnly ? entries.filter((e) => e.a.contentVersion > e.saved.seenVersion) : entries);
+  const visible = changedOnly ? entries.filter((e) => e.a.contentVersion > e.saved.seenVersion) : entries;
   const ordered = sortAnnouncements(visible.map((e) => e.a), "deadline", now).map((a) => visible.find((e) => e.a.id === a.id)!);
 
   if (entries.length === 0) {
     return (
       <EmptyState
-        icon={<Star className="size-6 text-faint" aria-hidden />}
+        icon={<Bookmark className="size-6 text-faint" aria-hidden />}
         title="아직 저장한 공고가 없어요"
-        description="발견 화면에서 별 버튼을 눌러 관심 공고로 저장하세요."
+        description="공고 카드의 저장 버튼을 누르면 여기에 모여요."
         action={
           <Link href="/discover" className={buttonClass("primary")}>
             공고 둘러보기
@@ -63,84 +63,57 @@ function SavedList() {
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-2" role="group" aria-label="보기">
-        {[
-          { v: false, label: `전체 ${entries.length}` },
-          { v: true, label: `변경 있음 ${changedCount}` },
-        ].map((t) => (
-          <button
-            key={String(t.v)}
-            type="button"
-            aria-pressed={changedOnly === t.v}
-            onClick={() => router.replace(t.v ? "/saved?changed=1" : "/saved", { scroll: false })}
-            className={cn(
-              "num h-8 rounded-md border px-3 text-[13px] font-semibold",
-              changedOnly === t.v ? "border-accent bg-accent-soft text-accent-text" : "border-line bg-panel text-muted hover:text-fg",
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <ViewTabs
+        label="보기"
+        value={changedOnly ? "changed" : "all"}
+        onChange={(v) => router.replace(v === "changed" ? "/saved?changed=1" : "/saved", { scroll: false })}
+        items={[
+          { value: "all", label: "전체", count: entries.length },
+          { value: "changed", label: "변경 있음", count: changedCount },
+        ]}
+      />
       {ordered.length === 0 ? (
-        <p className="rounded-md border border-line bg-panel px-4 py-8 text-center text-[13px] text-muted">저장 이후 바뀐 공고가 없어요.</p>
+        <p className="rounded-lg bg-subtle px-4 py-10 text-center text-sm text-muted">저장 이후 바뀐 공고가 없어요.</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-line bg-panel">
-          <div
-            aria-hidden
-            className="hidden h-10 items-center gap-4 border-b border-line px-4 text-xs font-semibold text-muted lg:grid lg:grid-cols-[minmax(0,2.2fr)_96px_128px_132px_minmax(0,1.6fr)_88px]"
-          >
-            <span>공고명 · 주최기관</span>
-            <span>분야</span>
-            <span>장소 · 방식</span>
-            <span>신청 마감</span>
-            <span>저장 이후 변경</span>
-            <span className="text-right">비교 · 빼기</span>
-          </div>
-          <ul className="divide-y divide-line">
-            {ordered.map(({ a, saved }) => {
-              const changed = a.contentVersion > saved.seenVersion;
-              const lastRev = a.revisions.at(-1);
-              return (
-                <li
-                  key={a.id}
-                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4 py-3.5 hover:bg-hover lg:grid-cols-[minmax(0,2.2fr)_96px_128px_132px_minmax(0,1.6fr)_88px]"
-                >
-                  <div className="flex min-w-0 items-start gap-3">
-                    <OrgMark org={a.organizer} />
-                    <div className="min-w-0">
-                      <Link href={announcementHref(a.id)} className="line-clamp-2 text-[15px] leading-snug font-semibold hover:text-accent-text">
-                        {a.title}
-                      </Link>
-                      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
-                        <span className="truncate">{a.organizer.name}</span>
-                        <StateBadge a={a} now={now} />
-                        {changed ? <Badge tone="warning">변경 있음</Badge> : null}
-                        <span className="lg:hidden">
-                          · {CATEGORY_LABEL[a.category]} · {venueShort(a)}
-                        </span>
-                      </p>
-                    </div>
+        <ul className="divide-y divide-line" aria-label="관심 공고 목록">
+          {ordered.map(({ a, saved }) => {
+            const changed = a.contentVersion > saved.seenVersion;
+            const lastRev = a.revisions.at(-1);
+            const event = cardEventLabel(a);
+            return (
+              <li key={a.id} className="grid grid-cols-[96px_minmax(0,1fr)_auto] gap-x-4 gap-y-2 py-5 first:pt-0 sm:grid-cols-[152px_minmax(0,1fr)_auto]">
+                <Link href={announcementHref(a.id)} tabIndex={-1} aria-hidden className="self-start">
+                  <Poster a={a} />
+                </Link>
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] text-muted">
+                    <span className="font-semibold text-accent-text">{CATEGORY_LABEL[a.category]}</span>
+                    <span aria-hidden> · </span>
+                    {venueShort(a)}
+                  </p>
+                  <Link href={announcementHref(a.id)} className="mt-0.5 line-clamp-2 text-[17px] leading-snug font-semibold break-keep hover:text-accent-text">
+                    {a.title}
+                  </Link>
+                  <p className="mt-0.5 truncate text-sm text-fg-2">{a.organizer.name}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+                    <StateBadge a={a} now={now} />
+                    {event ? <span className="num text-muted">{event}</span> : null}
                   </div>
-                  <span className="hidden text-sm text-fg-2 lg:block">{CATEGORY_LABEL[a.category]}</span>
-                  <span className="hidden flex-col gap-0.5 leading-tight lg:flex">
-                    <span className="text-sm text-fg-2">{venueShort(a)}</span>
-                    <span className="text-xs text-muted">{MODE_LABEL[a.participationMode]}</span>
-                  </span>
-                  <span className="hidden lg:block">
+                  {changed && lastRev ? (
+                    <p className="mt-2.5 flex gap-1.5 rounded-md bg-warning-soft px-3 py-2 text-[13px] text-fg-2">
+                      <History className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden />
+                      <span className="min-w-0 break-keep">
+                        <b className="text-warning">변경 있음</b> · {lastRev.summary} <span className="text-muted line-through">{lastRev.before}</span> →{" "}
+                        <b>{lastRev.after}</b>
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-col items-end justify-between gap-3">
+                  <div className="hidden w-[116px] text-right sm:block">
                     <DeadlineCell a={a} now={now} />
-                  </span>
-                  <span className="col-span-2 min-w-0 text-[13px] lg:col-span-1">
-                    {changed && lastRev ? (
-                      <>
-                        <span className="text-fg-2">{lastRev.summary}</span>{" "}
-                        <span className="text-muted line-through">{lastRev.before}</span> → <b>{lastRev.after}</b>
-                      </>
-                    ) : (
-                      <span className="hidden text-faint lg:inline">변경 없음</span>
-                    )}
-                  </span>
-                  <div className="row-start-1 flex items-center justify-end gap-0.5 col-start-2 lg:col-start-auto lg:row-start-auto">
+                  </div>
+                  <div className="flex items-center gap-0.5">
                     <CompareCheckbox a={a} />
                     <IconButton
                       label={`관심 공고에서 빼기: ${a.title}`}
@@ -152,11 +125,11 @@ function SavedList() {
                       <Trash2 className="size-4" aria-hidden />
                     </IconButton>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

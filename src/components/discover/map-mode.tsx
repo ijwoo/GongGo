@@ -47,6 +47,8 @@ export function MapMode({
   const unlocated = results.filter((a) => !hasCoordinates(a));
   const select = (id: string) => setQuery({ id }, "replace");
   const [listOpen, setListOpen] = useState(true);
+  /** 휴대폰 목록 시트를 펼쳤는지 */
+  const [sheetOpen, setSheetOpen] = useState(false);
   /** 같은 장소 마커로 고른 공고. 있으면 목록을 그 공고로 좁힌다 */
   const [picked, setPicked] = useState<string[] | null>(null);
   const pickedSet = picked ? new Set(picked) : null;
@@ -63,6 +65,73 @@ export function MapMode({
   const showList = md && listOpen;
   const showDetail = lg && (selected !== null || missing);
 
+  const listBody = (
+    <>
+      {results.length === 0 ? (
+        empty
+      ) : shown.length === 0 ? (
+        <p className="px-4 py-10 text-center text-[13px] text-muted">이 지역에는 조건에 맞는 공고가 없어요. 지도를 옮기거나 범위를 해제해 보세요.</p>
+      ) : (
+        <ul className="space-y-1 p-2" aria-label="지도 범위의 공고 목록">
+          {shown.map((a) => {
+            const isSelected = a.id === query.id;
+            const area = mapPointOf(a)?.precision === "area";
+            return (
+              <li
+                key={a.id}
+                className={cn(
+                  "relative flex gap-2 rounded-lg px-2.5 py-2.5",
+                  isSelected ? "bg-accent-soft before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-accent" : "hover:bg-subtle",
+                )}
+              >
+                <SaveButton a={a} />
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={hrefFor(a.id)}
+                    replace
+                    scroll={false}
+                    aria-current={isSelected ? "true" : undefined}
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey) return;
+                      e.preventDefault();
+                      select(a.id);
+                    }}
+                    className="line-clamp-2 text-sm leading-snug font-semibold break-keep hover:underline"
+                  >
+                    {a.title}
+                  </Link>
+                  <p className="mt-1 truncate text-xs text-muted">
+                    <span className="font-semibold text-accent-text">{a.category === "job" ? a.organizer.name : CATEGORY_LABEL[a.category]}</span>
+                    <span aria-hidden> · </span>
+                    {venueShort(a)}
+                    {area ? " · 대략 위치" : ""}
+                  </p>
+                  <p className="mt-1">
+                    <StateBadge a={a} now={now} />
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <DeadlineCell a={a} now={now} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {unlocated.length > 0 ? (
+        <div className="flex items-start gap-2 border-t border-line px-4 py-3 text-xs text-muted">
+          <MapPinOff className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          <p>
+            온라인이거나 지역을 알 수 없는 공고 {unlocated.length}건은 지도에 표시하지 않아요.{" "}
+            <button type="button" className="font-semibold text-accent-text hover:underline" onClick={() => setQuery({ view: "list", bbox: null })}>
+              목록에서 보기
+            </button>
+          </p>
+        </div>
+      ) : null}
+    </>
+  );
+
   return (
     <div className="relative min-h-0 flex-1">
       <MapCanvas
@@ -72,6 +141,7 @@ export function MapMode({
         onPickPlace={(ids) => {
           setPicked(ids);
           setListOpen(true);
+          setSheetOpen(true);
         }}
         pickedIds={pickedShown.length ? picked : null}
         appliedBbox={query.bbox}
@@ -135,68 +205,7 @@ export function MapMode({
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {results.length === 0 ? (
-            empty
-          ) : shown.length === 0 ? (
-            <p className="px-4 py-10 text-center text-[13px] text-muted">이 지역에는 조건에 맞는 공고가 없어요. 지도를 옮기거나 범위를 해제해 보세요.</p>
-          ) : (
-            <ul className="space-y-1 p-2" aria-label="지도 범위의 공고 목록">
-              {shown.map((a) => {
-                const isSelected = a.id === query.id;
-                const area = mapPointOf(a)?.precision === "area";
-                return (
-                  <li
-                    key={a.id}
-                    className={cn(
-                      "relative flex gap-2 rounded-lg px-2.5 py-2.5",
-                      isSelected ? "bg-accent-soft before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-accent" : "hover:bg-subtle",
-                    )}
-                  >
-                    <SaveButton a={a} />
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        href={hrefFor(a.id)}
-                        replace
-                        scroll={false}
-                        aria-current={isSelected ? "true" : undefined}
-                        onClick={(e) => {
-                          if (e.metaKey || e.ctrlKey) return;
-                          e.preventDefault();
-                          select(a.id);
-                        }}
-                        className="line-clamp-2 text-sm leading-snug font-semibold break-keep hover:underline"
-                      >
-                        {a.title}
-                      </Link>
-                      <p className="mt-1 truncate text-xs text-muted">
-                        <span className="font-semibold text-accent-text">{a.category === "job" ? a.organizer.name : CATEGORY_LABEL[a.category]}</span>
-                        <span aria-hidden> · </span>
-                        {venueShort(a)}
-                        {area ? " · 대략 위치" : ""}
-                      </p>
-                      <p className="mt-1">
-                        <StateBadge a={a} now={now} />
-                      </p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <DeadlineCell a={a} now={now} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          {unlocated.length > 0 ? (
-            <div className="flex items-start gap-2 border-t border-line px-4 py-3 text-xs text-muted">
-              <MapPinOff className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              <p>
-                온라인이거나 지역을 알 수 없는 공고 {unlocated.length}건은 지도에 표시하지 않아요.{" "}
-                <button type="button" className="font-semibold text-accent-text hover:underline" onClick={() => setQuery({ view: "list", bbox: null })}>
-                  목록에서 보기
-                </button>
-              </p>
-            </div>
-          ) : null}
+          {listBody}
         </div>
       </div>
 
@@ -210,9 +219,32 @@ export function MapMode({
         panelStyle={{ width: detailWidth }}
       />
 
-      <p className="pointer-events-none absolute bottom-2 left-2 z-[2] rounded-full bg-panel/95 px-3 py-1 text-xs shadow-sm md:hidden">
-        지도의 공고 <b className="num">{located.length}</b>건 · 온라인·지역 미상 {unlocated.length}건 제외
-      </p>
+      {/* 휴대폰: 지도 아래에서 끌어올리는 목록. 접으면 개수만 보인다 */}
+      {!md ? (
+        <div
+          className={cn(
+            "absolute inset-x-0 bottom-0 z-[4] flex flex-col rounded-t-xl border-t border-line bg-panel shadow-[var(--shadow)]",
+            sheetOpen ? "h-[62%]" : "h-auto",
+          )}
+        >
+          <button
+            type="button"
+            aria-expanded={sheetOpen}
+            onClick={() => setSheetOpen((o) => !o)}
+            className="flex w-full shrink-0 flex-col items-center gap-1.5 px-4 pt-2 pb-3"
+          >
+            <span aria-hidden className="h-1 w-9 rounded-full bg-line-strong" />
+            <span className="flex w-full items-center justify-between text-sm">
+              <span>
+                {pickedPlace ?? "지도"}
+                {pickedArea ? " 내" : "의"} 공고 <b className="num text-accent-text">{shown.length}</b>건
+              </span>
+              <span className="text-[13px] font-semibold text-accent-text">{sheetOpen ? "지도 보기" : "목록 보기"}</span>
+            </span>
+          </button>
+          {sheetOpen ? <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain border-t border-line">{listBody}</div> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

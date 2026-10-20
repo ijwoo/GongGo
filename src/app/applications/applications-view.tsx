@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { LoginRequired } from "@/components/auth/login-required";
 import { KindTag } from "@/components/calendar/event-kind";
-import { EmptyState, PageFrame, PageHeader } from "@/components/common/page";
-import { OrgMark } from "@/components/discover/org-mark";
+import { EmptyState, PageFrame, PageHeader, ViewTabs } from "@/components/common/page";
+import { Poster } from "@/components/discover/poster";
 import { DeadlineCell, StateBadge } from "@/components/discover/status";
 import { Button, buttonClass, IconButton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { CATEGORY_LABEL } from "@/domain/announcement";
 import { formatTiming, sortEvents } from "@/domain/calendar";
 import { APPLICATION_STATUSES, type Announcement, type ApplicationRecord, type ApplicationStatus } from "@/domain/types";
 import { newId, usePersonal } from "@/hooks/use-personal";
@@ -61,26 +62,19 @@ function ApplicationsBody() {
 
   return (
     <>
-      <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="상태별 보기">
-        {(["all", ...APPLICATION_STATUSES] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            aria-pressed={filter === s}
-            onClick={() => setFilter(s)}
-            className={cn(
-              "num h-8 rounded-md border px-3 text-[13px] font-semibold",
-              filter === s ? "border-accent bg-accent-soft text-accent-text" : "border-line bg-panel text-muted hover:text-fg",
-            )}
-          >
-            {s === "all" ? `전체 ${records.length}` : `${STATUS_LABEL[s]} ${counts[s]}`}
-          </button>
-        ))}
-      </div>
+      <ViewTabs
+        label="상태별 보기"
+        value={filter}
+        onChange={setFilter}
+        items={[
+          { value: "all" as const, label: "전체", count: records.length },
+          ...APPLICATION_STATUSES.map((st) => ({ value: st, label: STATUS_LABEL[st], count: counts[st] })),
+        ]}
+      />
       {visible.length === 0 ? (
-        <p className="rounded-md border border-line bg-panel px-4 py-8 text-center text-[13px] text-muted">이 상태의 공고가 없어요.</p>
+        <p className="rounded-lg bg-subtle px-4 py-10 text-center text-sm text-muted">이 상태의 공고가 없어요.</p>
       ) : (
-        <ul className="grid items-start gap-3 2xl:grid-cols-2">
+        <ul className="space-y-5" aria-label="지원 준비 목록">
           {visible.map((r) => (
             <ApplicationCard key={r.announcementId} record={r} a={byId.get(r.announcementId)!} />
           ))}
@@ -101,16 +95,23 @@ function ApplicationCard({ record, a }: { record: ApplicationRecord; a: Announce
   const patch = (p: Parameters<typeof upsertApplication>[2]) => update((s) => upsertApplication(s, a, p, now, newId));
 
   return (
-    <li className="rounded-lg border border-line bg-panel">
-      <div className="flex flex-wrap items-start gap-3 border-b border-line px-4 py-3">
-        <OrgMark org={a.organizer} size="sm" />
+    <li className="rounded-xl border border-line bg-panel">
+      <div className="flex flex-wrap items-start gap-4 border-b border-line px-5 py-4">
+        <Link href={announcementHref(a.id)} tabIndex={-1} aria-hidden className="hidden w-[112px] shrink-0 sm:block">
+          <Poster a={a} />
+        </Link>
         <div className="min-w-0 flex-1">
-          <Link href={announcementHref(a.id)} className="font-semibold hover:underline">
+          <p className="text-[13px] text-muted">
+            <span className="font-semibold text-accent-text">{CATEGORY_LABEL[a.category]}</span> · {a.organizer.name}
+          </p>
+          <Link href={announcementHref(a.id)} className="mt-0.5 line-clamp-2 text-[17px] leading-snug font-semibold break-keep hover:text-accent-text">
             {a.title}
           </Link>
-          <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+          <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
             <StateBadge a={a} now={now} />
-            {a.organizer.name}
+            <span className="num">
+              준비 {done}/{record.checklist.length}
+            </span>
           </p>
         </div>
         <div className="w-28 shrink-0">
@@ -134,7 +135,7 @@ function ApplicationCard({ record, a }: { record: ApplicationRecord; a: Announce
           </select>
         </label>
       </div>
-      <div className="grid gap-4 px-4 py-3 md:grid-cols-3">
+      <div className="grid gap-5 px-5 py-4 md:grid-cols-3">
         <section aria-label="준비 항목">
           <h3 className="mb-1.5 text-[13px] font-semibold">
             준비 항목 <span className="num font-normal text-muted">{done}/{record.checklist.length}</span>
@@ -226,7 +227,7 @@ function ApplicationCard({ record, a }: { record: ApplicationRecord; a: Announce
           />
         </section>
       </div>
-      <div className="flex justify-end border-t border-line px-4 py-2">
+      <div className="flex justify-end border-t border-line px-3 py-1.5">
         <Button
           size="sm"
           variant="ghost"

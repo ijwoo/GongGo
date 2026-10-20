@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ActiveFilters, FilterButton, FilterSheet, JobRoleChips, SortSelect } from "@/components/discover/filters";
 import { CardGrid, CategoryNav, DiscoverHead, SectionHeader } from "@/components/discover/gallery";
+import { JobList } from "@/components/discover/job-list";
 import { ClosingSoon, MySchedule } from "@/components/discover/side-rail";
 import { Button } from "@/components/ui/button";
 import { pickOpenNow, pickRecent } from "@/domain/card";
@@ -76,6 +77,8 @@ export function DiscoverView() {
   }
 
   const curated = isCuratedQuery(query);
+  // 채용만 보는 중이면 로고가 반복되는 갤러리 대신 한 줄 목록으로 보여 준다
+  const jobsOnly = results.length > 0 && results.every((a) => a.category === "job");
   const sortControls = (
     <>
       <FilterButton query={query} setQuery={setQuery} open={filterOpen} onOpenChange={setFilterOpen} />
@@ -96,10 +99,17 @@ export function DiscoverView() {
         ) : null}
       </div>
 
+      {/* 휴대폰에서는 곧 마감하는 공고를 카드보다 먼저 보여 준다(넓은 화면은 오른쪽 열) */}
+      {!loadError ? (
+        <div className="mt-8 md:hidden">
+          <ClosingSoon list={list} now={now} idSuffix="top" />
+        </div>
+      ) : null}
+
       <div className="mt-9 grid grid-cols-1 gap-y-14 xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-x-10 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
           {loadError ? (
-            <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-6 py-16 text-center">
+            <div role="alert" className="flex flex-col items-center gap-3 rounded-lg bg-subtle px-6 py-16 text-center">
               <AlertTriangle className="size-7 text-warning" aria-hidden />
               <div>
                 <p className="font-semibold">공고를 불러오지 못했어요</p>
@@ -118,6 +128,17 @@ export function DiscoverView() {
               </div>
               <NoResults query={query} setQuery={setQuery} />
             </>
+          ) : jobsOnly ? (
+            <section aria-labelledby="job-results-title">
+              <SectionHeader id="job-results-title" eyebrow="채용" title="채용 공고" description="직무·경력은 공고 제목으로 분류했어요" actions={sortControls} />
+              <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <p aria-live="polite" className="text-sm text-muted">
+                  공고 <b className="num text-[15px] text-fg">{results.length}</b>건
+                </p>
+                <ActiveFilters query={query} setQuery={setQuery} />
+              </div>
+              <JobList key={serialized} items={results} now={now} label="채용 공고 목록" />
+            </section>
           ) : curated ? (
             <Curated results={results} now={now} setQuery={setQuery} sortControls={sortControls} />
           ) : (
@@ -147,7 +168,9 @@ export function DiscoverView() {
         </div>
 
         <aside aria-label="마감·일정" className="grid min-w-0 content-start gap-10 md:grid-cols-2 md:gap-8 xl:grid-cols-1 xl:gap-10 xl:border-l xl:border-line xl:pl-10">
-          <ClosingSoon list={list} now={now} />
+          <div className="hidden md:block">
+            <ClosingSoon list={list} now={now} />
+          </div>
           <MySchedule />
         </aside>
       </div>
@@ -173,7 +196,7 @@ function Curated({
       {openNow.length ? (
         <section aria-labelledby="open-now-title">
           <SectionHeader id="open-now-title" eyebrow="신청할 수 있는 공고" title="지금 모집 중인 공고" description="행사가 가까운 순" actions={sortControls} />
-          <CardGrid items={openNow} now={now} label="지금 신청할 수 있는 공고" />
+          <CardGrid items={openNow} now={now} label="지금 신청할 수 있는 공고" scrollOnMobile />
         </section>
       ) : null}
       {recent.length ? (
@@ -197,7 +220,7 @@ function Curated({
               </>
             }
           />
-          <CardGrid items={recent} now={now} label="새로 올라온 공고" />
+          <CardGrid items={recent} now={now} label="새로 올라온 공고" scrollOnMobile />
         </section>
       ) : null}
       <div className="flex justify-center border-t border-line pt-8">
@@ -212,7 +235,7 @@ function Curated({
 
 function NoResults({ query, setQuery }: { query: DiscoverQuery; setQuery: (patch: Partial<DiscoverQuery>) => void }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-6 py-16 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-lg bg-subtle px-6 py-16 text-center">
       <SearchX className="size-7 text-faint" aria-hidden />
       <div>
         <p className="font-semibold">조건에 맞는 공고가 없어요</p>

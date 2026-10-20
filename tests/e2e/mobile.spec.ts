@@ -1,11 +1,13 @@
 import { expect, test } from "./fixtures";
 
-test("모바일: 1열 카드, 카테고리 가로 스크롤, 필터 시트, 상세 이동", async ({ page }) => {
+test("모바일: 곧 마감하는 공고가 먼저, 카드는 가로로 넘겨 보기, 필터 시트, 상세 이동", async ({ page }) => {
   await page.goto("/discover");
   const cards = page.getByRole("list", { name: "지금 신청할 수 있는 공고" }).getByRole("listitem");
   await expect(cards).toHaveCount(6);
-  const boxes = await cards.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
-  expect(new Set(boxes).size).toBe(1); // 한 열
+  const tops = await cards.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(1); // 한 줄로 가로 스크롤
+  const closingTop = await page.locator("section[aria-labelledby=closing-soon-title-top]").evaluate((e) => e.getBoundingClientRect().top);
+  expect(closingTop).toBeLessThan(tops[0]); // 곧 마감하는 공고가 카드보다 위
 
   await page.getByRole("button", { name: /^필터(,.*)?$/ }).click();
   const filter = page.getByRole("dialog", { name: "필터" });

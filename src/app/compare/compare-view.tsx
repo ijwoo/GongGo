@@ -4,7 +4,7 @@ import { GitCompareArrows, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { EmptyState, PageFrame, PageHeader } from "@/components/common/page";
-import { OrgMark } from "@/components/discover/org-mark";
+import { Poster } from "@/components/discover/poster";
 import { StateBadge } from "@/components/discover/status";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClass, IconButton } from "@/components/ui/button";
@@ -26,7 +26,8 @@ import { useAnnouncements, useNow } from "@/lib/app-data";
 import { clearCompare, COMPARE_LIMIT, toggleCompare, useCompare, useHydrated } from "@/lib/personal-store";
 import { announcementHref } from "@/lib/announcement-href";
 
-const NO_INFO = <span className="text-faint">정보 없음</span>;
+/** 출처가 주지 않은 값. ‘없음’과 섞이지 않게 ‘원문 확인’으로 쓴다 */
+const NO_INFO = <span className="text-muted">원문 확인</span>;
 
 function list(items: string[], empty: ReactNode = NO_INFO): ReactNode {
   if (items.length === 0) return empty;
@@ -101,7 +102,7 @@ export function CompareView() {
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-line bg-panel">
-          <table className="w-full min-w-[720px] table-fixed border-collapse text-[13px]">
+          <table className="w-full min-w-[720px] table-fixed border-collapse text-sm">
             <caption className="sr-only">선택한 공고 {items.length}개 비교</caption>
             <colgroup>
               <col className="w-[120px]" />
@@ -116,10 +117,12 @@ export function CompareView() {
                 </th>
                 {items.map((a) => (
                   <th key={a.id} scope="col" className="px-3 py-3 text-left font-normal">
+                    <Link href={announcementHref(a.id)} tabIndex={-1} aria-hidden className="mb-2.5 block">
+                      <Poster a={a} />
+                    </Link>
                     <div className="flex items-start gap-2">
-                      <OrgMark org={a.organizer} size="sm" />
                       <div className="min-w-0 flex-1">
-                        <Link href={announcementHref(a.id)} className="font-semibold break-keep hover:underline">
+                        <Link href={announcementHref(a.id)} className="text-[15px] leading-snug font-semibold break-keep hover:text-accent-text">
                           {a.title}
                         </Link>
                         <p className="text-xs text-muted">{a.organizer.name}</p>

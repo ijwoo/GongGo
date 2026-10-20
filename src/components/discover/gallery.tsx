@@ -163,11 +163,23 @@ export function SectionHeader({
   );
 }
 
-export function CardGrid({ items, now, label }: { items: Announcement[]; now: string; label: string }) {
+/**
+ * 카드 갤러리. scrollOnMobile이면 휴대폰에서 세로로 길게 쌓지 않고 가로로 넘겨 보게 하고(다음 카드가 살짝 보임),
+ * 640px 이상에서는 2~3열 격자로 돌아간다.
+ */
+export function CardGrid({ items, now, label, scrollOnMobile }: { items: Announcement[]; now: string; label: string; scrollOnMobile?: boolean }) {
   return (
-    <ul aria-label={label} className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+    <ul
+      aria-label={label}
+      className={cn(
+        "grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3",
+        scrollOnMobile
+          ? "-mx-4 auto-cols-[78%] grid-flow-col snap-x snap-mandatory overflow-x-auto scroll-px-4 px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:auto-cols-auto sm:grid-flow-row sm:overflow-visible sm:px-0 sm:pb-0"
+          : "grid-cols-1",
+      )}
+    >
       {items.map((a) => (
-        <li key={a.id} className="min-w-0">
+        <li key={a.id} className="min-w-0 snap-start">
           <AnnouncementCard a={a} now={now} />
         </li>
       ))}

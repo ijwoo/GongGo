@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CATEGORY_LABEL } from "@/domain/announcement";
 import { posterVariant } from "@/domain/card";
 import type { Announcement } from "@/domain/types";
@@ -14,8 +14,18 @@ import { cn } from "@/lib/cn";
  */
 export function Poster({ a, className, variant = "card" }: { a: Announcement; className?: string; variant?: "card" | "detail" }) {
   const [failed, setFailed] = useState(false);
+  // 표지 칸보다 훨씬 작은 이미지(앱 아이콘·작은 로고)는 늘려서 흐리게 만들지 않고 가운데에 작게 둔다
+  const [small, setSmall] = useState(false);
   const image = a.image && !failed ? a.image : null;
-  const contain = image?.kind === "poster";
+  const contain = image?.kind === "poster" && !small;
+  const imgRef = useRef<HTMLImageElement>(null);
+  const measure = (img: HTMLImageElement) => {
+    if (img.naturalWidth && (img.naturalWidth < 360 || img.naturalHeight < 200)) setSmall(true);
+  };
+  // 서버 렌더링된 이미지는 화면이 붙기 전에 이미 다 불러왔을 수 있어(onLoad를 놓침) 붙은 뒤 한 번 더 잰다
+  useEffect(() => {
+    if (imgRef.current?.complete) measure(imgRef.current);
+  }, []);
   return (
     <div
       className={cn(
@@ -26,6 +36,7 @@ export function Poster({ a, className, variant = "card" }: { a: Announcement; cl
     >
       {image ? (
         <>
+          {small ? <span aria-hidden className="absolute inset-0 bg-[var(--poster-5-bg)]" /> : null}
           {contain ? (
             // 포스터는 글자가 잘리지 않게 contain으로 두고, 남는 여백은 같은 이미지를 흐리게 깔아 채운다
             // eslint-disable-next-line @next/next/no-img-element
@@ -47,7 +58,13 @@ export function Poster({ a, className, variant = "card" }: { a: Announcement; cl
             // 일부 사이트는 다른 출처의 이미지 요청을 막으므로 출처 정보를 보내지 않는다
             referrerPolicy="no-referrer"
             onError={() => setFailed(true)}
-            className={cn("absolute inset-0 size-full", contain ? "object-contain" : "object-cover")}
+            ref={imgRef}
+            onLoad={(e) => measure(e.currentTarget)}
+            className={cn(
+              "absolute inset-0",
+              small ? "m-auto max-h-[44%] max-w-[44%] rounded-lg object-contain" : "size-full",
+              !small && (contain ? "object-contain" : "object-cover"),
+            )}
           />
         </>
       ) : (
@@ -68,10 +85,10 @@ function GeneratedPoster({ a }: { a: Announcement }) {
     <div aria-hidden className="absolute inset-0 bg-[var(--p-bg)] text-[var(--p-fg)] [container-type:inline-size]" style={style}>
       <Shape variant={v} />
       <div className="relative flex h-full flex-col justify-between p-[6.5cqw]">
-        <p className="text-[max(11px,3.6cqw)] font-semibold opacity-80">{CATEGORY_LABEL[a.category]}</p>
+        <p className="text-[max(9px,3.6cqw)] font-semibold opacity-80">{CATEGORY_LABEL[a.category]}</p>
         <div className="min-w-0 max-w-[88%]">
-          <p className="line-clamp-3 text-[max(15px,7.2cqw)] leading-[1.18] font-extrabold tracking-[-0.02em] break-keep">{a.title}</p>
-          <p className="mt-[2.4cqw] truncate text-[max(11px,3.4cqw)] font-medium opacity-75">{a.organizer.name}</p>
+          <p className="line-clamp-3 text-[max(11px,7.2cqw)] leading-[1.18] font-extrabold tracking-[-0.02em] break-keep">{a.title}</p>
+          <p className="mt-[2.4cqw] truncate text-[max(9px,3.4cqw)] font-medium opacity-75">{a.organizer.name}</p>
         </div>
       </div>
     </div>

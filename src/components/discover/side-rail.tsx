@@ -28,12 +28,13 @@ function DateBlock({ date, active }: { date: LocalDate; active?: boolean }) {
 }
 
 /** 신청 마감이 확인된 접수 중 공고만, 마감이 가까운 순으로 3개 */
-export function ClosingSoon({ list, now }: { list: Announcement[]; now: string }) {
+export function ClosingSoon({ list, now, idSuffix = "" }: { list: Announcement[]; now: string; idSuffix?: string }) {
+  const titleId = `closing-soon-title${idSuffix ? `-${idSuffix}` : ""}`;
   const items = closingSoonList(list, now, 3);
   return (
-    <section aria-labelledby="closing-soon-title">
+    <section aria-labelledby={titleId}>
       <p className="mb-1 text-[13px] font-semibold text-accent-text">신청 마감 기준</p>
-      <h2 id="closing-soon-title" className="mb-2 text-[20px] leading-tight font-bold tracking-[-0.01em]">
+      <h2 id={titleId} className="mb-2 text-[20px] leading-tight font-bold tracking-[-0.01em]">
         곧 마감하는 공고
       </h2>
       {items.length === 0 ? (

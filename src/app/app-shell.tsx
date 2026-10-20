@@ -51,23 +51,32 @@ export async function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** 첫 로딩 뼈대. 둘러보기 화면과 같은 폭·열·간격이라 내용이 들어와도 배치가 튀지 않는다 */
 export function AppShellFallback() {
   return (
     <div aria-busy="true" aria-label="불러오는 중">
       <div className="h-14 border-b border-line bg-panel md:h-[72px]" />
-      <div className="mx-auto w-full max-w-[1480px] px-4 pt-10 sm:px-6 lg:px-10">
-        <div className="h-9 w-80 max-w-full animate-pulse rounded bg-subtle" />
-        <div className="mt-3 h-5 w-96 max-w-full animate-pulse rounded bg-subtle" />
-        <div className="mt-8 h-12 animate-pulse rounded bg-subtle" />
-        <div className="mt-8 grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-3 xl:mr-[356px]">
-          {Array.from({ length: 6 }, (_, i) => (
-            <div key={i}>
-              <div className="aspect-[16/10] animate-pulse rounded-[10px] bg-subtle" />
-              <div className="mt-3 h-4 w-1/3 animate-pulse rounded bg-subtle" />
-              <div className="mt-2 h-5 w-5/6 animate-pulse rounded bg-subtle" />
-              <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-subtle" />
-            </div>
-          ))}
+      <div className="mx-auto w-full max-w-[1480px] px-4 pt-8 sm:px-6 md:pt-10 lg:px-10">
+        <div className="h-5 w-40 animate-pulse rounded bg-subtle" />
+        <div className="mt-3 h-9 w-56 animate-pulse rounded bg-subtle" />
+        <div className="mt-2 h-5 w-[28rem] max-w-full animate-pulse rounded bg-subtle" />
+        <div className="mt-7 h-12 border-b border-line" />
+        <div className="mt-9 grid grid-cols-1 gap-y-14 xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-x-10 2xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i}>
+                <div className="aspect-[16/10] animate-pulse rounded-[10px] bg-subtle" />
+                <div className="mt-3.5 h-4 w-1/3 animate-pulse rounded bg-subtle" />
+                <div className="mt-2 h-5 w-5/6 animate-pulse rounded bg-subtle" />
+                <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-subtle" />
+              </div>
+            ))}
+          </div>
+          <div className="hidden space-y-3 xl:block xl:border-l xl:border-line xl:pl-10">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="h-14 animate-pulse rounded bg-subtle" />
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,12 @@
 "use client";
 
-import { AlertTriangle, ClipboardList, ExternalLink, History, Info } from "lucide-react";
+import {
+  AlertTriangle,
+  ClipboardList,
+  ExternalLink,
+  History,
+  Info,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { useRequireLogin } from "@/components/auth/login-gate";
@@ -20,8 +26,17 @@ import {
   MODE_LABEL,
   venueShort,
 } from "@/domain/announcement";
-import { ELIGIBILITY_LABEL, evaluateCondition, type EligibilityResult } from "@/domain/eligibility";
-import { formatLocalDateShort, formatSeoulDateTime, formatSeoulTime, seoulDateOf } from "@/domain/time";
+import {
+  ELIGIBILITY_LABEL,
+  evaluateCondition,
+  type EligibilityResult,
+} from "@/domain/eligibility";
+import {
+  formatLocalDateShort,
+  formatSeoulDateTime,
+  formatSeoulTime,
+  seoulDateOf,
+} from "@/domain/time";
 import type { Announcement, ApplicationStart } from "@/domain/types";
 import { sourcePolicy } from "@/data/sources";
 import { usePersonal, newId } from "@/hooks/use-personal";
@@ -31,14 +46,25 @@ import { markSeen, upsertApplication } from "@/lib/personal-actions";
 import { readPersonalState, updatePersonalState } from "@/lib/personal-store";
 import { CompareButton } from "./compare-toggle";
 import { OrgMark } from "./org-mark";
+import { Poster } from "./poster";
 import { SaveButton } from "./save-button";
 import { StateBadge } from "./status";
 
-const RESULT_TONE: Record<EligibilityResult, Tone> = { meets: "success", notMeets: "danger", check: "warning", noInfo: "neutral" };
+const RESULT_TONE: Record<EligibilityResult, Tone> = {
+  meets: "success",
+  notMeets: "danger",
+  check: "warning",
+  noInfo: "neutral",
+};
 
 function formatStart(s: ApplicationStart): string {
   if (s.type === "tbd") return "미정";
-  return s.type === "datetime" ? formatSeoulDateTime(s.at) : formatDeadline({ type: "date", date: s.date }).replace(" · 시각 미공지", "");
+  return s.type === "datetime"
+    ? formatSeoulDateTime(s.at)
+    : formatDeadline({ type: "date", date: s.date }).replace(
+        " · 시각 미공지",
+        "",
+      );
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -50,10 +76,27 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Section({ title, icon, children, id }: { title: string; icon?: ReactNode; children: ReactNode; id?: string }) {
+function Section({
+  title,
+  icon,
+  children,
+  id,
+}: {
+  title: string;
+  icon?: ReactNode;
+  children: ReactNode;
+  id?: string;
+}) {
   return (
-    <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="scroll-mt-12 border-b border-line px-5 py-5 last:border-b-0">
-      <h3 id={id ? `${id}-title` : undefined} className="mb-3 flex items-center gap-1.5 text-[15px] font-bold">
+    <section
+      id={id}
+      aria-labelledby={id ? `${id}-title` : undefined}
+      className="scroll-mt-32 border-b border-line px-5 py-5 last:border-b-0"
+    >
+      <h3
+        id={id ? `${id}-title` : undefined}
+        className="mb-3 flex items-center gap-1.5 text-[15px] font-bold"
+      >
         {icon}
         {title}
       </h3>
@@ -106,11 +149,26 @@ function KeyFacts({ a, now }: { a: Announcement; now: string }) {
         ? `${formatSeoulTime(e.start)}~${formatSeoulTime(e.end)}`
         : "일정 공지 전";
   const facts = [
-    { label: "신청 마감", main: deadlineMain, sub: deadlineSub, tone: days !== null && days >= 0 && days <= 3 && a.status !== "cancelled" },
-    { label: "행사 일정", main: eventMain, sub: eventSub },
-    { label: "장소", main: venueShort(a), sub: a.venue.status === "confirmed" ? a.venue.name : MODE_LABEL[a.participationMode] },
     {
-      label: a.supportAmount && a.supportAmount.type !== "none" ? "지원 규모" : "참가비",
+      label: "신청 마감",
+      main: deadlineMain,
+      sub: deadlineSub,
+      tone: days !== null && days >= 0 && days <= 3 && a.status !== "cancelled",
+    },
+    { label: "행사 일정", main: eventMain, sub: eventSub },
+    {
+      label: "장소",
+      main: venueShort(a),
+      sub:
+        a.venue.status === "confirmed"
+          ? a.venue.name
+          : MODE_LABEL[a.participationMode],
+    },
+    {
+      label:
+        a.supportAmount && a.supportAmount.type !== "none"
+          ? "지원 규모"
+          : "참가비",
       main:
         a.supportAmount && a.supportAmount.type === "amount"
           ? `최대 ${formatKrw(a.supportAmount.maxKrw)}`
@@ -119,15 +177,34 @@ function KeyFacts({ a, now }: { a: Announcement; now: string }) {
             : a.cost
               ? formatCost(a.cost)
               : "정보 없음",
-      sub: a.supportAmount && a.supportAmount.type === "text" ? a.supportAmount.text : a.cost ? `참가비 ${formatCost(a.cost)}` : "원문 확인",
+      sub:
+        a.supportAmount && a.supportAmount.type === "text"
+          ? a.supportAmount.text
+          : a.cost
+            ? `참가비 ${formatCost(a.cost)}`
+            : "원문 확인",
     },
   ];
   return (
     <dl className="mx-5 mb-4 grid grid-cols-2 overflow-hidden rounded-lg border border-line">
       {facts.map((f, i) => (
-        <div key={f.label} className={cn("min-w-0 px-3.5 py-3", i % 2 === 1 && "border-l border-line", i > 1 && "border-t border-line")}>
+        <div
+          key={f.label}
+          className={cn(
+            "min-w-0 px-3.5 py-3",
+            i % 2 === 1 && "border-l border-line",
+            i > 1 && "border-t border-line",
+          )}
+        >
           <dt className="text-xs text-muted">{f.label}</dt>
-          <dd className={cn("num mt-1 truncate text-base font-bold", f.tone ? "text-danger" : "text-fg")}>{f.main}</dd>
+          <dd
+            className={cn(
+              "num mt-1 truncate text-base font-bold",
+              f.tone ? "text-danger" : "text-fg",
+            )}
+          >
+            {f.main}
+          </dd>
           <dd className="num truncate text-xs text-muted" title={f.sub}>
             {f.sub}
           </dd>
@@ -137,7 +214,16 @@ function KeyFacts({ a, now }: { a: Announcement; now: string }) {
   );
 }
 
-export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; headingLevel?: 2 | 3 }) {
+export function AnnouncementDetail({
+  a,
+  headingLevel = 2,
+  variant = "panel",
+}: {
+  a: Announcement;
+  headingLevel?: 2 | 3;
+  /** page: 독립 상세 페이지(창 전체 스크롤, 위쪽 헤더 아래에 항목 탭 고정). panel: 지도 모드 옆 패널·시트 */
+  variant?: "panel" | "page";
+}) {
   const now = useNow();
   const { state, loggedIn, hydrated } = usePersonal();
   const requireLogin = useRequireLogin();
@@ -154,17 +240,28 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
   // 변경 내용을 화면에 보여 준 다음 확인 처리한다(배너는 이번에 열었을 때까지 유지)
   useEffect(() => {
     if (!loggedIn) return;
-    const id = window.setTimeout(() => updatePersonalState((s) => markSeen(s, a)), 1500);
+    const id = window.setTimeout(
+      () => updatePersonalState((s) => markSeen(s, a)),
+      1500,
+    );
     return () => window.clearTimeout(id);
   }, [a, loggedIn]);
 
   const addApplication = () =>
     requireLogin({
-      reason: "지원 준비 목록은 계정에 저장돼요. 로그인하면 메모와 준비 체크리스트를 관리할 수 있어요.",
+      reason:
+        "지원 준비 목록은 계정에 저장돼요. 로그인하면 메모와 준비 체크리스트를 관리할 수 있어요.",
       onAuthorized: () => {
-        const exists = readPersonalState().applications.some((x) => x.announcementId === a.id);
-        if (!exists) updatePersonalState((s) => upsertApplication(s, a, {}, now, newId));
-        toast({ message: exists ? "이미 지원 현황에 있어요." : "지원 현황에 추가했어요. 준비 서류를 체크리스트로 만들었어요." });
+        const exists = readPersonalState().applications.some(
+          (x) => x.announcementId === a.id,
+        );
+        if (!exists)
+          updatePersonalState((s) => upsertApplication(s, a, {}, now, newId));
+        toast({
+          message: exists
+            ? "이미 지원 현황에 있어요."
+            : "지원 현황에 추가했어요. 준비 서류를 체크리스트로 만들었어요.",
+        });
       },
     });
 
@@ -176,32 +273,69 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
   ];
 
   return (
-    <article aria-labelledby={`detail-title-${a.id}`} className="bg-[inherit] pb-8">
-      <header className="px-5 pt-5 pr-12 pb-4">
-        <div className="mb-3 flex items-center gap-2.5">
-          <OrgMark org={a.organizer} />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-fg-2">{a.organizer.name}</p>
-            <p className="text-xs text-muted">
-              {CATEGORY_LABEL[a.category]} · {MODE_LABEL[a.participationMode]}
-            </p>
+    <article
+      aria-labelledby={`detail-title-${a.id}`}
+      className="bg-[inherit] pb-8"
+    >
+      <header
+        className={cn(
+          "px-5 pt-5 pb-4",
+          variant === "panel" && "pr-12",
+          variant === "page" &&
+            "md:grid md:grid-cols-[minmax(0,1fr)_240px] md:gap-6",
+        )}
+      >
+        {variant === "page" ? (
+          <Poster a={a} className="mb-4 md:order-2 md:mb-0" />
+        ) : null}
+        <div className="min-w-0">
+          <div className="mb-3 flex items-center gap-2.5">
+            <OrgMark org={a.organizer} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-fg-2">
+                {a.organizer.name}
+              </p>
+              <p className="text-xs text-muted">
+                {CATEGORY_LABEL[a.category]} · {MODE_LABEL[a.participationMode]}
+              </p>
+            </div>
           </div>
-        </div>
-        <Heading id={`detail-title-${a.id}`} className="text-xl leading-snug font-bold tracking-tight break-keep">
-          {a.title}
-        </Heading>
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          <StateBadge a={a} now={now} />
-          {a.revisions.length > 0 ? <Badge tone="warning">공고 수정 {a.revisions.length}회</Badge> : <Badge>수정 없음</Badge>}
-          <span className="num ml-auto text-xs text-faint">확인 {formatSeoulDateTime(a.lastCheckedAt)}</span>
+          <Heading
+            id={`detail-title-${a.id}`}
+            className={cn(
+              "leading-snug font-bold tracking-tight break-keep",
+              variant === "page" ? "text-2xl" : "text-xl",
+            )}
+          >
+            {a.title}
+          </Heading>
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <StateBadge a={a} now={now} />
+            {a.revisions.length > 0 ? (
+              <Badge tone="warning">공고 수정 {a.revisions.length}회</Badge>
+            ) : (
+              <Badge>수정 없음</Badge>
+            )}
+            <span className="num ml-auto text-xs text-faint">
+              확인 {formatSeoulDateTime(a.lastCheckedAt)}
+            </span>
+          </div>
         </div>
       </header>
 
       {a.status === "cancelled" ? (
-        <div role="alert" className="mx-5 mb-4 flex gap-2 rounded-md bg-danger-soft px-3 py-2.5 text-[13px] text-danger">
+        <div
+          role="alert"
+          className="mx-5 mb-4 flex gap-2 rounded-md bg-danger-soft px-3 py-2.5 text-[13px] text-danger"
+        >
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
-            <b>{a.category === "job" ? "마감된 채용 공고예요." : "취소된 공고예요."}</b> {a.revisions.findLast((r) => r.kind === "cancel")?.summary}
+            <b>
+              {a.category === "job"
+                ? "마감된 채용 공고예요."
+                : "취소된 공고예요."}
+            </b>{" "}
+            {a.revisions.findLast((r) => r.kind === "cancel")?.summary}
           </p>
         </div>
       ) : null}
@@ -245,12 +379,22 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
         </div>
       </div>
 
-      <nav aria-label="상세 항목" className="sticky top-0 z-[2] flex gap-1 overflow-x-auto border-y border-line bg-[inherit] px-4 py-1.5 [scrollbar-width:none]">
+      <nav
+        aria-label="상세 항목"
+        className={cn(
+          "sticky z-[2] flex gap-1 overflow-x-auto border-y border-line bg-[inherit] px-4 py-1.5 [scrollbar-width:none]",
+          variant === "page" ? "top-14 md:top-[72px]" : "top-0",
+        )}
+      >
         {sections.map((sec) => (
           <button
             key={sec.id}
             type="button"
-            onClick={() => document.getElementById(sec.id)?.scrollIntoView({ block: "start", behavior: "smooth" })}
+            onClick={() =>
+              document
+                .getElementById(sec.id)
+                ?.scrollIntoView({ block: "start", behavior: "smooth" })
+            }
             className="h-8 rounded-md px-2.5 text-[13px] font-semibold text-muted hover:bg-hover hover:text-fg"
           >
             {sec.label}
@@ -263,7 +407,8 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
           <Row label="신청 시작">{formatStart(a.applicationStart)}</Row>
           <Row label="신청 마감">
             <span className="num">{formatDeadline(a.applicationDeadline)}</span>
-            {a.applicationDeadline.type === "untilBudget" && a.applicationDeadline.note ? (
+            {a.applicationDeadline.type === "untilBudget" &&
+            a.applicationDeadline.note ? (
               <p className="text-xs text-muted">{a.applicationDeadline.note}</p>
             ) : null}
           </Row>
@@ -280,7 +425,9 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
               `온라인${a.venue.platform ? ` (${a.venue.platform})` : ""}`
             ) : (
               <>
-                {a.venue.area ? `${a.venue.area.label} · 상세 장소 미공개` : "장소 미정"}
+                {a.venue.area
+                  ? `${a.venue.area.label} · 상세 장소 미공개`
+                  : "장소 미정"}
                 {a.venue.note && !a.venue.area ? ` · ${a.venue.note}` : ""}
                 <p className="text-xs text-muted">
                   {a.venue.area?.coordinates
@@ -290,7 +437,11 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
               </>
             )}
           </Row>
-          <Row label="지원 지역">{a.eligibilityRegions.length ? `${a.eligibilityRegions.join("·")} (지원 자격)` : "제한 없음"}</Row>
+          <Row label="지원 지역">
+            {a.eligibilityRegions.length
+              ? `${a.eligibilityRegions.join("·")} (지원 자격)`
+              : "제한 없음"}
+          </Row>
           <Row label="기관 주소">{a.organizer.address ?? <Missing />}</Row>
         </dl>
       </Section>
@@ -298,8 +449,12 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
       <Section title="참가 조건·지원 내용" id={`s-terms-${a.id}`}>
         <dl className="divide-y divide-line">
           <Row label="참가비">{a.cost ? formatCost(a.cost) : <Missing />}</Row>
-          <Row label="팀 규모">{a.teamSize ? formatTeamSize(a.teamSize) : <Missing />}</Row>
-          <Row label="지원 규모">{a.supportAmount ? formatSupport(a.supportAmount) : <Missing />}</Row>
+          <Row label="팀 규모">
+            {a.teamSize ? formatTeamSize(a.teamSize) : <Missing />}
+          </Row>
+          <Row label="지원 규모">
+            {a.supportAmount ? formatSupport(a.supportAmount) : <Missing />}
+          </Row>
         </dl>
       </Section>
 
@@ -312,7 +467,12 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
               <button
                 type="button"
                 className="font-semibold text-accent-text hover:underline"
-                onClick={() => requireLogin({ reason: "프로필과 조건을 비교하려면 로그인이 필요해요.", onAuthorized: () => {} })}
+                onClick={() =>
+                  requireLogin({
+                    reason: "프로필과 조건을 비교하려면 로그인이 필요해요.",
+                    onAuthorized: () => {},
+                  })
+                }
               >
                 로그인하고 비교하기
               </button>
@@ -320,24 +480,42 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
           </p>
         ) : null}
         {a.conditions.length === 0 ? (
-          <p className="text-[13px] text-muted">원문에 별도 자격 조건이 없어요.</p>
+          <p className="text-[13px] text-muted">
+            원문에 별도 자격 조건이 없어요.
+          </p>
         ) : (
           <ul className="space-y-2">
             {a.conditions.map((c) => {
               const ev = evaluateCondition(c, loggedIn ? state.profile : null);
               return (
-                <li key={c.id} className="rounded-md border border-line px-3 py-2.5">
+                <li
+                  key={c.id}
+                  className="rounded-md border border-line px-3 py-2.5"
+                >
                   <div className="flex items-start gap-2">
-                    <span className="mt-px shrink-0 text-xs font-semibold text-muted">{c.kind === "required" ? "필수" : "우대"}</span>
-                    <p className="min-w-0 flex-1 text-[13px] font-medium break-keep">{c.text}</p>
-                    {hydrated && loggedIn ? <Badge tone={RESULT_TONE[ev.result]}>{ELIGIBILITY_LABEL[ev.result]}</Badge> : null}
+                    <span className="mt-px shrink-0 text-xs font-semibold text-muted">
+                      {c.kind === "required" ? "필수" : "우대"}
+                    </span>
+                    <p className="min-w-0 flex-1 text-[13px] font-medium break-keep">
+                      {c.text}
+                    </p>
+                    {hydrated && loggedIn ? (
+                      <Badge tone={RESULT_TONE[ev.result]}>
+                        {ELIGIBILITY_LABEL[ev.result]}
+                      </Badge>
+                    ) : null}
                   </div>
-                  {hydrated && loggedIn ? <p className="mt-1 pl-7 text-xs text-muted">{ev.reason}</p> : null}
+                  {hydrated && loggedIn ? (
+                    <p className="mt-1 pl-7 text-xs text-muted">{ev.reason}</p>
+                  ) : null}
                   <details className="mt-1.5 pl-7 text-xs">
                     <summary className="cursor-pointer text-muted hover:text-fg">
-                      근거 문장 · {c.origin === "source" ? "원문 그대로" : "AI 구조화"}
+                      근거 문장 ·{" "}
+                      {c.origin === "source" ? "원문 그대로" : "AI 구조화"}
                     </summary>
-                    <blockquote className="mt-1 border-l-2 border-line-strong pl-2 text-fg">“{c.evidence}”</blockquote>
+                    <blockquote className="mt-1 border-l-2 border-line-strong pl-2 text-fg">
+                      “{c.evidence}”
+                    </blockquote>
                   </details>
                 </li>
               );
@@ -345,7 +523,8 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
           </ul>
         )}
         <p className="mt-3 text-xs text-faint">
-          비교 결과는 프로필 구간과 원문을 맞춰 본 참고 정보예요. 단정할 수 없으면 ‘확인 필요’로 표시하며, 최종 자격은 원문으로 확인하세요.
+          비교 결과는 프로필 구간과 원문을 맞춰 본 참고 정보예요. 단정할 수
+          없으면 ‘확인 필요’로 표시하며, 최종 자격은 원문으로 확인하세요.
         </p>
       </Section>
 
@@ -371,9 +550,15 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
         ) : null}
       </Section>
 
-      <Section title="변경 이력" icon={<History className="size-4 text-muted" aria-hidden />} id={`s-rev-${a.id}`}>
+      <Section
+        title="변경 이력"
+        icon={<History className="size-4 text-muted" aria-hidden />}
+        id={`s-rev-${a.id}`}
+      >
         {a.revisions.length === 0 ? (
-          <p className="text-[13px] text-muted">처음 게시된 뒤 바뀐 내용이 없어요.</p>
+          <p className="text-[13px] text-muted">
+            처음 게시된 뒤 바뀐 내용이 없어요.
+          </p>
         ) : (
           <ol className="space-y-3">
             {[...a.revisions].reverse().map((r) => (
@@ -397,7 +582,9 @@ export function AnnouncementDetail({ a, headingLevel = 2 }: { a: Announcement; h
         )}
       </Section>
 
-      {policy ? <p className="px-4 pt-2 text-xs text-faint">{policy.attribution}</p> : null}
+      {policy ? (
+        <p className="px-4 pt-2 text-xs text-faint">{policy.attribution}</p>
+      ) : null}
     </article>
   );
 }

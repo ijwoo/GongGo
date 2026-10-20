@@ -29,6 +29,7 @@ import { usePersonal } from "@/hooks/use-personal";
 import { useAnnouncements, useNow, useToday } from "@/lib/app-data";
 import { cn } from "@/lib/cn";
 import { deleteEvent, eventsNeedingReview, resolveEventChange, updateEvent } from "@/lib/personal-actions";
+import { announcementHref } from "@/lib/announcement-href";
 
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -185,7 +186,7 @@ function CalendarBody() {
                     >
                       {proposed ? "기존 일정 유지" : "확인"}
                     </Button>
-                    <Link href={`/discover?id=${a.id}`} className={buttonClass("ghost", "sm")}>
+                    <Link href={announcementHref(a.id)} className={buttonClass("ghost", "sm")}>
                       공고 보기
                     </Link>
                   </div>
@@ -365,7 +366,7 @@ function EventList({
                   )}
                 </div>
                 {a ? (
-                  <Link href={`/discover?id=${a.id}`} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-accent-text hover:underline">
+                  <Link href={announcementHref(a.id)} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-accent-text hover:underline">
                     원본 공고 보기
                     <ArrowRight className="size-3" aria-hidden />
                   </Link>

@@ -12,7 +12,7 @@ import {
 export const CATEGORY_LABEL: Record<Category, string> = {
   hackathon: "해커톤",
   startup: "창업 지원",
-  education: "교육",
+  education: "교육·워크숍",
   event: "개발자 행사",
   job: "채용",
 };

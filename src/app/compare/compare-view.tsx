@@ -24,6 +24,7 @@ import type { Announcement } from "@/domain/types";
 import { usePersonal } from "@/hooks/use-personal";
 import { useAnnouncements, useNow } from "@/lib/app-data";
 import { clearCompare, COMPARE_LIMIT, toggleCompare, useCompare, useHydrated } from "@/lib/personal-store";
+import { announcementHref } from "@/lib/announcement-href";
 
 const NO_INFO = <span className="text-faint">정보 없음</span>;
 
@@ -118,7 +119,7 @@ export function CompareView() {
                     <div className="flex items-start gap-2">
                       <OrgMark org={a.organizer} size="sm" />
                       <div className="min-w-0 flex-1">
-                        <Link href={`/discover?id=${a.id}`} className="font-semibold break-keep hover:underline">
+                        <Link href={announcementHref(a.id)} className="font-semibold break-keep hover:underline">
                           {a.title}
                         </Link>
                         <p className="text-xs text-muted">{a.organizer.name}</p>

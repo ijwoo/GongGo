@@ -206,6 +206,13 @@ export const announcementSchema = z.object({
   /** 목록의 '확인할 사항' 열. 지원 전에 원문에서 꼭 확인할 것 */
   checkPoints: z.array(z.string()),
   status: z.enum(["active", "cancelled"]),
+  /**
+   * 출처가 제공한 대표 이미지(있을 때만). poster는 글자가 중요한 포스터라 자르지 않고 보여 준다.
+   * 없으면 화면이 제목·기관으로 자체 표지를 만든다(실제 포스터처럼 꾸미지 않는다).
+   */
+  image: z
+    .object({ url: z.url(), kind: z.enum(["photo", "poster"]), alt: z.string().optional() })
+    .optional(),
   contentVersion: z.number().int().positive(),
   revisions: z.array(announcementRevisionSchema),
 });

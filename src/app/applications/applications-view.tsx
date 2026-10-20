@@ -16,6 +16,7 @@ import { newId, usePersonal } from "@/hooks/use-personal";
 import { useAnnouncements, useNow } from "@/lib/app-data";
 import { cn } from "@/lib/cn";
 import { removeApplication, upsertApplication } from "@/lib/personal-actions";
+import { announcementHref } from "@/lib/announcement-href";
 
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
   reviewing: "검토 중",
@@ -104,7 +105,7 @@ function ApplicationCard({ record, a }: { record: ApplicationRecord; a: Announce
       <div className="flex flex-wrap items-start gap-3 border-b border-line px-4 py-3">
         <OrgMark org={a.organizer} size="sm" />
         <div className="min-w-0 flex-1">
-          <Link href={`/discover?id=${a.id}`} className="font-semibold hover:underline">
+          <Link href={announcementHref(a.id)} className="font-semibold hover:underline">
             {a.title}
           </Link>
           <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
@@ -192,7 +193,7 @@ function ApplicationCard({ record, a }: { record: ApplicationRecord; a: Announce
           {events.length === 0 ? (
             <p className="text-[13px] text-muted">
               연결된 일정이 없어요.{" "}
-              <Link href={`/discover?id=${a.id}`} className="font-semibold text-accent-text hover:underline">
+              <Link href={announcementHref(a.id)} className="font-semibold text-accent-text hover:underline">
                 공고에서 추가
               </Link>
             </p>

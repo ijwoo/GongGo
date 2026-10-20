@@ -7,60 +7,91 @@
  * 상태 색은 항상 텍스트 라벨과 함께 쓴다(색만으로 구분하지 않음).
  */
 :root {
-  /* 표면 3단계: 페이지 < 패널 < 띄운 요소(팝오버·시트) */
-  --page: #f2f4f6;
+  /* 표면 3단계: 페이지 < 패널 < 띄운 요소(팝오버·시트). 차분한 녹색 계열 */
+  --page: #fcfcfa;
   --panel: #ffffff;
   --elevated: #ffffff;
-  --fg: #191f28;
-  --fg-2: #333d4b;
-  --muted: #6b7684;
-  --faint: #8b95a1;
-  --line: #e5e8eb;
-  --line-strong: #d1d6db;
-  --subtle: #f2f4f6;
-  --hover: #f6f7f9;
-  --accent: #3182f6;
-  --accent-hover: #1b64da;
-  --accent-soft: #edf4ff;
+  --fg: #202622;
+  --fg-2: #3a423c;
+  --muted: #6f776f;
+  --faint: #8a918a;
+  --line: #e7ebe6;
+  --line-strong: #d3dad2;
+  --subtle: #f3f5f1;
+  --hover: #f6f8f4;
+  --accent: #205d47;
+  --accent-hover: #184a38;
+  --accent-soft: #f0f4ed;
   --accent-fg: #ffffff;
-  --accent-text: #1b64da;
-  --success: #0b7a43;
-  --success-soft: #e6f6ee;
-  --warning: #b45309;
-  --warning-soft: #fff4e5;
-  --danger: #d22030;
-  --danger-soft: #fdecee;
-  --focus: #3182f6;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 20px rgb(0 0 0 / 0.08);
-  --map-bg: #eef1f4;
+  --accent-text: #205d47;
+  --success: #1f7a4d;
+  --success-soft: #e7f4ec;
+  --warning: #9a5b0f;
+  --warning-soft: #fbf2e4;
+  --danger: #c0392b;
+  --danger-soft: #fbeceb;
+  --focus: #205d47;
+  --shadow: 0 1px 2px rgb(20 30 24 / 0.04), 0 8px 24px rgb(20 30 24 / 0.08);
+  --map-bg: #eef1ec;
+  /* 이미지 없는 공고의 표지(5종). 단색 배경 + 글자색 + 도형색 */
+  --poster-1-bg: #1f3a2f;
+  --poster-1-fg: #f3f1e8;
+  --poster-1-shape: #6f9a7f;
+  --poster-2-bg: #e9efe4;
+  --poster-2-fg: #1d3a2e;
+  --poster-2-shape: #a9c3a4;
+  --poster-3-bg: #f4eee2;
+  --poster-3-fg: #3b2f22;
+  --poster-3-shape: #d9c4a0;
+  --poster-4-bg: #263238;
+  --poster-4-fg: #eef2f1;
+  --poster-4-shape: #6d8a8a;
+  --poster-5-bg: #eef0f2;
+  --poster-5-fg: #22302b;
+  --poster-5-shape: #b9c6bf;
 }
 
 [data-theme="dark"] {
-  --page: #0b0c0f;
-  --panel: #15161b;
-  --elevated: #1e2027;
-  --fg: #f2f4f6;
-  --fg-2: #d5d9df;
-  --muted: #a3aab5;
-  --faint: #7e8591;
-  --line: #262832;
-  --line-strong: #383b47;
-  --subtle: #1e2027;
-  --hover: #1b1d23;
-  --accent: #4b8ffa;
-  --accent-hover: #6ea4fb;
-  --accent-soft: #172a48;
-  --accent-fg: #ffffff;
-  --accent-text: #86b5ff;
-  --success: #4fcb8d;
-  --success-soft: #11291e;
-  --warning: #f3ab52;
-  --warning-soft: #2c2113;
-  --danger: #ff6f7a;
-  --danger-soft: #34171b;
-  --focus: #6ea4fb;
+  --page: #0f1311;
+  --panel: #151a17;
+  --elevated: #1c231f;
+  --fg: #eaefe9;
+  --fg-2: #cdd5cc;
+  --muted: #9aa49a;
+  --faint: #7c867c;
+  --line: #252d28;
+  --line-strong: #344038;
+  --subtle: #1c231f;
+  --hover: #19201c;
+  --accent: #5aa883;
+  --accent-hover: #74bb98;
+  --accent-soft: #1a2a22;
+  --accent-fg: #0f1311;
+  --accent-text: #86c9a6;
+  --success: #5fc48f;
+  --success-soft: #142a1e;
+  --warning: #e3a65a;
+  --warning-soft: #2b2114;
+  --danger: #f07b70;
+  --danger-soft: #331a18;
+  --focus: #86c9a6;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
-  --map-bg: #13151a;
+  --map-bg: #141916;
+  --poster-1-bg: #1a3328;
+  --poster-1-fg: #e8ede3;
+  --poster-1-shape: #4f7d63;
+  --poster-2-bg: #22302a;
+  --poster-2-fg: #dfe9df;
+  --poster-2-shape: #42604f;
+  --poster-3-bg: #2d2820;
+  --poster-3-fg: #efe6d6;
+  --poster-3-shape: #6f5f45;
+  --poster-4-bg: #1d272b;
+  --poster-4-fg: #e6eeec;
+  --poster-4-shape: #4e6a6a;
+  --poster-5-bg: #232826;
+  --poster-5-fg: #e3e8e5;
+  --poster-5-shape: #4c5a53;
 }
 
 @theme inline {
@@ -91,6 +122,7 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
+  --radius-xl: 10px;
   --shadow-panel: var(--shadow);
 }
 

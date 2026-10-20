@@ -66,7 +66,7 @@ async function main() {
     "",
     "closed=1",
     "cat=hackathon,event",
-    "region=서울",
+    "region=서울&online=0",
     "mode=online",
     "q=판교",
     "sort=recent",

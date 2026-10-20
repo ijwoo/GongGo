@@ -17,6 +17,7 @@ import { usePersonal } from "@/hooks/use-personal";
 import { useAnnouncements, useNow } from "@/lib/app-data";
 import { cn } from "@/lib/cn";
 import { toggleSaved } from "@/lib/personal-actions";
+import { announcementHref } from "@/lib/announcement-href";
 
 export function SavedView() {
   return (
@@ -108,7 +109,7 @@ function SavedList() {
                   <div className="flex min-w-0 items-start gap-3">
                     <OrgMark org={a.organizer} />
                     <div className="min-w-0">
-                      <Link href={`/discover?id=${a.id}`} className="line-clamp-2 text-[15px] leading-snug font-semibold hover:text-accent-text">
+                      <Link href={announcementHref(a.id)} className="line-clamp-2 text-[15px] leading-snug font-semibold hover:text-accent-text">
                         {a.title}
                       </Link>
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">

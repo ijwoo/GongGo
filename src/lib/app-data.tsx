@@ -12,6 +12,8 @@ interface AppDataValue {
   emailConfigured: boolean;
   /** 카카오맵 JavaScript 키(도메인 제한이 걸린 공개 키). 없으면 지도 대신 안내를 보여 준다 */
   kakaoMapKey: string | null;
+  /** 공고를 불러오지 못했는지(이때 baseAnnouncements는 비어 있다) */
+  loadError: boolean;
   clock: Clock;
 }
 
@@ -47,12 +49,14 @@ export function AppDataProvider({
   announcements,
   emailConfigured,
   kakaoMapKey,
+  loadError = false,
   children,
 }: {
   serverNow: string;
   announcements: Announcement[];
   emailConfigured: boolean;
   kakaoMapKey: string | null;
+  loadError?: boolean;
   children: ReactNode;
 }) {
   const clockRef = useRef<Clock | null>(null);
@@ -61,8 +65,8 @@ export function AppDataProvider({
   // eslint-disable-next-line react-hooks/refs
   const clock = clockRef.current;
   const value = useMemo(
-    () => ({ serverNow, baseAnnouncements: announcements, emailConfigured, kakaoMapKey, clock }),
-    [serverNow, announcements, emailConfigured, kakaoMapKey, clock],
+    () => ({ serverNow, baseAnnouncements: announcements, emailConfigured, kakaoMapKey, loadError, clock }),
+    [serverNow, announcements, emailConfigured, kakaoMapKey, loadError, clock],
   );
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }
@@ -85,6 +89,10 @@ export function useToday(): string {
 
 export function useEmailConfigured(): boolean {
   return useAppData().emailConfigured;
+}
+
+export function useAnnouncementsLoadError(): boolean {
+  return useAppData().loadError;
 }
 
 export function useKakaoMapKey(): string | null {

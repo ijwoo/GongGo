@@ -14,6 +14,7 @@ import { usePersonal } from "@/hooks/use-personal";
 import { useEmailConfigured, useNow } from "@/lib/app-data";
 import { cn } from "@/lib/cn";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/personal-actions";
+import { announcementHref } from "@/lib/announcement-href";
 
 export function NotificationsView() {
   return (
@@ -28,7 +29,7 @@ export function NotificationsView() {
 function linkOf(n: AppNotification): { href: string; label: string } | null {
   if (!n.link) return null;
   return n.link.kind === "announcement"
-    ? { href: `/discover?id=${n.link.id}`, label: "공고 보기" }
+    ? { href: announcementHref(n.link.id), label: "공고 보기" }
     : { href: `/calendar?event=${n.link.id}`, label: "일정 보기" };
 }
 

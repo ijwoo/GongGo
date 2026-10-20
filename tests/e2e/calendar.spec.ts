@@ -3,8 +3,8 @@ import { expect, test } from "./fixtures";
 import { changeFixture, expectToast, login } from "./helpers";
 
 async function addDeadline(page: Page, id: string) {
-  await page.goto(`/discover?id=${id}`);
-  const detail = page.getByRole("complementary", { name: "공고 상세" });
+  await page.goto(`/announcements/${id}`);
+  const detail = page.getByRole("region", { name: "공고 상세" });
   await detail.getByRole("button", { name: "내 캘린더에 추가" }).click();
   const dialog = page.getByRole("dialog", { name: "내 캘린더에 추가" });
   await dialog.getByRole("radio", { name: /신청 마감/ }).check();
@@ -23,7 +23,7 @@ test("캘린더 등록 → 수정 → 삭제", async ({ page }) => {
   await expectToast(page, "신청 마감");
 
   // 같은 종류는 다시 추가할 수 없다
-  await page.getByRole("complementary", { name: "공고 상세" }).getByRole("button", { name: "내 캘린더에 추가" }).click();
+  await page.getByRole("region", { name: "공고 상세" }).getByRole("button", { name: "내 캘린더에 추가" }).click();
   await expect(page.getByRole("dialog", { name: "내 캘린더에 추가" }).getByText("이미 내 캘린더에 있어요.")).toBeVisible();
   await page.keyboard.press("Escape");
 
@@ -63,8 +63,8 @@ test("마감 시각이 없는 공고는 종일 일정으로 등록하고 시각�
 
 test("상시 모집 공고는 마감 일정을 만들 수 없다고 안내한다", async ({ page }) => {
   await login(page);
-  await page.goto("/discover?id=su-rolling-mentoring");
-  await page.getByRole("complementary", { name: "공고 상세" }).getByRole("button", { name: "내 캘린더에 추가" }).click();
+  await page.goto("/announcements/su-rolling-mentoring");
+  await page.getByRole("region", { name: "공고 상세" }).getByRole("button", { name: "내 캘린더에 추가" }).click();
   const dialog = page.getByRole("dialog", { name: "내 캘린더에 추가" });
   await expect(dialog.getByRole("radio", { name: /신청 마감/ })).toBeDisabled();
   await expect(dialog.getByText("상시 모집이라 마감일이 없어요.")).toBeVisible();

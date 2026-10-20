@@ -57,6 +57,10 @@ export interface DiscoverQuery {
   bbox: Bbox | null;
   /** 요약 스트립에서 들어온 빠른 필터 */
   quick: "today" | "week" | null;
+  /** 온라인 공고 포함. 지역을 고르면 그 지역 공고 + 온라인 공고, 전국이면 끄는 것은 온라인 제외 */
+  online: boolean;
+  /** 큐레이션 섹션 대신 전체 결과를 한 그리드로 */
+  all: boolean;
 }
 
 export const DEFAULT_QUERY: DiscoverQuery = {
@@ -71,6 +75,8 @@ export const DEFAULT_QUERY: DiscoverQuery = {
   id: null,
   bbox: null,
   quick: null,
+  online: true,
+  all: false,
 };
 
 function csvOf<T extends string>(allowed: readonly T[]) {
@@ -108,6 +114,8 @@ const querySchema = z.object({
   id: z.string().max(80).optional().catch(undefined),
   bbox: bboxSchema,
   quick: z.enum(["today", "week"]).optional().catch(undefined),
+  online: z.literal("0").optional().catch(undefined),
+  all: z.literal("1").optional().catch(undefined),
 });
 
 /** 잘못된 값은 버리고 기본값으로 돌린다. URL을 손으로 고쳐도 화면이 깨지지 않게 한다 */
@@ -128,6 +136,8 @@ export function parseDiscoverQuery(params: URLSearchParams | Record<string, stri
     id: p.id ?? null,
     bbox: p.bbox,
     quick: p.quick ?? null,
+    online: p.online !== "0",
+    all: p.all === "1",
   };
 }
 
@@ -141,6 +151,8 @@ export function serializeDiscoverQuery(q: DiscoverQuery): string {
   if (q.includeClosed) s.set("closed", "1");
   if (q.sort !== "deadline") s.set("sort", q.sort);
   if (q.quick) s.set("quick", q.quick);
+  if (!q.online) s.set("online", "0");
+  if (q.all) s.set("all", "1");
   if (q.view !== "list") s.set("view", q.view);
   if (q.bbox) s.set("bbox", q.bbox.map((n) => n.toFixed(4)).join(","));
   if (q.id) s.set("id", q.id);
@@ -156,8 +168,22 @@ export function activeFilterCount(q: DiscoverQuery): number {
     q.modes.length +
     (q.status !== "all" ? 1 : 0) +
     (q.includeClosed ? 1 : 0) +
-    (q.quick ? 1 : 0)
+    (q.quick ? 1 : 0) +
+    (q.online ? 0 : 1)
   );
+}
+
+/**
+ * 큐레이션 섹션을 보여 줄지. 검색어·세부 필터·정렬 변경·'전체 보기'가 있으면 결과 하나의 그리드로 보여 준다.
+ * 분야·지역·온라인 포함은 화면 위쪽의 기본 조건이라 큐레이션 안에서도 그대로 적용한다.
+ */
+export function isCuratedQuery(q: DiscoverQuery): boolean {
+  return !q.all && !q.q && q.modes.length === 0 && q.status === "all" && !q.includeClosed && !q.quick && q.sort === "deadline";
+}
+
+/** 온라인으로만 진행하는 공고(장소가 없다) */
+export function isOnlineOnly(a: Announcement): boolean {
+  return a.venue.status === "online" || a.participationMode === "online";
 }
 
 export function venueRegionOf(a: Announcement): VenueRegion | null {
@@ -210,7 +236,10 @@ export function filterAnnouncements(list: Announcement[], q: DiscoverQuery, nowI
     if (q.modes.length && !q.modes.includes(a.participationMode)) return false;
     if (q.regions.length) {
       const r = venueRegionOf(a);
-      if (!r || !q.regions.includes(r)) return false;
+      const inRegion = r !== null && q.regions.includes(r);
+      if (!inRegion && !(q.online && isOnlineOnly(a))) return false;
+    } else if (!q.online && isOnlineOnly(a)) {
+      return false;
     }
     if (q.quick === "today" && !isPublishedToday(a, nowIso)) return false;
     if (q.quick === "week" && !isDueThisWeek(a, nowIso)) return false;

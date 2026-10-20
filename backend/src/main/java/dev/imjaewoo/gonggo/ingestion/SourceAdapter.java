@@ -3,6 +3,7 @@ package dev.imjaewoo.gonggo.ingestion;
 import dev.imjaewoo.gonggo.announcement.Incoming;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /** 출처 하나. 가져오기(fetch)와 정규화(normalize)를 나눠 원본을 먼저 남긴다 */
 public interface SourceAdapter {
@@ -21,6 +22,11 @@ public interface SourceAdapter {
      */
     default boolean fullSnapshot() {
         return false;
+    }
+
+    /** 원문 페이지에 대표 이미지가 없을 때 대신 찾아볼 주소(예: 회사 홈페이지). 없으면 empty */
+    default Optional<String> previewFallbackUrl(String organizerName) {
+        return Optional.empty();
     }
 
     List<SourceRecord> fetch();

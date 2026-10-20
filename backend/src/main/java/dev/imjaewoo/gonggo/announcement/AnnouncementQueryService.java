@@ -19,12 +19,14 @@ public class AnnouncementQueryService {
     private final AnnouncementRepository announcements;
     private final AnnouncementRevisionRepository revisions;
     private final AnnouncementMapper mapper;
+    private final AnnouncementImageStore images;
 
     public AnnouncementQueryService(AnnouncementRepository announcements, AnnouncementRevisionRepository revisions,
-            AnnouncementMapper mapper) {
+            AnnouncementMapper mapper, AnnouncementImageStore images) {
         this.announcements = announcements;
         this.revisions = revisions;
         this.mapper = mapper;
+        this.images = images;
     }
 
     public record Result(List<AnnouncementView> items, long total) {
@@ -40,7 +42,7 @@ public class AnnouncementQueryService {
         return announcements.findById(id).map(a -> withRevisions(List.of(a)).getFirst());
     }
 
-    /** 이력은 한 번에 모아 읽는다(공고마다 따로 읽지 않는다) */
+    /** 이력·대표 이미지는 한 번에 모아 읽는다(공고마다 따로 읽지 않는다) */
     private List<AnnouncementView> withRevisions(List<Announcement> list) {
         if (list.isEmpty()) {
             return List.of();
@@ -50,6 +52,9 @@ public class AnnouncementQueryService {
                 .stream()
                 .collect(Collectors.groupingBy(AnnouncementRevision::getAnnouncementId,
                         Collectors.mapping(AnnouncementRevision::toView, Collectors.toList())));
-        return list.stream().map(a -> mapper.toView(a, byId.getOrDefault(a.getId(), List.of()))).toList();
+        var imageById = images.find(list.stream().map(Announcement::getId).toList());
+        return list.stream()
+                .map(a -> mapper.toView(a, byId.getOrDefault(a.getId(), List.of()), imageById.get(a.getId())))
+                .toList();
     }
 }

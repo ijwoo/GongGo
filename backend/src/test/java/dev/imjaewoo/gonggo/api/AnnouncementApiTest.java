@@ -15,12 +15,36 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import dev.imjaewoo.gonggo.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** 테스트 고정 공고 34건이 시작할 때 들어가고, 웹 계약 모양으로 조회되는지 확인한다 */
 class AnnouncementApiTest extends IntegrationTest {
 
     @Autowired MockMvc mvc;
+    @Autowired JdbcClient jdbc;
+
+    @Test
+    void 대표_이미지가_있으면_내려_주고_없으면_필드를_뺀다() throws Exception {
+        jdbc.sql("""
+                insert into announcement_images (announcement_id, url, kind, checked_at)
+                values ('hk-pangyo-ai', 'https://cdn.example.com/cover.png', 'photo', now())""").update();
+        try {
+            mvc.perform(get("/api/announcements/hk-pangyo-ai"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.image.url").value("https://cdn.example.com/cover.png"))
+                    .andExpect(jsonPath("$.image.kind").value("photo"))
+                    .andExpect(jsonPath("$.image", not(hasKey("alt"))));
+            // 찾아봤지만 없던 공고(url null)도 필드가 없어야 웹 계약(optional)과 맞다
+            jdbc.sql("update announcement_images set url = null, kind = null where announcement_id = 'hk-pangyo-ai'")
+                    .update();
+            mvc.perform(get("/api/announcements/hk-pangyo-ai"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", not(hasKey("image"))));
+        } finally {
+            jdbc.sql("delete from announcement_images where announcement_id = 'hk-pangyo-ai'").update();
+        }
+    }
 
     @Test
     void 마감_포함_전체_목록과_서버_시각() throws Exception {

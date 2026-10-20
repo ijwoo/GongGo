@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -76,6 +77,12 @@ public class GreenhouseSourceAdapter implements SourceAdapter {
             }
         }
         return records;
+    }
+
+    @Override
+    public Optional<String> previewFallbackUrl(String organizerName) {
+        return props.boards().stream().filter(b -> b.name().equals(organizerName) && b.homepage() != null)
+                .map(GreenhouseProperties.Board::homepage).findFirst();
     }
 
     @Override

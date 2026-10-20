@@ -1,6 +1,7 @@
 package dev.imjaewoo.gonggo.announcement;
 
 import dev.imjaewoo.gonggo.announcement.model.AnnouncementContent;
+import dev.imjaewoo.gonggo.announcement.model.AnnouncementImage;
 import dev.imjaewoo.gonggo.announcement.model.AnnouncementRevisionView;
 import dev.imjaewoo.gonggo.announcement.model.AnnouncementView;
 import dev.imjaewoo.gonggo.announcement.model.ApplicationStart;
@@ -126,13 +127,13 @@ public class AnnouncementMapper {
                 a.getStatus());
     }
 
-    public AnnouncementView toView(Announcement a, List<AnnouncementRevisionView> revisions) {
+    public AnnouncementView toView(Announcement a, List<AnnouncementRevisionView> revisions, AnnouncementImage image) {
         AnnouncementContent c = toContent(a);
         return new AnnouncementView(c.id(), c.title(), c.organizer(), c.category(), c.sourceId(), c.sourceUrl(),
                 c.sourceName(), c.publishedAt(), c.sourceUpdatedAt(), a.getLastCheckedAt(), c.applicationStart(),
                 c.applicationDeadline(), c.event(), c.participationMode(), c.venue(), c.eligibilityRegions(),
                 c.teamSize(), c.cost(), c.supportAmount(), c.conditions(), c.requiredDocuments(), c.checkPoints(),
-                c.status(), a.getContentVersion(), revisions);
+                c.status(), image, a.getContentVersion(), revisions);
     }
 
     private String write(Object value) {

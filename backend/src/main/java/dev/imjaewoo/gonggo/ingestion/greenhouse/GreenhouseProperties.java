@@ -15,8 +15,11 @@ public record GreenhouseProperties(
         String titlePattern,
         List<Board> boards) {
 
-    /** token: 게시판 주소의 회사 식별자(boards.greenhouse.io/{token}), name: 화면에 쓸 회사 이름 */
-    public record Board(String token, String name) {
+    /**
+     * token: 게시판 주소의 회사 식별자(boards.greenhouse.io/{token}), name: 화면에 쓸 회사 이름,
+     * homepage: 공고 페이지에 대표 이미지가 없을 때 대신 찾아볼 회사 홈페이지(선택)
+     */
+    public record Board(String token, String name, String homepage) {
     }
 
     public boolean configured() {

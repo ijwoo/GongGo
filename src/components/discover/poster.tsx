@@ -25,6 +25,8 @@ export function Poster({ a, className }: { a: Announcement; className?: string }
           alt={image.alt ?? ""}
           loading="lazy"
           decoding="async"
+          // 일부 사이트는 다른 출처의 이미지 요청을 막으므로 출처 정보를 보내지 않는다
+          referrerPolicy="no-referrer"
           onError={() => setFailed(true)}
           className={cn("absolute inset-0 size-full", image.kind === "poster" ? "object-contain" : "object-cover")}
         />

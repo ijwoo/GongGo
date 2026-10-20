@@ -3,6 +3,7 @@ package dev.imjaewoo.gonggo.ingestion;
 import dev.imjaewoo.gonggo.announcement.AnnouncementUpserter;
 import dev.imjaewoo.gonggo.announcement.Incoming;
 import dev.imjaewoo.gonggo.geo.AreaGeocoder;
+import dev.imjaewoo.gonggo.preview.ImageEnricher;
 import dev.imjaewoo.gonggo.announcement.AnnouncementUpserter.Outcome;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -39,6 +40,7 @@ public class IngestionService {
     private final Map<String, SourceAdapter> adapters;
     private final AnnouncementUpserter upserter;
     private final AreaGeocoder geocoder;
+    private final ImageEnricher images;
     private final JdbcClient jdbc;
     private final JsonMapper json;
     private final Clock clock;
@@ -46,8 +48,9 @@ public class IngestionService {
     private final Set<String> running = ConcurrentHashMap.newKeySet();
 
     public IngestionService(List<SourceAdapter> adapters, AnnouncementUpserter upserter, AreaGeocoder geocoder,
-            JdbcClient jdbc, JsonMapper json, Clock clock) {
+            ImageEnricher images, JdbcClient jdbc, JsonMapper json, Clock clock) {
         this.geocoder = geocoder;
+        this.images = images;
         this.adapters = adapters.stream().collect(Collectors.toMap(SourceAdapter::sourceId, Function.identity()));
         this.upserter = upserter;
         this.jdbc = jdbc;
@@ -70,7 +73,14 @@ public class IngestionService {
             return Optional.empty();
         }
         try {
-            return Optional.of(execute(adapter, trigger));
+            IngestionRunView run = execute(adapter, trigger);
+            // 대표 이미지는 공고 내용과 따로 붙인다. 실패해도 수집 결과는 그대로 둔다
+            try {
+                images.enrich(adapter);
+            } catch (RuntimeException e) {
+                log.warn("[ingestion] {} 이미지 붙이기 실패: {}", adapter.sourceId(), e.toString());
+            }
+            return Optional.of(run);
         } finally {
             running.remove(adapter.sourceId());
         }

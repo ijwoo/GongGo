@@ -31,6 +31,8 @@ public record AnnouncementView(
         List<String> requiredDocuments,
         List<String> checkPoints,
         String status,
+        /** 없으면 필드를 뺀다(웹 계약에서 optional) */
+        @JsonInclude(JsonInclude.Include.NON_NULL) AnnouncementImage image,
         int contentVersion,
         List<AnnouncementRevisionView> revisions) {
 }

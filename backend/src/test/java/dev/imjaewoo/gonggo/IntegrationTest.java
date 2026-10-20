@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import;
         "gonggo.auth.test-login-enabled=true",
         "gonggo.admin-token=test-admin-token",
         "gonggo.ingestion.scheduler-enabled=false",
+        "gonggo.images.enabled=false",
 })
 @AutoConfigureMockMvc
 @Import({TestcontainersConfiguration.class, FakeSourceAdapter.class})

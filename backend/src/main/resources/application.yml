@@ -54,6 +54,9 @@ gonggo:
     file: ${GONGGO_FIXTURE_FILE:}
     anchor-date: ${GONGGO_FIXTURE_ANCHOR_DATE:}
     overrides-file: ${GONGGO_FIXTURE_OVERRIDES:}
+  images:
+    # 수집 뒤 원문 페이지의 og:image 등으로 대표 이미지를 붙인다(외부 페이지를 연다)
+    enabled: ${GONGGO_IMAGES_ENABLED:true}
   ingestion:
     # 매일 06:10 (서울)
     cron: ${GONGGO_INGESTION_CRON:0 10 6 * * *}

@@ -47,6 +47,13 @@ export function MapMode({
   const unlocated = results.filter((a) => !hasCoordinates(a));
   const select = (id: string) => setQuery({ id }, "replace");
   const [listOpen, setListOpen] = useState(true);
+  /** 같은 장소 마커로 고른 공고. 있으면 목록을 그 공고로 좁힌다 */
+  const [picked, setPicked] = useState<string[] | null>(null);
+  const pickedSet = picked ? new Set(picked) : null;
+  const pickedShown = pickedSet ? located.filter((a) => pickedSet.has(a.id)) : [];
+  // 필터를 바꿔 고른 공고가 모두 빠지면 고르기 전 목록으로 돌아간다
+  const shown = pickedShown.length ? pickedShown : located;
+  const pickedPlace = pickedShown.length ? placeLabel(pickedShown[0]) : null;
   const md = useMediaQuery("(min-width: 768px)");
   const lg = useMediaQuery("(min-width: 1024px)");
   const showList = md && listOpen;
@@ -58,6 +65,11 @@ export function MapMode({
         items={located.length || !query.bbox ? located : []}
         selectedId={query.id}
         onSelect={select}
+        onPickPlace={(ids) => {
+          setPicked(ids);
+          setListOpen(true);
+        }}
+        pickedIds={pickedShown.length ? picked : null}
         appliedBbox={query.bbox}
         onSearchArea={(bbox) => setQuery({ bbox })}
         onShowList={() => setQuery({ view: "list" })}
@@ -82,10 +94,19 @@ export function MapMode({
         className="absolute top-3 bottom-3 left-3 z-[4] flex flex-col overflow-hidden rounded-xl border border-line bg-panel shadow-[var(--shadow)]"
       >
         <div className="flex items-center gap-2 border-b border-line px-4 py-3">
-          <p className="text-sm">
-            {query.bbox ? "이 지역" : "지도"}의 공고 <b className="num text-accent-text">{located.length}</b>건
+          <p className="min-w-0 truncate text-sm">
+            {pickedPlace ?? (query.bbox ? "이 지역" : "지도")}의 공고 <b className="num text-accent-text">{shown.length}</b>건
           </p>
-          {query.bbox ? (
+          {pickedPlace ? (
+            <button
+              type="button"
+              onClick={() => setPicked(null)}
+              className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-accent-soft px-2 text-xs font-semibold text-accent-text"
+            >
+              전체 보기
+              <X className="size-3" aria-hidden />
+            </button>
+          ) : query.bbox ? (
             <button
               type="button"
               onClick={() => setQuery({ bbox: null })}
@@ -108,11 +129,11 @@ export function MapMode({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {results.length === 0 ? (
             empty
-          ) : located.length === 0 ? (
+          ) : shown.length === 0 ? (
             <p className="px-4 py-10 text-center text-[13px] text-muted">이 지역에는 조건에 맞는 공고가 없어요. 지도를 옮기거나 범위를 해제해 보세요.</p>
           ) : (
             <ul className="space-y-1 p-2" aria-label="지도 범위의 공고 목록">
-              {located.map((a) => {
+              {shown.map((a) => {
                 const isSelected = a.id === query.id;
                 return (
                   <li
@@ -179,4 +200,12 @@ export function MapMode({
       </p>
     </div>
   );
+}
+
+/** 같은 장소 묶음의 이름: 확정 장소면 장소 이름, 아니면 시·구 */
+function placeLabel(a: Announcement): string {
+  const v = a.venue;
+  if (v.status === "confirmed") return v.name;
+  if (v.status === "tbd" && v.area) return v.area.label;
+  return "이 장소";
 }

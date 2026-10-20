@@ -73,6 +73,10 @@ export interface MapCanvasProps {
   items: Announcement[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** 같은 장소의 여러 공고 마커를 눌렀을 때 */
+  onPickPlace: (ids: string[]) => void;
+  /** 고른 장소의 공고(강조 표시) */
+  pickedIds?: string[] | null;
   /** 적용된 지도 범위(URL) */
   appliedBbox: Bbox | null;
   onSearchArea: (bbox: Bbox) => void;
@@ -90,13 +94,12 @@ interface Marker {
   group: Group;
 }
 
-export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchArea, onShowList, insetLeft = 0, insetRight = 0 }: MapCanvasProps) {
+export function MapCanvas({ items, selectedId, onSelect, onPickPlace, pickedIds = null, appliedBbox, onSearchArea, onShowList, insetLeft = 0, insetRight = 0 }: MapCanvasProps) {
   const appKey = useKakaoMapKey();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KMap | null>(null);
   const libRef = useRef<KakaoMaps | null>(null);
   const markersRef = useRef(new Map<string, Marker>());
-  const popupRef = useRef<KCustomOverlay | null>(null);
   const programmaticRef = useRef(false);
   const [status, setStatus] = useState<Status>(appKey ? "loading" : "nokey");
   const [error, setError] = useState<string | null>(null);
@@ -110,16 +113,11 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
   const [attempt, setAttempt] = useState(0);
 
   // 최신 props를 지도 이벤트 핸들러에서 읽기 위한 참조
-  const latest = useRef({ items, selectedId, onSelect, appliedBbox, insetLeft, insetRight });
+  const latest = useRef({ items, selectedId, onSelect, onPickPlace, pickedIds, appliedBbox, insetLeft, insetRight });
   useEffect(() => {
-    latest.current = { items, selectedId, onSelect, appliedBbox, insetLeft, insetRight };
+    latest.current = { items, selectedId, onSelect, onPickPlace, pickedIds, appliedBbox, insetLeft, insetRight };
     bboxKeyRef.current = bboxKey;
   });
-
-  function closePopup() {
-    popupRef.current?.setMap(null);
-    popupRef.current = null;
-  }
 
   function labelOf(g: Group): string {
     if (g.cluster) return `공고 ${g.ids.length}건이 모인 지역. 눌러서 확대`;
@@ -132,13 +130,13 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
     const map = mapRef.current;
     const lib = libRef.current;
     if (!map || !lib) return;
-    const { items: current, selectedId: sel } = latest.current;
+    const { items: current, selectedId: sel, pickedIds: picked } = latest.current;
     const groups = groupForLevel(current, map.getLevel());
     const jobIds = new Set(current.filter((a) => a.category === "job").map((a) => a.id));
     const seen = new Set<string>();
     for (const g of groups) {
       seen.add(g.key);
-      const selected = sel !== null && g.ids.includes(sel);
+      const selected = (sel !== null && g.ids.includes(sel)) || (!g.cluster && picked !== null && picked.length > 0 && g.ids.includes(picked[0]));
       let m = markersRef.current.get(g.key);
       if (!m) {
         const wrapper = document.createElement("div");
@@ -165,7 +163,11 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
       const jobs = g.ids.filter((id) => jobIds.has(id)).length;
       m.button.dataset.kind = jobs === 0 ? "event" : jobs === g.ids.length ? "job" : "mixed";
       m.button.className = markerClass(g, selected);
-      m.button.style.background = selected ? "" : markerColor(m.button.dataset.kind, g);
+      const color = markerColor(m.button.dataset.kind);
+      m.button.style.background = selected ? "" : color;
+      // 대략 위치(시·구)는 같은 색의 옅은 번짐으로 구분한다
+      m.button.style.boxShadow =
+        selected || g.precision !== "area" || g.cluster ? "" : `0 0 0 6px ${color}33, 0 2px 8px rgb(0 0 0 / 0.3)`;
       m.button.textContent = g.cluster || g.ids.length > 1 ? String(g.ids.length) : "";
       m.button.setAttribute("aria-pressed", String(selected));
     }
@@ -181,7 +183,6 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
     const map = mapRef.current;
     const lib = libRef.current;
     if (!map || !lib) return;
-    closePopup();
     if (g.cluster) {
       programmaticRef.current = true;
       setMoved(true);
@@ -192,37 +193,8 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
       latest.current.onSelect(g.ids[0]);
       return;
     }
-    // 같은 장소의 여러 공고: 작은 목록을 띄워 고르게 한다
-    const box = document.createElement("div");
-    box.className = "mb-5 max-h-80 min-w-56 max-w-80 overflow-y-auto rounded-lg border border-[var(--line)] bg-[var(--elevated)] p-2 text-[13px] text-[var(--fg)] shadow-[var(--shadow)]";
-    const head = document.createElement("div");
-    head.className = "mb-1 flex items-center justify-between gap-2";
-    const heading = document.createElement("p");
-    heading.className = "text-xs font-semibold text-[var(--muted)]";
-    heading.textContent = `같은 장소의 공고 ${g.ids.length}건`;
-    const close = document.createElement("button");
-    close.type = "button";
-    close.className = "rounded px-1 text-[var(--muted)] hover:bg-[var(--subtle)]";
-    close.setAttribute("aria-label", "닫기");
-    close.textContent = "×";
-    close.addEventListener("click", closePopup);
-    head.append(heading, close);
-    box.append(head);
-    for (const id of g.ids) {
-      const a = latest.current.items.find((x) => x.id === id);
-      if (!a) continue;
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "block w-full rounded px-1.5 py-1 text-left hover:bg-[var(--subtle)]";
-      b.textContent = a.title;
-      b.addEventListener("click", () => {
-        latest.current.onSelect(id);
-        closePopup();
-      });
-      box.append(b);
-    }
-    popupRef.current = new lib.CustomOverlay({ position: new lib.LatLng(g.lat, g.lng), content: box, yAnchor: 1, zIndex: 10, clickable: true, map });
-    box.querySelector<HTMLButtonElement>("button:not([aria-label])")?.focus();
+    // 같은 장소의 여러 공고: 옆 목록을 그 장소의 공고로 좁힌다
+    latest.current.onPickPlace(g.ids);
   }
 
   function fitTo(bbox: Bbox | null) {
@@ -258,14 +230,12 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
         mapRef.current = map;
         lib.event.addListener(map, "dragend", () => setMoved(true));
         lib.event.addListener(map, "zoom_changed", () => {
-          closePopup();
           if (!programmaticRef.current) setMoved(true);
         });
         lib.event.addListener(map, "idle", () => {
           programmaticRef.current = false;
           syncMarkers();
         });
-        lib.event.addListener(map, "click", closePopup);
         fitTo(latest.current.appliedBbox);
         syncMarkers();
         setMoved(false);
@@ -280,7 +250,6 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
       cancelled = true;
       markers.forEach((m) => m.overlay.setMap(null));
       markers.clear();
-      closePopup();
       mapRef.current = null;
     };
     // attempt가 바뀌면 다시 시도한다
@@ -301,7 +270,7 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
   useEffect(() => {
     syncMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataKey, selectedId, status]);
+  }, [dataKey, selectedId, status, pickedIds?.[0]]);
 
   /* 적용 범위가 바뀌면(뒤로 가기 등) 지도도 맞춘다 */
   useEffect(() => {
@@ -390,8 +359,8 @@ export function MapCanvas({ items, selectedId, onSelect, appliedBbox, onSearchAr
           채용
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-2.5 rounded-full border border-dashed border-[#5b6573] bg-white" aria-hidden />
-          점선 = 대략 위치(시·구)
+          <span className="size-2.5 rounded-full bg-[#5b6573] shadow-[0_0_0_3px_rgb(91_101_115/0.25)]" aria-hidden />
+          번진 원 = 대략 위치(시·구)
         </span>
       </div>
 
@@ -466,10 +435,9 @@ const EVENT_COLOR = "#205d47";
 const JOB_COLOR = "#3b5bdb";
 const MIXED_COLOR = "#2b3440";
 
-/** 채용은 파랑, 행사·교육은 초록, 섞인 묶음은 짙은 회색. 대략 위치는 옅게 칠하고 점선 테두리 */
-function markerColor(kind: string | undefined, g: Group): string {
-  const base = kind === "job" ? JOB_COLOR : kind === "event" ? EVENT_COLOR : MIXED_COLOR;
-  return g.precision === "area" && !g.cluster ? `${base}d9` : base;
+/** 채용은 파랑, 행사·교육은 초록, 섞인 묶음은 짙은 회색 */
+function markerColor(kind: string | undefined): string {
+  return kind === "job" ? JOB_COLOR : kind === "event" ? EVENT_COLOR : MIXED_COLOR;
 }
 
 /** 공고 수에 따라 원 크기를 키운다 */
@@ -481,11 +449,10 @@ function sizeFor(n: number): string {
 }
 
 function markerClass(g: Group, selected: boolean): string {
-  const area = g.precision === "area" && !g.cluster;
   return cn(
     "flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full font-bold text-white shadow-[0_2px_8px_rgb(0_0_0/0.3)] transition-transform hover:scale-110 focus-visible:outline-2",
     sizeFor(g.ids.length),
-    area ? "border-[3px] border-dashed border-white" : "border-[3px] border-white",
+    "border-[3px] border-white",
     g.cluster && "ring-4 ring-white/50",
     selected && "scale-110 bg-[#f59e0b] ring-4 ring-[#f59e0b]/35",
   );
